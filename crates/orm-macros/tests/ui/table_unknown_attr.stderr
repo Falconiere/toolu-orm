@@ -1,0 +1,5 @@
+error: unknown attribute, expected `name` or `strict`
+ --> tests/ui/table_unknown_attr.rs:5:27
+  |
+5 | #[table(name = "widgets", foo = "x")]
+  |                           ^^^

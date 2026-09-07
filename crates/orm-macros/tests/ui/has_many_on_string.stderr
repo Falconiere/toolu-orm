@@ -1,0 +1,5 @@
+error: relation field must be Vec<T> or Option<T>
+  --> tests/ui/has_many_on_string.rs:10:14
+   |
+10 |   pub posts: String,
+   |              ^^^^^^

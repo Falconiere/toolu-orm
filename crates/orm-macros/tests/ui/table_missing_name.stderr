@@ -1,0 +1,7 @@
+error: missing `name` in #[table(name = "...")]
+ --> tests/ui/table_missing_name.rs:5:1
+  |
+5 | #[table]
+  | ^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `table` (in Nightly builds, run with -Z macro-backtrace for more info)

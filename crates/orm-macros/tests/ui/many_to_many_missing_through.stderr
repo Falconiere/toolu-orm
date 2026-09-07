@@ -1,0 +1,5 @@
+error: missing `through`
+ --> tests/ui/many_to_many_missing_through.rs:9:3
+  |
+9 |   #[many_to_many(table = "tags", local_key = "post_id", foreign_key = "tag_id", columns = ["id"])]
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

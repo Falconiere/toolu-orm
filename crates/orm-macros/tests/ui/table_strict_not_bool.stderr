@@ -1,0 +1,5 @@
+error: expected a bool literal
+ --> tests/ui/table_strict_not_bool.rs:5:36
+  |
+5 | #[table(name = "widgets", strict = maybe)]
+  |                                    ^^^^^

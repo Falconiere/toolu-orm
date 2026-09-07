@@ -1,0 +1,7 @@
+error: #[derive(Relational)] requires #[relational(table = "...")] (the `#[table(...)]` attribute is reserved for #[table] schema macro)
+ --> tests/ui/relational_missing_table.rs:6:1
+  |
+6 | / struct Widget {
+7 | |   pub id: String,
+8 | | }
+  | |_^

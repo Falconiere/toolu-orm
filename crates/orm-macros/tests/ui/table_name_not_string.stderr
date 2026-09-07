@@ -1,0 +1,5 @@
+error: expected a string literal
+ --> tests/ui/table_name_not_string.rs:5:16
+  |
+5 | #[table(name = 1)]
+  |                ^

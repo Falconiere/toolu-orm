@@ -1,0 +1,5 @@
+error: first arg must be index name string
+ --> tests/ui/index_name_not_string.rs:6:1
+  |
+6 | #[index(123)]
+  | ^^^^^^^^^^^^^
