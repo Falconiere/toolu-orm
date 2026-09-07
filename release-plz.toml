@@ -1,5 +1,5 @@
 # release-plz: on every push to main it opens/updates a release PR (workspace
-# version bump + CHANGELOG.md). Merging that PR publishes the five crates to
+# version bump + CHANGELOG.md). Merging that PR publishes the six crates to
 # crates.io in dependency order, then pushes one `vX.Y.Z` tag and one GitHub
 # Release. Workflow: .github/workflows/release-plz.yml.
 
@@ -11,8 +11,10 @@ git_release_name = "v{{ version }}"
 git_tag_enable = false
 git_release_enable = false
 
-# Tag/release hang off orm-cli: it is published last (depends on core +
-# connection), so the tag exists only once every crate is on the registry.
+# Tag/release hang off orm-cli: it sits at the end of a dependency chain
+# (core + connection), so the tag lands after those are on the registry.
+# The `toolu-orm` facade is a separate leaf and may publish either side of
+# it; a partial failure is resumed by the next run on main.
 [[package]]
 name = "toolu-orm-cli"
 git_tag_enable = true

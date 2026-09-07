@@ -2343,6 +2343,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "toolu-orm"
+version = "0.1.0"
+dependencies = [
+ "toolu-orm-connection",
+ "toolu-orm-core",
+ "toolu-orm-macros",
+ "toolu-orm-query",
+]
+
+[[package]]
 name = "toolu-orm-cli"
 version = "0.1.0"
 dependencies = [
