@@ -69,7 +69,10 @@ fn extract_with_attr(field: &syn::Field) -> syn::Result<Option<String>> {
 }
 
 /// Builds field extraction for `tokio_postgres::Row::try_get`.
-fn build_field_extraction_postgres(info: &FieldInfo) -> syn::Result<TokenStream> {
+fn build_field_extraction_postgres(
+  core: &TokenStream,
+  info: &FieldInfo,
+) -> syn::Result<TokenStream> {
   let name = &info.name;
   let name_str = &info.name_str;
   let idx = info.idx_usize;
@@ -80,10 +83,10 @@ fn build_field_extraction_postgres(info: &FieldInfo) -> syn::Result<TokenStream>
     Ok(quote! {
       #name: {
         let raw = row.try_get::<usize, #field_ty>(#idx)
-          .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(
+          .map_err(|e| #core::error::DbCoreError::RowMapping(
             format!("column {} ({}): {}", #idx, #name_str, e)
           ))?;
-        #func_ident(raw).map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(
+        #func_ident(raw).map_err(|e| #core::error::DbCoreError::RowMapping(
           format!("column {} ({}): {}", #idx, #name_str, e)
         ))?
       }
@@ -91,7 +94,7 @@ fn build_field_extraction_postgres(info: &FieldInfo) -> syn::Result<TokenStream>
   } else {
     Ok(quote! {
       #name: row.try_get::<usize, #field_ty>(#idx)
-        .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(
+        .map_err(|e| #core::error::DbCoreError::RowMapping(
           format!("column {} ({}): {}", #idx, #name_str, e)
         ))?
     })
@@ -99,6 +102,7 @@ fn build_field_extraction_postgres(info: &FieldInfo) -> syn::Result<TokenStream>
 }
 
 pub fn expand_from_row(input: &DeriveInput) -> syn::Result<TokenStream> {
+  let core = crate::paths::core();
   let name = &input.ident;
   let field_infos = parse_fields(input)?;
 
@@ -106,7 +110,7 @@ pub fn expand_from_row(input: &DeriveInput) -> syn::Result<TokenStream> {
 
   let postgres_extractions: Vec<TokenStream> = field_infos
     .iter()
-    .map(build_field_extraction_postgres)
+    .map(|info| build_field_extraction_postgres(&core, info))
     .collect::<syn::Result<_>>()?;
 
   Ok(crate::from_row_expand::emit_from_row_impl(

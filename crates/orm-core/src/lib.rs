@@ -7,6 +7,11 @@ pub use rusqlite;
 #[cfg(feature = "postgres")]
 pub use tokio_postgres;
 
+// `#[table]`'s view structs derive Serialize/Deserialize and `Relational`
+// names `serde_json::Value`, so the expansions reach both through here rather
+// than through the consumer's extern prelude.
+pub use {serde, serde_json};
+
 pub mod column;
 pub mod dialect;
 pub mod diff;

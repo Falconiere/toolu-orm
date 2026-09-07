@@ -3,6 +3,7 @@ mod expand;
 mod from_row;
 mod from_row_expand;
 mod parse;
+mod paths;
 mod relational;
 mod view;
 

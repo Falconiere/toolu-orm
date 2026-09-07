@@ -9,7 +9,7 @@
 #
 # Lanes (must match CLAUDE.md / .github/workflows/ci.yml):
 #   default       cargo nextest list --workspace
-#   postgres      cargo nextest list -p <six crates> --features postgres
+#   postgres      cargo nextest list $PKGS --features postgres   (see PKGS below)
 #   libsql-only   cargo nextest list -p toolu-orm-query --features libsql
 #   rusqlite-only cargo nextest list -p toolu-orm-query --features rusqlite
 #                 cargo nextest list -p toolu-orm-connection --features rusqlite
@@ -17,7 +17,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 DOCS=docs/scenarios
-PKGS="-p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli"
+PKGS="-p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

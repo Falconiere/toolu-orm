@@ -40,7 +40,7 @@ pub fn parse_view_attr(attr: &Attribute) -> Result<ViewInput> {
   })
 }
 
-fn map_type_to_rust(type_spec: &TypeSpec) -> TokenStream {
+fn map_type_to_rust(core: &TokenStream, type_spec: &TypeSpec) -> TokenStream {
   let type_name = match type_spec {
     TypeSpec::Varchar(_) => "Varchar",
     TypeSpec::Char(_) => "Char",
@@ -51,7 +51,7 @@ fn map_type_to_rust(type_spec: &TypeSpec) -> TokenStream {
     "SmallInt" => quote! { i16 },
     "Real" => quote! { f64 },
     "Boolean" => quote! { bool },
-    "Json" => quote! { serde_json::Value },
+    "Json" => quote! { #core::serde_json::Value },
     "Blob" => quote! { Vec<u8> },
     // Uuid, Text, Date, Time, Varchar, and enum types all map to String
     _ => quote! { String },
@@ -63,6 +63,8 @@ pub fn generate_view_struct(
   columns: &[ColumnInput],
   vis: &syn::Visibility,
 ) -> TokenStream {
+  let core = crate::paths::core();
+  let serde = crate::paths::core_serde_literal();
   let struct_name = &view.struct_name;
 
   let filtered: Vec<&ColumnInput> = columns
@@ -77,7 +79,7 @@ pub fn generate_view_struct(
     .iter()
     .map(|col| {
       let field_ident = format_ident!("{}", col.field_name);
-      let base_type = map_type_to_rust(&col.type_spec);
+      let base_type = map_type_to_rust(&core, &col.type_spec);
       let required = col.flags.primary_key() || col.flags.not_null();
       if required {
         quote! { pub #field_ident: #base_type }
@@ -87,8 +89,11 @@ pub fn generate_view_struct(
     })
     .collect();
 
+  // `serde(crate = ...)` points serde's own `extern crate serde as _serde` at
+  // the re-export, so a consumer that only depends on the facade still compiles.
   quote! {
-    #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+    #[derive(Debug, Clone, #core::serde::Serialize, #core::serde::Deserialize)]
+    #[serde(crate = #serde)]
     #vis struct #struct_name {
       #(#field_tokens,)*
     }

@@ -5,27 +5,25 @@ against an in-memory libsql database.
 
 ```toml
 [dependencies]
-toolu-orm      = { version = "0.1", features = ["libsql"] }
-toolu-orm-core = { version = "0.1", default-features = false, features = ["libsql"] }
-toolu-orm-cli  = { version = "0.1", default-features = false, features = ["libsql"] }
-tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
+toolu-orm     = { version = "0.1", features = ["libsql"] }
+toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
+tokio         = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
-`toolu-orm-core` sits alongside the facade because the generated column module
-resolves its paths against the extern prelude — see
-[the macro-path caveat](installation.md#the-macro-path-caveat).
+`toolu-orm` is the only ORM dependency: the macros emit absolute paths that go
+through the facade — see [Installation](installation.md).
 
 ```rust
 use toolu_orm::connection::Database;
 use toolu_orm::core::column::{Integer, Text};
 use toolu_orm::core::dialect::Dialect;
 use toolu_orm::core::error::DbCoreError;
+use toolu_orm::core::libsql;                 // the driver crate, re-exported
 use toolu_orm::core::query_column::CommonOps;
 use toolu_orm::core::row::FromRow;
 use toolu_orm::core::schema::SchemaRegistry;
 use toolu_orm::core::table::TableSchema;
-use toolu_orm::prelude::*;                   // required: the macros expand to
-                                             // toolu_orm_core / toolu_orm_query paths
+use toolu_orm::table;
 
 #[table(name = "users")]
 pub struct UsersTable {
@@ -105,11 +103,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 `select_for::<User>()` selects exactly `User::REQUIRED_COLUMNS`, so the row
 mapper and the column list cannot drift apart.
 
-`use toolu_orm::prelude::*;` is not decoration: the macro expansion names
-`toolu_orm_core` and `toolu_orm_query` directly, and only the prelude puts those
-crate names in scope for a consumer whose sole dependency is `toolu-orm`. It also
-re-exports the driver crate — that is where the `libsql::Row` in the `FromRow`
-impl below comes from. See [Installation](installation.md).
+Only `use toolu_orm::table;` is needed for the macro: the expansion emits
+absolute `::toolu_orm::core::…` / `::toolu_orm::query::…` paths, so nothing
+else has to be in scope. Code you write yourself still needs its own imports —
+`use toolu_orm::core::libsql;` above is what the `libsql::Row` in the `FromRow`
+impl below resolves through. See [Installation](installation.md).
 
 Note the two connection types: `LibsqlConnection` (what `db.connect()` returns)
 is what migrations take, and `conn.inner_conn()` is the driver connection the

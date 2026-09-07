@@ -6,16 +6,10 @@ One dependency pulls in the whole stack behind one version and one feature list:
 
 ```toml
 [dependencies]
-toolu-orm      = { version = "0.1", features = ["libsql"] }
-toolu-orm-core = { version = "0.1", default-features = false, features = ["libsql"] }
-tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
+toolu-orm = { version = "0.1", features = ["libsql"] }
+tokio     = { version = "1", features = ["rt-multi-thread", "macros"] }
 # add toolu-orm-cli too if you generate or apply migrations — see below
 ```
-
-`toolu-orm-core` is listed a second time on purpose — see
-[the macro-path caveat](#the-macro-path-caveat) below. Keep the two on the same
-version: the crates share one workspace version, and a mismatch puts two
-different `toolu_orm_core` crates in the graph, whose types do not interoperate.
 
 `toolu-orm` contains no logic — it re-exports the four library crates and the
 proc macros:
@@ -27,43 +21,33 @@ proc macros:
 | `toolu_orm::connection` | `toolu-orm-connection` | `DbConnection` and the driver adapters |
 | `toolu_orm::{table, FromRow, Relational, ColumnEnum}` | `toolu-orm-macros` | the proc macros |
 
-### Import the prelude
+### Importing the macros
 
-The macros expand to paths that name `toolu_orm_core` and `toolu_orm_query`
-**directly**, and Cargo only puts your direct dependencies in a crate's extern
-prelude. Depending on `toolu-orm` alone therefore does not put those names in
-scope. Glob-import the prelude in every module that uses `#[table]` or a derive:
+Import the macro you use and nothing else:
 
 ```rust
-use toolu_orm::prelude::*;
+use toolu_orm::core::column::Text;
+use toolu_orm::table;
+
+#[table(name = "users")]
+pub struct UsersTable {
+  #[column(primary_key)]
+  pub id: Text,
+}
 ```
 
-Besides the macros, the prelude re-exports `toolu_orm_core`, `toolu_orm_query`
-and the driver crate for the active feature (`libsql`, `rusqlite` or
-`tokio_postgres`), which is what makes most of the expansion resolve.
+The expansions emit **absolute** paths — `::toolu_orm::core::…` and
+`::toolu_orm::query::…` when the facade is your dependency,
+`::toolu_orm_core::…` when you name the crates directly. `toolu-orm-macros`
+reads your `Cargo.toml` (via
+[`proc-macro-crate`](https://crates.io/crates/proc-macro-crate)) to pick
+between them, honouring a Cargo rename. Nothing has to be in scope for the
+generated code to resolve, including inside the companion column module
+`#[table]` generates.
 
-### The macro-path caveat
-
-The prelude is not quite enough on its own. `#[table]` also generates the
-companion **column module** (`mod users { … }`), and the paths inside it are
-resolved in that nested module, where a `use` in the parent module does not
-apply — so `toolu_orm_core` there has to come from the crate's extern prelude,
-which Cargo fills only from **direct dependencies**:
-
-```text
-error[E0433]: cannot find module or crate `toolu_orm_core` in this scope
-  --> src/main.rs
-   |
-   | #[table(name = "users")]
-   | ^^^^^^^^^^^^^^^^^^^^^^^^ use of unresolved module or unlinked crate `toolu_orm_core`
-```
-
-Until the macros emit facade-relative paths (the `proc-macro-crate` approach,
-tracked in [issue #15](https://github.com/Falconiere/toolu-orm/issues/15)), a
-facade consumer lists `toolu-orm-core` as a direct dependency too, as shown
-above. Everything else — the derives, the builder
-factories, the driver crate — resolves through the prelude, so `toolu-orm-query`
-and `toolu-orm-connection` stay behind the facade.
+`toolu_orm::prelude` still re-exports the macros, `toolu_orm_core`,
+`toolu_orm_query` and the active driver crate. It is a convenience for code
+that names those crates itself; the macros no longer need it.
 
 ### Migrations are a separate crate
 
@@ -90,8 +74,9 @@ toolu-orm-connection = { version = "0.1", features = ["libsql"] }
 toolu-orm-cli        = { version = "0.1", default-features = false, features = ["libsql"] }
 ```
 
-Only `toolu-orm-core` and `toolu-orm-macros` are mandatory. No prelude is needed
-here: the crates the expansion names are already direct dependencies.
+Only `toolu-orm-core` and `toolu-orm-macros` are mandatory. The expansions
+resolve to `::toolu_orm_core` / `::toolu_orm_query` here, since those are the
+direct dependencies.
 
 ## Driver features
 

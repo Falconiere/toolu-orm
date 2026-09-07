@@ -5,6 +5,7 @@ use quote::quote;
 use syn::{Data, DeriveInput, Error, Fields, Result};
 
 pub fn expand_column_enum(input: &DeriveInput) -> Result<TokenStream> {
+  let core = crate::paths::core();
   let name = &input.ident;
 
   let Data::Enum(data_enum) = &input.data else {
@@ -34,7 +35,7 @@ pub fn expand_column_enum(input: &DeriveInput) -> Result<TokenStream> {
   let variant_strs = variants.iter().map(|v| v.as_str());
 
   Ok(quote! {
-    impl toolu_orm_core::column::EnumSchema for #name {
+    impl #core::column::EnumSchema for #name {
       fn variants() -> &'static [&'static str] {
         &[#(#variant_strs),*]
       }
@@ -55,6 +56,13 @@ fn extract_serde_rename_all(attrs: &[syn::Attribute]) -> Option<String> {
         if let syn::Lit::Str(s) = lit {
           rename_all = Some(s.value());
         }
+        return Ok(());
+      }
+      // Consume any other `option = value` so the scan does not stop before
+      // `rename_all`. `#[serde(crate = "...", rename_all = "...")]` is what a
+      // facade-only consumer writes.
+      if meta.input.peek(syn::Token![=]) {
+        let _: syn::Expr = meta.value()?.parse()?;
       }
       Ok(())
     });

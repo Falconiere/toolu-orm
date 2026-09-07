@@ -14,8 +14,10 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 
 use crate::parse::{ColumnInput, TableInput, TypeSpec};
+use crate::paths;
 
 pub fn expand_columns_module(input: &TableInput) -> TokenStream {
+  let core = paths::core();
   let table_name = &input.table_name;
   let mod_name = Ident::new(table_name, Span::call_site());
 
@@ -31,10 +33,10 @@ pub fn expand_columns_module(input: &TableInput) -> TokenStream {
     .map(|col| {
       let const_name = Ident::new(&col.field_name, Span::call_site());
       let col_name = &col.field_name;
-      let marker = column_marker_type(col);
+      let marker = column_marker_type(&core, col);
       quote! {
-        pub const #const_name: toolu_orm_core::query_column::Column<#marker> =
-          toolu_orm_core::query_column::Column::new(#table_name, #col_name);
+        pub const #const_name: #core::query_column::Column<#marker> =
+          #core::query_column::Column::new(#table_name, #col_name);
       }
     })
     .collect();
@@ -56,44 +58,50 @@ pub fn expand_columns_module(input: &TableInput) -> TokenStream {
 }
 
 /// Maps a column's type spec and flags to the Column<T> generic parameter tokens.
-fn column_marker_type(col: &ColumnInput) -> TokenStream {
+fn column_marker_type(core: &TokenStream, col: &ColumnInput) -> TokenStream {
   if col.flags.as_text() {
-    return quote! { toolu_orm_core::column::Text };
+    return quote! { #core::column::Text };
   }
   if let Some(explicit) = &col.explicit_column_type {
-    return simple_marker_type(explicit.as_str());
+    return simple_marker_type(core, explicit.as_str());
   }
   match &col.type_spec {
     TypeSpec::Varchar(n) => {
       let n = *n;
-      quote! { toolu_orm_core::column::Varchar<#n> }
+      quote! { #core::column::Varchar<#n> }
     },
     TypeSpec::Char(n) => {
       let n = *n;
-      quote! { toolu_orm_core::column::Char<#n> }
+      quote! { #core::column::Char<#n> }
     },
-    TypeSpec::Simple(name) => simple_marker_type(name.as_str()),
+    TypeSpec::Simple(name) => simple_marker_type(core, name.as_str()),
   }
 }
 
-fn simple_marker_type(name: &str) -> TokenStream {
+fn simple_marker_type(core: &TokenStream, name: &str) -> TokenStream {
+  let marker = Ident::new(marker_name(name), Span::call_site());
+  quote! { #core::column::#marker }
+}
+
+/// Column marker type name for a type spec. Text is the fallback: unknown and
+/// custom types are enums stored as text.
+fn marker_name(name: &str) -> &'static str {
   match name {
-    "Integer" => quote! { toolu_orm_core::column::Integer },
-    "Real" => quote! { toolu_orm_core::column::Real },
-    "Blob" => quote! { toolu_orm_core::column::Blob },
-    "Uuid" => quote! { toolu_orm_core::column::Uuid },
-    "Boolean" => quote! { toolu_orm_core::column::Boolean },
-    "Timestamp" => quote! { toolu_orm_core::column::Timestamp },
-    "Date" => quote! { toolu_orm_core::column::Date },
-    "Time" => quote! { toolu_orm_core::column::Time },
-    "Json" => quote! { toolu_orm_core::column::Json },
-    "BigInt" => quote! { toolu_orm_core::column::BigInt },
-    "SmallInt" => quote! { toolu_orm_core::column::SmallInt },
-    "Serial" => quote! { toolu_orm_core::column::Serial },
-    "BigSerial" => quote! { toolu_orm_core::column::BigSerial },
-    "Jsonb" => quote! { toolu_orm_core::column::Jsonb },
-    "Numeric" => quote! { toolu_orm_core::column::Numeric },
-    // Text and unknown/custom types (enums stored as text) both use Text marker
-    _ => quote! { toolu_orm_core::column::Text },
+    "Integer" => "Integer",
+    "Real" => "Real",
+    "Blob" => "Blob",
+    "Uuid" => "Uuid",
+    "Boolean" => "Boolean",
+    "Timestamp" => "Timestamp",
+    "Date" => "Date",
+    "Time" => "Time",
+    "Json" => "Json",
+    "BigInt" => "BigInt",
+    "SmallInt" => "SmallInt",
+    "Serial" => "Serial",
+    "BigSerial" => "BigSerial",
+    "Jsonb" => "Jsonb",
+    "Numeric" => "Numeric",
+    _ => "Text",
   }
 }

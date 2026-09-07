@@ -7,8 +7,6 @@
 //! `pub mod` via `#[path]`.
 
 use toolu_orm_core::column::{Integer, Text};
-// The FromRow derive names `libsql::Row`; this lane gets it via orm-core.
-use toolu_orm_core::libsql;
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::row::FromRow as _;
 use toolu_orm_macros::FromRow;

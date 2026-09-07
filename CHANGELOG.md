@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hashes come from `_journal.json`, a name absent from the journal is rejected
   with the new `MigrateError::NotInJournal`, and already-recorded names are
   skipped.
+- *(core)* `toolu_orm_core::serde` and `toolu_orm_core::serde_json` re-exports,
+  so generated view structs and `Relational` impls reach serde without the
+  consumer depending on it.
+
+### Fixed
+- *(macros)* the proc macros emit absolute paths resolved from the consuming
+  crate's `Cargo.toml` (`proc-macro-crate`): `::toolu_orm::core::…` when
+  `toolu-orm` is the dependency, `::toolu_orm_core::…` when the crates are
+  named directly, honouring a Cargo rename. `#[table]`, `#[view]`,
+  `#[derive(FromRow)]`, `#[derive(Relational)]` and `#[derive(ColumnEnum)]` now
+  all compile with `toolu-orm` as the only dependency — previously the
+  companion column module failed with `error[E0433]: cannot find module or
+  crate toolu_orm_core`, which no import could fix ([#15]).
+- *(macros)* `#[derive(ColumnEnum)]` reads `rename_all` even when another serde
+  option precedes it, so `#[serde(crate = "…", rename_all = "…")]` renames
+  variants as written.
+
+### Changed
+- `toolu_orm::prelude` is now a convenience rather than a requirement; it keeps
+  exporting the macros, `toolu_orm_core`, `toolu_orm_query` and the active
+  driver crate. The README and the docs site no longer ask facade users to add
+  `toolu-orm-core` as a second dependency.
+
+[#15]: https://github.com/Falconiere/toolu-orm/issues/15
 
 ## `toolu-orm-cli` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/v0.1.1...v0.1.2) - 2026-09-07
 

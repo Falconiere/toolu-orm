@@ -8,6 +8,7 @@ members = [
   "crates/orm-query",
   "crates/orm-connection",
   "crates/orm-cli",
+  "crates/orm-facade-consumer",
 ]
 
 [workspace.package]
