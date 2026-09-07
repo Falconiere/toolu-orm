@@ -7,11 +7,12 @@ against an in-memory libsql database.
 use toolu_orm_connection::Database;
 use toolu_orm_core::column::{Integer, Text};
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::error::DbCoreError;
+use toolu_orm_core::libsql;                  // re-exported by orm-core
 use toolu_orm_core::query_column::CommonOps;
+use toolu_orm_core::row::FromRow;
 use toolu_orm_core::schema::SchemaRegistry;
 use toolu_orm_core::table::TableSchema;
-use toolu_orm_core::error::DbCoreError;
-use toolu_orm_core::row::FromRow;
 use toolu_orm_macros::table;
 
 #[table(name = "users")]
