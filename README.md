@@ -454,18 +454,33 @@ binding rules. The short version:
 5. One concern per file. No `utils.rs` / `helpers.rs` / `common.rs`.
 6. `cargo nextest run`, never `cargo test`.
 
-The quality gate is what CI runs. Both lanes must be green:
+The quality gate is what CI runs: four feature lanes plus a docs check. Every
+test executes against a real database (in-memory libsql, in-memory rusqlite,
+or a live Postgres), so start the test Postgres first:
 
 ```sh
+docker compose -f docker-compose.test.yaml up -d --wait   # postgres:16 on localhost:5434
+export TEST_DB_PORT=5434                                   # for_test() defaults to 5433
+
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace
 cargo clippy -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
+cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-query --features libsql
+cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-query --features rusqlite
+cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-connection --features rusqlite
+bash scripts/check-scenario-docs.sh
 ```
 
-Every test runs against in-memory libsql or pure SQL-generation fixtures. No
-external database is needed. Use a
+`TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, and `TEST_DB_PASSWORD` point the
+Postgres suites at another server. Each feature scenario is documented in
+[`docs/scenarios/`](docs/scenarios/README.md) with the tests that prove it on
+every driver; the docs check fails when a page and its tests drift apart, so
+update the page with the test. Use a
 [Conventional Commits](https://www.conventionalcommits.org/) subject
 (`feat(query): add fetch_optional`).
 
