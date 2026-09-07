@@ -112,8 +112,9 @@ feature list:
 
 ```toml
 [dependencies]
-toolu-orm = { version = "0.1", features = ["libsql"] }
-tokio     = { version = "1", features = ["rt-multi-thread", "macros"] }
+toolu-orm      = { version = "0.1", features = ["libsql"] }
+toolu-orm-core = { version = "0.1", default-features = false, features = ["libsql"] }
+tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
 It re-exports `toolu_orm::core`, `toolu_orm::query`, `toolu_orm::connection`
@@ -124,6 +125,17 @@ uses `#[table]` or a derive:
 ```rust
 use toolu_orm::prelude::*;
 ```
+
+`toolu-orm-core` is listed a second time because the prelude cannot cover one
+case: `#[table]` also generates the companion column module, and the
+`toolu_orm_core` paths inside that nested `mod` resolve against the crate's
+extern prelude — which Cargo fills from direct dependencies only, so a `use` in
+the parent module never reaches them. Without it the expansion fails with
+`error[E0433]: cannot find module or crate toolu_orm_core`. Everything else
+resolves through the prelude. Emitting facade-relative paths
+(`proc-macro-crate`) would remove both the glob and this extra dependency, and
+is tracked as a follow-up. `crates/orm/tests/facade_test.rs` does not catch it:
+that package depends on the four crates directly.
 
 The `toolu-orm-cli` migration binary stays separate — install it with
 `cargo install toolu-orm-cli --no-default-features --features libsql`.
