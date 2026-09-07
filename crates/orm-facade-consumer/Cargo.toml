@@ -1,0 +1,38 @@
+[package]
+name = "toolu-orm-facade-consumer"
+version.workspace = true
+edition = "2021"
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "Compile-proof that toolu-orm works as a consumer's only dependency (not published)"
+publish = false
+autotests = false
+
+# Deliberately the ONLY dependency. Cargo fills a crate's extern prelude from
+# its direct dependencies, so `toolu_orm_core`, `toolu_orm_query`, `serde` and
+# `serde_json` are *not* in scope here — which is exactly the constraint an
+# external facade user works under, and the one the macros must satisfy.
+[dependencies]
+toolu-orm = { path = "../orm", default-features = false }
+
+[features]
+default = []
+libsql = ["toolu-orm/libsql"]
+rusqlite = ["toolu-orm/rusqlite"]
+postgres = ["toolu-orm/postgres"]
+
+[[test]]
+name = "facade_only_test"
+path = "tests/facade_only_test.rs"
+
+# `#[derive(FromRow)]` emits the postgres+libsql shape, so it only compiles on
+# the full postgres lane, where selecting toolu-orm-core unifies its default
+# libsql in alongside postgres (see crates/orm-macros/src/from_row_expand.rs).
+[[test]]
+name = "facade_only_from_row_test"
+path = "tests/facade_only_from_row_test.rs"
+required-features = ["postgres"]
+
+[lints]
+workspace = true

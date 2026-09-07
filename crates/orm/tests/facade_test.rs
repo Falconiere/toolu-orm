@@ -1,14 +1,14 @@
-//! The facade is usable with `toolu-orm` as the only dependency.
+//! The facade's re-exports and its prelude.
 //!
 //! # Public API
 //!
-//! Tests: `toolu_orm::prelude` puts the macro-expansion crate names in scope,
-//! `#[table]` produces a schema, and the generated builders reach
-//! `toolu-orm-query` through the facade.
+//! Tests: `#[table]` expands through the facade, the generated builders reach
+//! `toolu-orm-query`, and `toolu_orm::prelude` still puts `toolu_orm_core` /
+//! `toolu_orm_query` in scope for code that names them.
 //!
-//! This file deliberately names no `toolu_orm_*` crate directly: only
-//! `toolu-orm` is in Cargo.toml, so anything it reaches has to come through
-//! the facade's re-exports.
+//! This package depends on the four library crates directly, so it cannot
+//! prove the single-dependency case — `crates/orm-facade-consumer` does that.
+//! What it proves here is that the re-exports and the prelude keep working.
 
 use toolu_orm::core::column::{Integer, Text};
 use toolu_orm::core::table::TableSchema;
@@ -46,4 +46,13 @@ fn generated_builders_reach_the_query_crate() {
 
   assert_eq!(sql, r#"SELECT "id", "email" FROM "facade_users""#);
   assert!(params.is_empty());
+}
+
+#[test]
+fn prelude_still_exports_the_expansion_crate_names() {
+  // Named through the glob above, not through `toolu_orm::core` / `::query`.
+  let def: toolu_orm_core::table::TableDef = FacadeUser::table_def();
+  let builder = toolu_orm_query::select::SelectBuilder::new(&def.name);
+
+  assert_eq!(builder.table_name(), "facade_users");
 }

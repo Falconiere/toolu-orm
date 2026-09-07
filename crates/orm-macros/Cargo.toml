@@ -16,6 +16,7 @@ toolu-orm-core = { path = "../orm-core", version = "0.1.2", default-features = f
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
+proc-macro-crate = "3.5"
 
 [dev-dependencies]
 serde = { version = "1", features = ["derive"] }

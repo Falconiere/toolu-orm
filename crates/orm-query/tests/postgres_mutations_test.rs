@@ -3,12 +3,11 @@
 //! `Value` variant bound and read back.
 //!
 //! Needs `docker compose -f docker-compose.test.yaml up -d --wait` and
-//! `TEST_DB_PORT=5434` locally; compiles only via the five-crate postgres lane.
+//! `TEST_DB_PORT=5434` locally; compiles only via the postgres lane.
 
 #[path = "fixtures/postgres_db.rs"]
 pub mod pg;
 
-use toolu_orm_core::libsql;
 use toolu_orm_core::query_column::CommonOps;
 use toolu_orm_core::value::Value;
 use toolu_orm_macros::FromRow;

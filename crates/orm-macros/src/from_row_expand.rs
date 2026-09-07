@@ -9,15 +9,18 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
+use crate::paths;
+
 pub fn emit_from_row_impl(
   name: &Ident,
   column_names: &[&str],
   postgres_extractions: &[TokenStream],
 ) -> TokenStream {
+  let core = paths::core();
   let rusqlite_method = if cfg!(feature = "rusqlite") {
     quote! {
-      fn from_rusqlite_row(_: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
-        Err(toolu_orm_core::error::DbCoreError::RowMapping(
+      fn from_rusqlite_row(_: &#core::rusqlite::Row<'_>) -> Result<Self, #core::error::DbCoreError> {
+        Err(#core::error::DbCoreError::RowMapping(
           concat!(stringify!(#name), " is only decoded from Postgres rows").into(),
         ))
       }
@@ -27,17 +30,17 @@ pub fn emit_from_row_impl(
   };
 
   quote! {
-    impl toolu_orm_core::row::FromRow for #name {
+    impl #core::row::FromRow for #name {
       const REQUIRED_COLUMNS: &'static [&'static str] = &[#(#column_names),*];
 
-      fn from_pg_row(row: &tokio_postgres::Row) -> Result<Self, toolu_orm_core::error::DbCoreError> {
+      fn from_pg_row(row: &#core::tokio_postgres::Row) -> Result<Self, #core::error::DbCoreError> {
         Ok(Self {
           #(#postgres_extractions,)*
         })
       }
 
-      fn from_libsql_row(_: &libsql::Row) -> Result<Self, toolu_orm_core::error::DbCoreError> {
-        Err(toolu_orm_core::error::DbCoreError::RowMapping(
+      fn from_libsql_row(_: &#core::libsql::Row) -> Result<Self, #core::error::DbCoreError> {
+        Err(#core::error::DbCoreError::RowMapping(
           concat!(stringify!(#name), " is only decoded from Postgres rows").into(),
         ))
       }

@@ -112,30 +112,15 @@ feature list:
 
 ```toml
 [dependencies]
-toolu-orm      = { version = "0.1", features = ["libsql"] }
-toolu-orm-core = { version = "0.1", default-features = false, features = ["libsql"] }
-tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
+toolu-orm = { version = "0.1", features = ["libsql"] }
+tokio     = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
-It re-exports `toolu_orm::core`, `toolu_orm::query`, `toolu_orm::connection`
-and the proc macros. The macros expand to paths that name `toolu_orm_core` and
-`toolu_orm_query` directly, so glob-import the prelude in every module that
-uses `#[table]` or a derive:
-
-```rust
-use toolu_orm::prelude::*;
-```
-
-`toolu-orm-core` is listed a second time because the prelude cannot cover one
-case: `#[table]` also generates the companion column module, and the
-`toolu_orm_core` paths inside that nested `mod` resolve against the crate's
-extern prelude — which Cargo fills from direct dependencies only, so a `use` in
-the parent module never reaches them. Without it the expansion fails with
-`error[E0433]: cannot find module or crate toolu_orm_core`. Everything else
-resolves through the prelude. Emitting facade-relative paths
-(`proc-macro-crate`) would remove both the glob and this extra dependency, and
-is tracked in [#15](https://github.com/Falconiere/toolu-orm/issues/15). `crates/orm/tests/facade_test.rs` does not catch it:
-that package depends on the four crates directly.
+That is the whole list. It re-exports `toolu_orm::core`, `toolu_orm::query`,
+`toolu_orm::connection` and the proc macros, and the macros expand to absolute
+paths resolved against your `Cargo.toml`, so `#[table]` and the derives work
+with no other dependency and no import beyond the macro itself. `toolu_orm::prelude`
+still exists as a convenience glob; nothing requires it.
 
 `toolu-orm-cli` is not re-exported by the facade. Add it as a normal
 dependency when you generate or apply migrations from your own binary — it is a
@@ -145,9 +130,9 @@ library crate with no `[[bin]]` of its own:
 toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
 ```
 
-Keep `toolu-orm` and `toolu-orm-core` on the same version: they share one
-workspace version, and a mismatch means two different `toolu_orm_core` crates in
-the graph, whose types do not interoperate.
+If you do name `toolu-orm-core` directly as well, keep it on the same version as
+`toolu-orm`: they share one workspace version, and a mismatch means two
+different `toolu_orm_core` crates in the graph, whose types do not interoperate.
 
 ### Depending on the crates directly
 
@@ -183,10 +168,9 @@ an in-memory libsql database.
 
 ```toml
 [dependencies]
-toolu-orm      = { version = "0.1", features = ["libsql"] }
-toolu-orm-core = { version = "0.1", default-features = false, features = ["libsql"] }
-toolu-orm-cli  = { version = "0.1", default-features = false, features = ["libsql"] }
-tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
+toolu-orm     = { version = "0.1", features = ["libsql"] }
+toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
+tokio         = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
 `toolu-orm-cli` is a plain library crate despite the name — it ships no
@@ -198,12 +182,12 @@ use toolu_orm::connection::Database;
 use toolu_orm::core::column::{Integer, Text};
 use toolu_orm::core::dialect::Dialect;
 use toolu_orm::core::error::DbCoreError;
+use toolu_orm::core::libsql;                 // the driver crate, re-exported
 use toolu_orm::core::query_column::CommonOps;
 use toolu_orm::core::row::FromRow;
 use toolu_orm::core::schema::SchemaRegistry;
 use toolu_orm::core::table::TableSchema;
-use toolu_orm::prelude::*;                   // required: the macros expand to
-                                             // toolu_orm_core / toolu_orm_query paths
+use toolu_orm::table;
 
 #[table(name = "users")]
 pub struct UsersTable {

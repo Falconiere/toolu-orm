@@ -79,7 +79,7 @@ it; only `toolu-orm-cli` depends on `toolu-orm-connection`.
 
 ## Where to go next
 
-- [Installation](getting-started/installation.md) — the facade, the prelude, driver features.
+- [Installation](getting-started/installation.md) — the facade, macro paths, driver features.
 - [Quickstart](getting-started/quickstart.md) — table, migration, insert and read against in-memory libsql.
 - [Defining tables](schema/tables.md) — every `#[table]` and `#[column]` attribute.
 - [Select](queries/select.md) — builders, joins, paging and the fetch methods.

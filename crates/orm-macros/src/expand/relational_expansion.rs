@@ -4,6 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::parse::relation_parsing::{RelationInput, RelationInputKind};
+use crate::paths;
 use crate::relational::RelationalInput;
 
 fn relation_metadata_revision(relations: &[RelationInput]) -> usize {
@@ -25,6 +26,7 @@ fn relation_metadata_revision(relations: &[RelationInput]) -> usize {
 
 /// Generate `FromRelationalRow` for a relational struct.
 pub fn expand_relational(input: &RelationalInput) -> TokenStream {
+  let core = paths::core();
   let struct_name = &input.struct_name;
   let _ = relation_metadata_revision(&input.relations);
   let table_lit = syn::LitStr::new(&input.table_name, proc_macro2::Span::call_site());
@@ -42,9 +44,9 @@ pub fn expand_relational(input: &RelationalInput) -> TokenStream {
       let field_ident = syn::Ident::new(&field.name, proc_macro2::Span::call_site());
       let ty = &field.ty;
       quote! {
-        let #field_ident: #ty = ::toolu_orm_core::relational_row::RelationDeserializer::new(values)
+        let #field_ident: #ty = #core::relational_row::RelationDeserializer::new(values)
           .get(#i)
-          .map_err(|e| ::toolu_orm_core::error::DbCoreError::RowMapping(
+          .map_err(|e| #core::error::DbCoreError::RowMapping(
             format!("field '{}': {}", stringify!(#field_ident), e)
           ))?;
       }
@@ -79,16 +81,16 @@ pub fn expand_relational(input: &RelationalInput) -> TokenStream {
                   let mut result = Vec::with_capacity(rows.len());
                   for row in rows {
                     let inner: #inner_type = (if let Some(arr) = row.as_array() {
-                      ::toolu_orm_core::relational_row::from_json_object_slice(
+                      #core::relational_row::from_json_object_slice(
                         arr.as_slice(),
                         &[#(#column_lits),*],
                       )
                     } else {
-                      ::serde_json::from_value(row.clone()).map_err(|e| {
-                        ::toolu_orm_core::error::DbCoreError::RowMapping(e.to_string())
+                      #core::serde_json::from_value(row.clone()).map_err(|e| {
+                        #core::error::DbCoreError::RowMapping(e.to_string())
                       })
                     })
-                    .map_err(|e| ::toolu_orm_core::error::DbCoreError::RowMapping(
+                    .map_err(|e| #core::error::DbCoreError::RowMapping(
                       format!("field '{}': {}", stringify!(#field_ident), e)
                     ))?;
                     result.push(inner);
@@ -96,7 +98,7 @@ pub fn expand_relational(input: &RelationalInput) -> TokenStream {
                   result
                 }
               } else {
-                return Err(::toolu_orm_core::error::DbCoreError::RowMapping(
+                return Err(#core::error::DbCoreError::RowMapping(
                   format!("field '{}': expected JSON array", stringify!(#field_ident)),
                 ));
               }
@@ -110,17 +112,17 @@ pub fn expand_relational(input: &RelationalInput) -> TokenStream {
               if json_val.is_null() {
                 None
               } else if let Some(arr) = json_val.as_array() {
-                let inner: #inner_type = ::toolu_orm_core::relational_row::from_json_object_slice(
+                let inner: #inner_type = #core::relational_row::from_json_object_slice(
                   arr.as_slice(),
                   &[#(#column_lits),*],
                 )
-                .map_err(|e| ::toolu_orm_core::error::DbCoreError::RowMapping(
+                .map_err(|e| #core::error::DbCoreError::RowMapping(
                   format!("field '{}': {}", stringify!(#field_ident), e)
                 ))?;
                 Some(inner)
               } else {
-                let inner: #inner_type = ::serde_json::from_value(json_val.clone())
-                  .map_err(|e| ::toolu_orm_core::error::DbCoreError::RowMapping(
+                let inner: #inner_type = #core::serde_json::from_value(json_val.clone())
+                  .map_err(|e| #core::error::DbCoreError::RowMapping(
                     format!("field '{}': {}", stringify!(#field_ident), e)
                   ))?;
                 Some(inner)
@@ -150,14 +152,14 @@ pub fn expand_relational(input: &RelationalInput) -> TokenStream {
       pub const RELATIONAL_TABLE: &'static str = #table_lit;
     }
 
-    impl ::toolu_orm_core::relational_row::FromRelationalRow for #struct_name {
+    impl #core::relational_row::FromRelationalRow for #struct_name {
       const SCALAR_COLUMNS: &'static [&'static str] = &[
         #(#scalar_names),*
       ];
 
       fn from_relational_values(
-        values: &[::serde_json::Value],
-      ) -> Result<Self, ::toolu_orm_core::error::DbCoreError> {
+        values: &[#core::serde_json::Value],
+      ) -> Result<Self, #core::error::DbCoreError> {
         #(#scalar_extractions)*
         #(#relation_extractions)*
 

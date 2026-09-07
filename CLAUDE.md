@@ -3,10 +3,12 @@
 Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc macros, drivers for libsql, rusqlite, and Postgres.
 
 ## Workspace
-- Virtual workspace; six crates under `crates/`: orm-core, orm-macros, orm-query, orm-connection, orm-cli, and orm (the `toolu-orm` facade).
+- Virtual workspace; seven crates under `crates/`: orm-core, orm-macros, orm-query, orm-connection, orm-cli, orm (the `toolu-orm` facade), and orm-facade-consumer.
 - orm-core is the foundation; every other crate depends on it. orm-cli also depends on orm-connection.
 - orm-macros is a proc-macro crate and can only export proc macros.
-- orm (`toolu-orm`) is a facade: only re-exports, no logic. Macro expansions name `toolu_orm_core` / `toolu_orm_query` directly, so facade-only consumers import `toolu_orm::prelude::*` to bring those crate names into scope.
+- orm (`toolu-orm`) is a facade: only re-exports, no logic.
+- orm-facade-consumer (`publish = false`) ships nothing: its only dependency is `toolu-orm`, so its tests compile under a real external consumer's extern prelude. Never add a second dependency to it — that is the whole test.
+- Macro expansions emit absolute paths resolved with `proc-macro-crate` (`crates/orm-macros/src/paths.rs`): `::toolu_orm_core` for a direct dependent, `::toolu_orm::core` for a facade-only one. `toolu_orm::prelude` is a convenience, not a requirement.
 - Toolchain pinned in `rust-toolchain.toml`. Lints live in the root `Cargo.toml` (`[workspace.lints]`) and `clippy.toml`; every crate inherits them with `[lints] workspace = true`.
 
 ## Driver features
@@ -41,8 +43,8 @@ Four lanes plus the docs check, exactly what `.github/workflows/ci.yml` runs. Th
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace
-cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
-cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
+cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer --features postgres --all-targets -- -D warnings
+cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer --features postgres
 cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features libsql
 cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
