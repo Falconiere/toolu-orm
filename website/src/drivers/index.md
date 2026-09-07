@@ -5,8 +5,14 @@ saves a compile error.
 
 | Trait | Crate | Implemented for | Used by |
 |---|---|---|---|
-| `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `PgTransaction` | `run_migrate`, `get_status`, and your own code |
-| `Executor` | `toolu-orm-query` | `libsql::Connection`, `rusqlite::Connection`, `tokio_postgres::Client`, `PgTransaction` | the query builders' `.execute()` and `fetch_*` |
+| `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `toolu_orm_connection::PgTransaction` | `run_migrate`, `get_status`, and your own code |
+| `Executor` | `toolu-orm-query` | `libsql::Connection`, `rusqlite::Connection`, `tokio_postgres::Client`, `toolu_orm_query::executor::PgTransaction` | the query builders' `.execute()` and `fetch_*` |
+
+Both rows end in a `PgTransaction`, and they are **two different types** — the
+connection crate's wrapper implements `DbConnection`, the query crate's
+implements `Executor`. Neither is `tokio_postgres::Transaction`; both wrap one.
+Pick by what you are calling: builders take the query crate's, `run_migrate` and
+`execute_sql` take the connection crate's.
 
 `DbConnection` is the portable, driver-agnostic surface:
 

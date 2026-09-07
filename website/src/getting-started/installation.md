@@ -9,6 +9,7 @@ One dependency pulls in the whole stack behind one version and one feature list:
 toolu-orm      = { version = "0.1", features = ["libsql"] }
 toolu-orm-core = { version = "0.1", default-features = false, features = ["libsql"] }
 tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
+# add toolu-orm-cli too if you generate or apply migrations — see below
 ```
 
 `toolu-orm-core` is listed a second time on purpose — see
