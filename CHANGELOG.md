@@ -12,6 +12,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - add the toolu-orm facade crate
 
+### Other
+- release v0.1.1
+
+## `toolu-orm` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.1.0...toolu-orm-v0.1.1) - 2026-09-07
+
+### Other
+- release v0.1.1
+
+## `toolu-orm-query` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-query-v0.1.0...toolu-orm-query-v0.1.1) - 2026-09-07
+
+### Added
+- add the toolu-orm facade crate
+
+### Other
+- release v0.1.1
+
+## `toolu-orm-macros` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-macros-v0.1.0...toolu-orm-macros-v0.1.1) - 2026-09-07
+
+### Added
+- add the toolu-orm facade crate
+
+### Other
+- release v0.1.1
+
+## `toolu-orm-connection` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.1.0...toolu-orm-connection-v0.1.1) - 2026-09-07
+
+### Added
+- add the toolu-orm facade crate
+
+### Other
+- release v0.1.1
+
+## `toolu-orm-core` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-core-v0.1.0...toolu-orm-core-v0.1.1) - 2026-09-07
+
+### Added
+- add the toolu-orm facade crate
+
+## `toolu-orm-cli` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/v0.1.0...v0.1.1) - 2026-09-07
+
+### Added
+- add the toolu-orm facade crate
+
 ## `toolu-orm` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.1.0...toolu-orm-v0.1.1) - 2026-09-07
 
 ### Added
