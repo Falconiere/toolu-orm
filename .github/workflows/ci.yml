@@ -74,10 +74,10 @@ jobs:
       # shape) and orm-query gets postgres alone (its Postgres executor). Runs
       # every live-Postgres suite against the service container.
       - name: Clippy (postgres)
-        run: cargo clippy -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
+        run: cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
 
       - name: Test (postgres)
-        run: cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
+        run: cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
 
       # Lane 3, libsql-only: orm-query with libsql as its sole driver, which is
       # the only way its libsql executor, transaction, and fetch code compiles.

@@ -9,7 +9,7 @@
 #
 # Lanes (must match CLAUDE.md / .github/workflows/ci.yml):
 #   default       cargo nextest list --workspace
-#   postgres      cargo nextest list -p <five crates> --features postgres
+#   postgres      cargo nextest list -p <six crates> --features postgres
 #   libsql-only   cargo nextest list -p toolu-orm-query --features libsql
 #   rusqlite-only cargo nextest list -p toolu-orm-query --features rusqlite
 #                 cargo nextest list -p toolu-orm-connection --features rusqlite
@@ -17,7 +17,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 DOCS=docs/scenarios
-FIVE="-p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli"
+PKGS="-p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
@@ -39,7 +39,7 @@ list_lane() {
 : > "$tmp/default" "$tmp/postgres" "$tmp/libsql-only" "$tmp/rusqlite-only"
 list_lane default --workspace
 # shellcheck disable=SC2086
-list_lane postgres $FIVE --features postgres
+list_lane postgres $PKGS --features postgres
 list_lane libsql-only -p toolu-orm-query --features libsql
 list_lane rusqlite-only -p toolu-orm-query --features rusqlite
 list_lane rusqlite-only -p toolu-orm-connection --features rusqlite

@@ -1,0 +1,43 @@
+[package]
+name = "toolu-orm"
+version.workspace = true
+edition = "2021"
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "Schema-driven Rust ORM: migrations, type-safe query builders and drivers for libsql, rusqlite and Postgres"
+autotests = false
+
+[dependencies]
+toolu-orm-core = { path = "../orm-core", version = "0.1.0", default-features = false }
+toolu-orm-macros = { path = "../orm-macros", version = "0.1.0", default-features = false }
+toolu-orm-query = { path = "../orm-query", version = "0.1.0", default-features = false }
+toolu-orm-connection = { path = "../orm-connection", version = "0.1.0", default-features = false }
+
+[features]
+default = []
+libsql = [
+  "toolu-orm-core/libsql",
+  "toolu-orm-macros/libsql",
+  "toolu-orm-query/libsql",
+  "toolu-orm-connection/libsql",
+]
+rusqlite = [
+  "toolu-orm-core/rusqlite",
+  "toolu-orm-macros/rusqlite",
+  "toolu-orm-query/rusqlite",
+  "toolu-orm-connection/rusqlite",
+]
+postgres = [
+  "toolu-orm-core/postgres",
+  "toolu-orm-macros/postgres",
+  "toolu-orm-query/postgres",
+  "toolu-orm-connection/postgres",
+]
+
+[[test]]
+name = "facade_test"
+path = "tests/facade_test.rs"
+
+[lints]
+workspace = true

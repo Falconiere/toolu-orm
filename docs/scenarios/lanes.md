@@ -4,8 +4,8 @@
 
 | Lane | Command | Compiles |
 |---|---|---|
-| default | `cargo nextest run --workspace` | orm-core and orm-cli with libsql, orm-query with no driver (SQL-generation tests only) |
-| postgres | `cargo nextest run -p <five crates> --features postgres` | orm-core postgres+libsql (the derive shape), orm-query postgres alone, every live-Postgres suite |
+| default | `cargo nextest run --workspace` | orm-core and orm-cli with libsql, orm-query with no driver (SQL-generation tests only), the `toolu-orm` facade with no driver |
+| postgres | `cargo nextest run -p <six crates> --features postgres` | orm-core postgres+libsql (the derive shape), orm-query postgres alone, every live-Postgres suite |
 | libsql-only | `cargo nextest run -p toolu-orm-query --features libsql` | orm-query's libsql executor, `run_transaction`, fetch methods |
 | rusqlite-only | `cargo nextest run -p toolu-orm-query --features rusqlite` and `-p toolu-orm-connection --features rusqlite` | orm-query's sync rusqlite executor and the rusqlite `DbConnection` |
 

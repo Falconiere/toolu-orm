@@ -106,6 +106,29 @@ structs ──#[table]──▶ TableDef ──SchemaRegistry──▶ diff vs l
 
 ## Install
 
+The `toolu-orm` facade pulls in the whole stack behind one version and one
+feature list:
+
+```toml
+[dependencies]
+toolu-orm = { version = "0.1", features = ["libsql"] }
+tokio     = { version = "1", features = ["rt-multi-thread", "macros"] }
+```
+
+It re-exports `toolu_orm::core`, `toolu_orm::query`, `toolu_orm::connection`
+and the proc macros. The macros expand to paths that name `toolu_orm_core` and
+`toolu_orm_query` directly, so glob-import the prelude in every module that
+uses `#[table]` or a derive:
+
+```rust
+use toolu_orm::prelude::*;
+```
+
+The `toolu-orm-cli` migration binary stays separate — install it with
+`cargo install toolu-orm-cli --no-default-features --features libsql`.
+
+### Depending on the crates directly
+
 Every crate exposes the same driver features (`libsql`, `rusqlite`, `postgres`)
 and forwards them to `toolu-orm-core`. **Enable the drivers you need on every
 crate you depend on** so Cargo unifies them into one shape.
@@ -465,8 +488,8 @@ export TEST_DB_PORT=5434                                   # for_test() defaults
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace
-cargo clippy -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
-cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
+cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
+cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
 cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features libsql
 cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
