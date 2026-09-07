@@ -19,7 +19,7 @@ src/
 ├── index.rs            # IndexDef
 ├── value.rs            # Value enum + driver conversions
 ├── row.rs              # FromRow trait (feature-gated)
-├── expr.rs             # Expr, ExprKind, OrderBy, JoinCondition
+├── expr/               # Expr, ExprKind, OrderBy, JoinCondition (types.rs) + per-dialect rendering (render.rs)
 ├── query_column.rs     # Column<T>, ColumnRef, CommonOps/TextOps/NumericOps
 ├── connection.rs       # libsql Connection wrapper (feature: libsql)
 ├── error.rs            # DbCoreError

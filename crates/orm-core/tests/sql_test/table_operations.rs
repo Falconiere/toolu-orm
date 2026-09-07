@@ -3,7 +3,7 @@
 //! # Public API
 //!
 //! Tests: create table, drop table, strict mode, empty ops, non-strict compat types,
-//! non-strict FK omission.
+//! non-strict FK retention (references render regardless of `strict`).
 
 use toolu_orm_core::column::{ColumnDef, ColumnType, ForeignKeyAction};
 use toolu_orm_core::dialect::Dialect;

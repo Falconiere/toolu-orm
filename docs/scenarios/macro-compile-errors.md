@@ -11,7 +11,7 @@
 | `table_missing_name.rs` | `#[table]` without `name` | missing `name` in #[table(name = "...")] |
 | `table_unknown_attr.rs` | `#[table(name = "t", foo = "x")]` | unknown attribute, expected `name` or `strict` |
 | `table_name_not_string.rs` | `#[table(name = 1)]` | expected a string literal |
-| `table_strict_not_bool.rs` | `#[table(name = "t", strict = "yes")]` | expected a bool literal |
+| `table_strict_not_bool.rs` | `#[table(name = "t", strict = maybe)]` (a non-literal value; a string literal reaches a later check, "expected true or false") | expected a bool literal |
 | `index_name_not_string.rs` | `#[index(123)]` | first arg must be index name string |
 | `view_unknown_mode.rs` | `#[view(V, drop(a))]` | expected `omit` or `pick` |
 | `relational_on_enum.rs` | `#[derive(Relational)]` on an enum | #[derive(Relational)] only works on structs |

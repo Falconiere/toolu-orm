@@ -112,9 +112,10 @@ async fn execute_migration_statements(
   Ok(())
 }
 
-/// A chunk with only blank lines and `--` comments (the generator emits such
-/// chunks for operations a dialect cannot express) must not reach the driver:
-/// libsql reports "not an error" when asked to execute an empty statement.
+/// A chunk with only blank lines and `--` line comments (the generator emits
+/// such chunks for operations a dialect cannot express, and never emits block
+/// comments) must not reach the driver: libsql reports "not an error" when
+/// asked to execute an empty statement.
 fn has_statement(chunk: &str) -> bool {
   chunk
     .lines()
