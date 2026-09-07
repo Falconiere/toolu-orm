@@ -16,6 +16,7 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 - **The two paths cannot drift.** The async `DbConnection` impl delegates to the blocking methods inside `spawn_blocking`. `async_and_blocking_share_one_connection` writes through one path and reads through the other, in both directions, on one connection.
 - **Callable from inside a runtime.** `blocking_calls_work_inside_a_runtime` runs the blocking methods inside `spawn_blocking` on a multi-thread runtime — the "already offloads" consumer. This is the case that pins the connection's `std::sync::Mutex`: `tokio::sync::Mutex::blocking_lock` panics in an async execution context.
 - **Contention.** `concurrent_threads_serialize_on_the_connection` shares `&RusqliteConnection` across two OS threads writing 50 rows each; all 100 land.
+- **Exported at the crate root.** Both suites import `toolu_orm_connection::DbConnectionBlocking` and call every method on it, so the trait being unreachable from a consumer is a compile failure in the lane, with no separate importability test to assert nothing at runtime.
 - **Poisoning.** `a_poisoned_connection_reports_it` unwinds a panicking `FromRow` out of `query_map` while the lock is held, then asserts that both the blocking and the async path refuse the connection with `DbError::Connection` rather than handing out a connection that may be stuck mid-transaction.
 
 ## Tests
@@ -31,4 +32,3 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 | rusqlite-only | rusqlite_blocking_concurrency_test | concurrent_threads_serialize_on_the_connection |
 | rusqlite-only | rusqlite_blocking_concurrency_test | async_reports_a_panicking_task_as_a_connection_error |
 | rusqlite-only | rusqlite_blocking_concurrency_test | a_poisoned_connection_reports_it |
-| default | blocking_trait_def_test | trait_is_importable |
