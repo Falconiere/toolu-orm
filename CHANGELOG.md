@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## `toolu-orm-cli` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/v0.1.1...v0.1.2) - 2026-09-07
+
+### Fixed
+- *(ci)* keep the Pages scopes out of the pull-request build
+
+### Other
+- link the facade macro-path caveat to issue #15
+- put the README quickstart on the facade it now installs
+- correct the facade install section in the README
+- fix the README quickstart and the FromRow/Executor description
+- mdBook documentation site with GitHub Pages deploy
+
+## `toolu-orm` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.1.1...toolu-orm-v0.1.2) - 2026-09-07
+
+### Fixed
+- *(ci)* keep the Pages scopes out of the pull-request build
+
+### Other
+- link the facade macro-path caveat to issue #15
+- put the README quickstart on the facade it now installs
+- correct the facade install section in the README
+- fix the README quickstart and the FromRow/Executor description
+- mdBook documentation site with GitHub Pages deploy
+
+## `toolu-orm-query` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-query-v0.1.1...toolu-orm-query-v0.1.2) - 2026-09-07
+
+### Fixed
+- *(ci)* keep the Pages scopes out of the pull-request build
+
+### Other
+- link the facade macro-path caveat to issue #15
+- put the README quickstart on the facade it now installs
+- correct the facade install section in the README
+- fix the README quickstart and the FromRow/Executor description
+- mdBook documentation site with GitHub Pages deploy
+
+## `toolu-orm-macros` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-macros-v0.1.1...toolu-orm-macros-v0.1.2) - 2026-09-07
+
+### Fixed
+- *(ci)* keep the Pages scopes out of the pull-request build
+
+### Other
+- link the facade macro-path caveat to issue #15
+- put the README quickstart on the facade it now installs
+- correct the facade install section in the README
+- fix the README quickstart and the FromRow/Executor description
+- mdBook documentation site with GitHub Pages deploy
+
+## `toolu-orm-connection` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.1.1...toolu-orm-connection-v0.1.2) - 2026-09-07
+
+### Fixed
+- *(ci)* keep the Pages scopes out of the pull-request build
+
+### Other
+- link the facade macro-path caveat to issue #15
+- put the README quickstart on the facade it now installs
+- correct the facade install section in the README
+- fix the README quickstart and the FromRow/Executor description
+- mdBook documentation site with GitHub Pages deploy
+
+## `toolu-orm-core` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-core-v0.1.1...toolu-orm-core-v0.1.2) - 2026-09-07
+
+### Fixed
+- *(ci)* keep the Pages scopes out of the pull-request build
+
+### Other
+- link the facade macro-path caveat to issue #15
+- put the README quickstart on the facade it now installs
+- correct the facade install section in the README
+- fix the README quickstart and the FromRow/Executor description
+- mdBook documentation site with GitHub Pages deploy
+
 ## `toolu-orm-cli` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/v0.1.0...v0.1.1) - 2026-09-07
 
 ### Added
