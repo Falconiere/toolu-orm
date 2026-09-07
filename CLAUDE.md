@@ -11,8 +11,15 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 ## Driver features
 - Features `libsql`, `rusqlite`, `postgres` exist on every crate and forward to orm-core.
 - Consumers activate the drivers they need on every crate they depend on.
-- `FromRow` changes shape per driver set. `#[derive(FromRow)]` emits the postgres+libsql shape, so suites that derive it are gated with `required-features = ["postgres"]` in `crates/orm-macros/Cargo.toml`.
+- `FromRow` changes shape per driver set: one driver on orm-core gives `from_row(&Row)`; two or more give `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`. `#[derive(FromRow)]` emits the postgres+libsql shape (its libsql method is an error stub), so suites that derive it compile only on the postgres lane; single-driver suites implement `from_row` by hand.
+- orm-query compiles its executor, transaction, and fetch code only when exactly one driver feature is active (`cfg_single_backend!`), which is why the libsql-only and rusqlite-only lanes exist.
 - orm-core emits `DEP_TOOLU_ORM_CORE_HAS_*` build metadata (`links = "toolu_orm_core"`) so orm-cli's `build.rs` can see which features Cargo actually unified.
+
+## Tests
+- Test files are flat: `crates/<crate>/tests/<name>_test.rs`. Shared setup lives in `tests/fixtures/*.rs` (no `#[test]` there) and is wired in with `#[path = "fixtures/<file>.rs"] pub mod <name>;` (`pub mod`, so unused fixture items do not trip `dead_code`; `#[allow]` is banned).
+- Every test runs against a real database: in-memory libsql, in-memory rusqlite, or the live Postgres from `docker-compose.test.yaml` (`docker compose -f docker-compose.test.yaml up -d --wait`, then `TEST_DB_PORT=5434`). Postgres tests own a schema each and fail hard when the server is absent; never skip.
+- Every `[[test]]` target with `required-features` must have a CI lane that satisfies it (see Quality gate). Verify with `cargo nextest list` per lane, not by counting `#[test]`.
+- Every test scenario has a page in `docs/scenarios/` with a `## Tests` table naming its tests. `scripts/check-scenario-docs.sh` fails when a listed test is missing or a test in a scenario binary is undocumented, so a new or renamed test means a doc update in the same change.
 
 ## Migrations
 - Multi-statement migration files use the `--> statement-breakpoint` separator.
@@ -28,10 +35,18 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Use `cargo nextest run`, never `cargo test`.
 
 ## Quality gate
+Four lanes plus the docs check, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`.
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace
 cargo clippy -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
+cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-query --features libsql
+cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-query --features rusqlite
+cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-connection --features rusqlite
+bash scripts/check-scenario-docs.sh
 ```

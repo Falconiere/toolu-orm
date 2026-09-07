@@ -1,0 +1,30 @@
+# Scenarios
+
+One page per feature scenario, each proven by tests that execute against real
+databases: in-memory libsql, in-memory rusqlite, and a live Postgres. Like
+drizzle, the goal is parity: a feature is done when it behaves the same on
+SQLite and Postgres, and each page shows both.
+
+These pages are kept in sync with the test suites by
+`scripts/check-scenario-docs.sh` (run in CI and in the quality gate). It fails
+when a test listed in a page's `## Tests` table does not exist, or when a test
+in any binary named on these pages is missing from every page. Add or rename a
+test, update its page.
+
+| Scenario | What it proves |
+|---|---|
+| [Upsert](upsert.md) | `or_replace` / `or_ignore` on all three drivers (`INSERT OR REPLACE`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`). |
+| [Relational loads](relational-loads.md) | `with_many` / `with_one` fetch parent and children in one statement, including empty and null relations. |
+| [Value round-trip](value-round-trip.md) | Every `Value` variant binds as a parameter and reads back unchanged. |
+| [Fetch semantics](fetch-semantics.md) | `fetch_one` / `fetch_optional` / `count` / `exists` and their empty, single, and multi-row behavior. |
+| [Filters](filters.md) | Every `Expr` operator executed against real rows, parameter numbering across filters, nested AND/OR, empty `in_list`. |
+| [Transactions](transactions.md) | Commit persists; rollback and drop discard; reads inside see own writes (libsql `run_transaction`, orm-query `PgTransaction`, connection `PgTransaction`). |
+| [Postgres connection](postgres-connection.md) | `PgDatabase` pool, `PgConnection`, error mapping with SQLSTATE, unreachable server. |
+| [FromRow derive](from-row-derive.md) | `#[derive(FromRow)]` on real Postgres rows, NULL to `None`, missing columns, and the documented libsql stub. |
+| [Migration loop](migration-loop.md) | generate → migrate → evolve → generate → migrate, asserted through `PRAGMA` / `information_schema`. |
+| [Migration failures](migration-failures.md) | Rollback after a failing statement, unreadable inputs, malformed journal, absent directory, comment-only chunks. |
+| [Expression fragments](expr-fragments.md) | `Expr` SQL fragments with parameter offsets per dialect, nesting, and the empty-list constant. |
+| [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |
+| [Renames](renames.md) | A `RenameResolver` turns drop+create into `RENAME TABLE` / `RENAME COLUMN`. |
+| [Macro compile errors](macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |
+| [Lanes and revived suites](lanes.md) | Which CI lane compiles which suite, and the executor/transaction suites brought back from bit-rot. |
