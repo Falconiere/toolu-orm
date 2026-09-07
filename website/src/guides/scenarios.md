@@ -27,6 +27,7 @@ pages cannot quietly go stale.
 | [Legacy snapshot](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/legacy-snapshot.md) | Old snapshot JSON still deserializes and diffs. |
 | [Renames](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/renames.md) | A `RenameResolver` turns drop+create into `RENAME`. |
 | [Macro compile errors](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |
+| [Facade crate](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/facade.md) | `#[table]` and the builders work with `toolu-orm` as the only dependency. |
 | [Lanes](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lanes.md) | Which CI lane compiles which suite. |
 
 If you are evaluating the ORM, these pages are the honest answer to "does it

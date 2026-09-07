@@ -65,9 +65,9 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace
 
 # postgres lane (needs the server above)
-cargo clippy -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query \
+cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query \
   -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
-cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query \
+cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query \
   -p toolu-orm-connection -p toolu-orm-cli --features postgres
 
 # single-driver lanes: the executor and transaction code only compiles here
