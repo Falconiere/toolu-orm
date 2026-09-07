@@ -1,0 +1,9 @@
+error: #[derive(Relational)] only works on structs
+  --> tests/ui/relational_on_enum.rs:6:1
+   |
+ 6 | / #[relational(table = "widgets")]
+ 7 | | enum Widget {
+ 8 | |   A,
+ 9 | |   B,
+10 | | }
+   | |_^

@@ -25,6 +25,7 @@ toolu-orm-query = { path = "../orm-query", default-features = false }
 tokio-postgres = { workspace = true }
 libsql = { workspace = true, default-features = false, features = ["core"] }
 rusqlite.workspace = true
+trybuild = "1"
 
 [features]
 default = []
@@ -52,6 +53,11 @@ path = "tests/relational_expansion_test.rs"
 name = "table_macro_test"
 path = "tests/table_macro_test/mod.rs"
 required-features = ["postgres"]
+
+# trybuild compile-fail cases for the macro error paths (tests/ui/*.rs).
+[[test]]
+name = "compile_fail_test"
+path = "tests/compile_fail_test.rs"
 
 [lints]
 workspace = true
