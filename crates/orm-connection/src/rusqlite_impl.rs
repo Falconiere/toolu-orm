@@ -20,6 +20,23 @@ pub struct RusqliteConnection {
 }
 
 impl RusqliteConnection {
+  /// Adopt an already-open `rusqlite::Connection`.
+  ///
+  /// The connection is taken as-is, so anything established on it beforehand --
+  /// pragmas such as `foreign_keys` or `journal_mode`, open flags, a loaded
+  /// extension, an attached database -- stays in effect. Use this when the
+  /// connection needs configuration that `open` cannot express.
+  ///
+  /// Wrapping cannot fail or block, so this is neither `async` nor fallible;
+  /// a connection that is unusable surfaces at the first statement as
+  /// `DbError::Query`.
+  #[must_use]
+  pub fn from_connection(conn: rusqlite::Connection) -> Self {
+    Self {
+      inner: Arc::new(tokio::sync::Mutex::new(conn)),
+    }
+  }
+
   /// Open an in-memory SQLite database. Useful for tests.
   ///
   /// # Errors
@@ -31,9 +48,7 @@ impl RusqliteConnection {
     })
     .await
     .map_err(|e| DbError::Connection(e.to_string()))??;
-    Ok(Self {
-      inner: Arc::new(tokio::sync::Mutex::new(conn)),
-    })
+    Ok(Self::from_connection(conn))
   }
 
   /// Open a SQLite database file.
@@ -48,9 +63,7 @@ impl RusqliteConnection {
     })
     .await
     .map_err(|e| DbError::Connection(e.to_string()))??;
-    Ok(Self {
-      inner: Arc::new(tokio::sync::Mutex::new(conn)),
-    })
+    Ok(Self::from_connection(conn))
   }
 }
 

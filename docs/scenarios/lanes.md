@@ -16,7 +16,7 @@ Before this program, only the first two lanes ran. The four suites below existed
 - **executor_test (libsql):** `InsertBuilder` / `SelectBuilder` / `UpdateBuilder` / `DeleteBuilder` executed on an in-memory libsql database; `fetch_one` on an empty table is `QueryError::NotFound`; `count` matches inserted rows.
 - **integration_test (libsql):** the `#[table]`-generated `select()` / `insert()` / `update()` / `delete()` factories end to end, filters, order + pagination, `count` / `exists`, transactions, dynamic filter lists.
 - **transaction_test (libsql):** see [Transactions](transactions.md).
-- **rusqlite_impl_test (rusqlite):** `RusqliteConnection::open_in_memory()`: `execute_batch` DDL, `execute_sql` insert, `query_map` decode, bad SQL maps to `DbError::Query`.
+- **rusqlite_impl_test (rusqlite):** `RusqliteConnection::open_in_memory()`: `execute_batch` DDL, `execute_sql` insert, `query_map` decode, bad SQL maps to `DbError::Query`. Also the two other constructors, both of which now route through `from_connection`: adopting a caller-built connection keeps its database and its connection-scoped pragmas, and `open` still writes durably to a file.
 
 ## Tests
 
@@ -49,3 +49,6 @@ Before this program, only the first two lanes ran. The four suites below existed
 | rusqlite-only | rusqlite_impl_test | execute_sql_inserts_row |
 | rusqlite-only | rusqlite_impl_test | query_map_returns_rows |
 | rusqlite-only | rusqlite_impl_test | execute_sql_returns_error_on_bad_sql |
+| rusqlite-only | rusqlite_impl_test | from_connection_adopts_existing_database |
+| rusqlite-only | rusqlite_impl_test | from_connection_preserves_connection_pragmas |
+| rusqlite-only | rusqlite_impl_test | open_persists_to_a_file |

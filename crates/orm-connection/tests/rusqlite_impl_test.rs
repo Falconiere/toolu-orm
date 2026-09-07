@@ -11,19 +11,48 @@ use toolu_orm_connection::rusqlite_impl::RusqliteConnection;
 use toolu_orm_core::row::FromRow;
 use toolu_orm_core::value::Value;
 
-struct CountRow {
-  count: i64,
+/// Any one-column integer result -- a `count`, a `PRAGMA` value. It reads
+/// column 0 positionally, so it names no required column.
+struct ScalarRow {
+  value: i64,
 }
 
-impl FromRow for CountRow {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &["count"];
+impl FromRow for ScalarRow {
+  const REQUIRED_COLUMNS: &'static [&'static str] = &[];
 
   fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
-    let count: i64 = row
+    let value: i64 = row
       .get(0)
       .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(e.to_string()))?;
-    Ok(Self { count })
+    Ok(Self { value })
   }
+}
+
+struct LabelRow {
+  label: String,
+}
+
+impl FromRow for LabelRow {
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["label"];
+
+  fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
+    let label: String = row
+      .get(0)
+      .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(e.to_string()))?;
+    Ok(Self { label })
+  }
+}
+
+/// Read the single scalar a one-row, one-column query returns.
+async fn scalar(
+  conn: &RusqliteConnection,
+  sql: &str,
+) -> Result<i64, toolu_orm_connection::DbError> {
+  let rows: Vec<ScalarRow> = conn.query_map(sql, vec![]).await?;
+  rows
+    .first()
+    .map(|row| row.value)
+    .ok_or_else(|| toolu_orm_connection::DbError::Query(format!("no row for `{sql}`")))
 }
 
 #[tokio::test]
@@ -66,7 +95,7 @@ async fn query_map_returns_rows() -> Result<(), toolu_orm_connection::DbError> {
     )
     .await?;
 
-  let rows: Vec<CountRow> = conn
+  let rows: Vec<ScalarRow> = conn
     .query_map("SELECT count FROM test_query", vec![])
     .await?;
 
@@ -74,7 +103,7 @@ async fn query_map_returns_rows() -> Result<(), toolu_orm_connection::DbError> {
   let row = rows
     .first()
     .ok_or_else(|| toolu_orm_connection::DbError::Query("missing row".to_owned()))?;
-  assert_eq!(row.count, 42);
+  assert_eq!(row.value, 42);
   Ok(())
 }
 
@@ -88,5 +117,106 @@ async fn execute_sql_returns_error_on_bad_sql() -> Result<(), toolu_orm_connecti
     )
     .await;
   assert!(result.is_err());
+  Ok(())
+}
+
+/// The adopted connection keeps its own in-memory database: a table created
+/// before adoption is still there afterwards. Reopening `:memory:` would give a
+/// fresh, empty database and this query would fail with "no such table".
+#[tokio::test]
+async fn from_connection_adopts_existing_database() -> Result<(), Box<dyn std::error::Error>> {
+  let raw = rusqlite::Connection::open_in_memory()?;
+  raw.execute_batch(
+    "CREATE TABLE adopted (id INTEGER PRIMARY KEY, label TEXT NOT NULL);
+     INSERT INTO adopted (id, label) VALUES (7, 'pre-existing');",
+  )?;
+
+  let conn = RusqliteConnection::from_connection(raw);
+
+  let rows: Vec<LabelRow> = conn
+    .query_map("SELECT label FROM adopted WHERE id = 7", vec![])
+    .await?;
+  assert_eq!(rows.len(), 1);
+  assert_eq!(
+    rows.first().map(|row| row.label.as_str()),
+    Some("pre-existing")
+  );
+  Ok(())
+}
+
+/// Connection-scoped configuration applied before adoption survives it.
+///
+/// rusqlite 0.32's bundled SQLite is compiled with `SQLITE_DEFAULT_FOREIGN_KEYS`,
+/// so `foreign_keys` reads `1` unless the caller turns it off; turning it off is
+/// therefore the deviation worth pinning. The control connection, left at that
+/// default, reads `1` through the same path, so a wrapper that reset or reopened
+/// the connection instead of adopting it would fail here.
+#[tokio::test]
+async fn from_connection_preserves_connection_pragmas() -> Result<(), Box<dyn std::error::Error>> {
+  let configured = rusqlite::Connection::open_in_memory()?;
+  configured.execute_batch("PRAGMA foreign_keys = OFF;")?;
+  let configured = RusqliteConnection::from_connection(configured);
+
+  let control = RusqliteConnection::from_connection(rusqlite::Connection::open_in_memory()?);
+
+  assert_eq!(scalar(&configured, "PRAGMA foreign_keys").await?, 0);
+  assert_eq!(scalar(&control, "PRAGMA foreign_keys").await?, 1);
+  Ok(())
+}
+
+/// A temp database path that deletes itself, so a failed assertion or an early
+/// `?` cannot leave the file behind.
+struct TempDbPath(String);
+
+impl TempDbPath {
+  /// Process id plus a nanosecond timestamp: parallel test processes cannot
+  /// collide on the same name. A clock behind the epoch would break that
+  /// uniqueness, so it fails the test rather than falling back to a shared name.
+  fn new() -> Result<Self, std::time::SystemTimeError> {
+    let nanos = std::time::SystemTime::now()
+      .duration_since(std::time::UNIX_EPOCH)?
+      .as_nanos();
+    let path =
+      std::env::temp_dir().join(format!("toolu-orm-open-{}-{nanos}.db", std::process::id()));
+    Ok(Self(path.to_string_lossy().into_owned()))
+  }
+
+  fn as_str(&self) -> &str {
+    &self.0
+  }
+}
+
+impl Drop for TempDbPath {
+  fn drop(&mut self) {
+    // A test that failed before `open` leaves nothing to remove; anything else
+    // is a real filesystem problem and is worth seeing rather than swallowing.
+    match std::fs::remove_file(&self.0) {
+      Ok(()) => {},
+      Err(e) if e.kind() == std::io::ErrorKind::NotFound => {},
+      Err(e) => eprintln!("could not remove the temp database {}: {e}", self.0),
+    }
+  }
+}
+
+/// `open` still reaches a real file after being routed through
+/// `from_connection`: a second wrapper reads what the first one wrote.
+#[tokio::test]
+async fn open_persists_to_a_file() -> Result<(), Box<dyn std::error::Error>> {
+  let path = TempDbPath::new()?;
+
+  let writer = RusqliteConnection::open(path.as_str()).await?;
+  writer
+    .execute_batch("CREATE TABLE persisted (count INTEGER NOT NULL)")
+    .await?;
+  writer
+    .execute_sql(
+      "INSERT INTO persisted (count) VALUES (?1)",
+      vec![Value::Integer(99)],
+    )
+    .await?;
+  drop(writer);
+
+  let reader = RusqliteConnection::open(path.as_str()).await?;
+  assert_eq!(scalar(&reader, "SELECT count FROM persisted").await?, 99);
   Ok(())
 }
