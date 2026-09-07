@@ -40,6 +40,7 @@ postgres = [
 [dev-dependencies]
 tokio-postgres = { workspace = true }
 libsql = { workspace = true, default-features = false, features = ["core"] }
+toolu-orm-macros = { path = "../orm-macros", default-features = false }
 
 [lints]
 workspace = true

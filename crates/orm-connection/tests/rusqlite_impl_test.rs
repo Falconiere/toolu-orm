@@ -1,4 +1,10 @@
-#![cfg(feature = "rusqlite")]
+// Single-backend shape: `FromRow` exposes `from_row(&rusqlite::Row)` only when
+// rusqlite is the sole driver feature on orm-core (the rusqlite-only lane).
+#![cfg(all(
+  feature = "rusqlite",
+  not(feature = "libsql"),
+  not(feature = "postgres")
+))]
 
 use toolu_orm_connection::DbConnection;
 use toolu_orm_connection::rusqlite_impl::RusqliteConnection;
@@ -12,21 +18,7 @@ struct CountRow {
 impl FromRow for CountRow {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["count"];
 
-  fn from_pg_row(_: &tokio_postgres::Row) -> Result<Self, toolu_orm_core::error::DbCoreError> {
-    Err(toolu_orm_core::error::DbCoreError::RowMapping(
-      "CountRow is only used on the rusqlite test path".into(),
-    ))
-  }
-
-  fn from_libsql_row(_: &libsql::Row) -> Result<Self, toolu_orm_core::error::DbCoreError> {
-    Err(toolu_orm_core::error::DbCoreError::RowMapping(
-      "CountRow is only used on the rusqlite test path".into(),
-    ))
-  }
-
-  fn from_rusqlite_row(
-    row: &rusqlite::Row<'_>,
-  ) -> Result<Self, toolu_orm_core::error::DbCoreError> {
+  fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
     let count: i64 = row
       .get(0)
       .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(e.to_string()))?;
