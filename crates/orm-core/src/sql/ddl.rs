@@ -36,17 +36,15 @@ pub(crate) fn column_def_sql(col: &ColumnDef, strict: bool, dialect: Dialect) ->
     let d = translate_default(default, dialect);
     parts.push(format!("DEFAULT ({d})"));
   }
-  if strict {
-    if let Some(refs) = &col.references {
-      let mut refs_part = format_references(refs);
-      if let Some(on_delete) = &col.on_delete {
-        refs_part.push_str(&format!(" ON DELETE {}", on_delete.as_sql()));
-      }
-      if let Some(on_update) = &col.on_update {
-        refs_part.push_str(&format!(" ON UPDATE {}", on_update.as_sql()));
-      }
-      parts.push(refs_part);
+  if let Some(refs) = &col.references {
+    let mut refs_part = format_references(refs);
+    if let Some(on_delete) = &col.on_delete {
+      refs_part.push_str(&format!(" ON DELETE {}", on_delete.as_sql()));
     }
+    if let Some(on_update) = &col.on_update {
+      refs_part.push_str(&format!(" ON UPDATE {}", on_update.as_sql()));
+    }
+    parts.push(refs_part);
   }
   if let Some(check) = &col.check {
     parts.push(check.clone());
