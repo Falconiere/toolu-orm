@@ -1,7 +1,5 @@
 error: `primary_key` on `memory_id`: an fts5 column carries no constraints, only #[column(unindexed)]
- --> tests/ui/fts5_column_constraint.rs:6:1
-  |
-6 | #[fts5_table(name = "memory_fts")]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  |
-  = note: this error originates in the attribute macro `fts5_table` (in Nightly builds, run with -Z macro-backtrace for more info)
+  --> tests/ui/fts5_column_constraint.rs:10:18
+   |
+10 |   pub memory_id: String,
+   |                  ^^^^^^

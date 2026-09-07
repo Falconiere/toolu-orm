@@ -73,8 +73,8 @@ pub fn check_columns(columns: &[ColumnInput]) -> syn::Result<()> {
     } else {
       continue;
     };
-    return Err(syn::Error::new(
-      Span::call_site(),
+    return Err(syn::Error::new_spanned(
+      &column.original_type,
       format!(
         "`{offender}` on `{}`: an fts5 column carries no constraints, only #[column(unindexed)]",
         column.field_name
