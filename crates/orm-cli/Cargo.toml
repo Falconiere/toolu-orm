@@ -43,8 +43,27 @@ path = "tests/generate_test.rs"
 name = "migrations_table_ddl_test"
 path = "tests/migrations_table_ddl_test.rs"
 
+[[test]]
+name = "migration_loop_sqlite_test"
+path = "tests/migration_loop_sqlite_test.rs"
+required-features = ["libsql"]
+
+# Needs a live Postgres (docker-compose.test.yaml).
+[[test]]
+name = "migration_loop_postgres_test"
+path = "tests/migration_loop_postgres_test.rs"
+required-features = ["libsql", "postgres"]
+
+[[test]]
+name = "migrate_failure_test"
+path = "tests/migrate_failure_test.rs"
+required-features = ["libsql"]
+
 [dev-dependencies]
 tempfile = "3"
+toolu-orm-macros = { path = "../orm-macros", default-features = false }
+# `#[table]` expansions reference toolu_orm_query builder types.
+toolu-orm-query = { path = "../orm-query", default-features = false }
 tokio = { version = "1", features = ["full"] }
 tokio-postgres = { workspace = true }
 libsql = { version = "0.9", default-features = false, features = ["core"] }
