@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "tables": {
+    "users": {
+      "columns": [
+        {
+          "name": "id",
+          "column_type": "Text",
+          "primary_key": true,
+          "not_null": true,
+          "unique": false
+        },
+        {
+          "name": "name",
+          "column_type": "Text",
+          "primary_key": false,
+          "not_null": false,
+          "unique": false
+        }
+      ]
+    },
+    "posts": {
+      "columns": [
+        {
+          "name": "id",
+          "column_type": "Text",
+          "primary_key": true,
+          "not_null": true,
+          "unique": false
+        },
+        {
+          "name": "author_id",
+          "column_type": "Text",
+          "primary_key": false,
+          "not_null": true,
+          "unique": false
+        }
+      ]
+    }
+  }
+}
