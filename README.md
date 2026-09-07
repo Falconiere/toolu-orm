@@ -503,6 +503,11 @@ migrations/
   `--> statement-breakpoint`. Each file runs inside `BEGIN` / `COMMIT`.
 - The journal hash is verified before a file runs. Edit a shipped migration
   and `run_migrate` stops with `MigrateError::HashMismatch`.
+- Adopting toolu-orm on a database that already has the schema? Baseline it with
+  `mark_applied(&conn, "migrations", &["0001_init.sql"], dialect)` — or
+  `mark_applied_through(&conn, "migrations", "0016_add_tags.sql", dialect)` — to
+  record those journal entries (with their journal hashes) without executing
+  them, so the next `run_migrate` starts from the first one you did not baseline.
 - Snapshots are plain JSON (`version`, `dialect`, `id`, `prev_id`, `tables`,
   `enums`, `meta`), so a schema diff is reviewable in the PR alongside the SQL.
 

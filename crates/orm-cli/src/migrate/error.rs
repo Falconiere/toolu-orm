@@ -20,6 +20,11 @@ pub enum MigrateError {
     expected: String,
     actual: String,
   },
+
+  /// A baseline named a migration the journal does not list, so there is no
+  /// hash to record for it.
+  #[error("no journal entry for migration(s): {0}")]
+  NotInJournal(String),
 }
 
 pub(crate) fn map_db(err: &DbError) -> MigrateError {
