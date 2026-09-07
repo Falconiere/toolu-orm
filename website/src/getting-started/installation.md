@@ -58,8 +58,9 @@ error[E0433]: cannot find module or crate `toolu_orm_core` in this scope
 ```
 
 Until the macros emit facade-relative paths (the `proc-macro-crate` approach,
-tracked as a follow-up), a facade consumer lists `toolu-orm-core` as a direct
-dependency too, as shown above. Everything else — the derives, the builder
+tracked in [issue #15](https://github.com/Falconiere/toolu-orm/issues/15)), a
+facade consumer lists `toolu-orm-core` as a direct dependency too, as shown
+above. Everything else — the derives, the builder
 factories, the driver crate — resolves through the prelude, so `toolu-orm-query`
 and `toolu-orm-connection` stay behind the facade.
 
