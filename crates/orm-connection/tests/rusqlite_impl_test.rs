@@ -26,6 +26,33 @@ impl FromRow for CountRow {
   }
 }
 
+struct LabelRow {
+  label: String,
+}
+
+impl FromRow for LabelRow {
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["label"];
+
+  fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
+    let label: String = row
+      .get(0)
+      .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(e.to_string()))?;
+    Ok(Self { label })
+  }
+}
+
+/// Read the single scalar a one-row, one-column query returns.
+async fn scalar(
+  conn: &RusqliteConnection,
+  sql: &str,
+) -> Result<i64, toolu_orm_connection::DbError> {
+  let rows: Vec<CountRow> = conn.query_map(sql, vec![]).await?;
+  rows
+    .first()
+    .map(|row| row.count)
+    .ok_or_else(|| toolu_orm_connection::DbError::Query(format!("no row for `{sql}`")))
+}
+
 #[tokio::test]
 async fn execute_batch_creates_table() -> Result<(), toolu_orm_connection::DbError> {
   let conn = RusqliteConnection::open_in_memory().await?;
@@ -88,5 +115,87 @@ async fn execute_sql_returns_error_on_bad_sql() -> Result<(), toolu_orm_connecti
     )
     .await;
   assert!(result.is_err());
+  Ok(())
+}
+
+/// The adopted connection keeps its own in-memory database: a table created
+/// before adoption is still there afterwards. Reopening `:memory:` would give a
+/// fresh, empty database and this query would fail with "no such table".
+#[tokio::test]
+async fn from_connection_adopts_existing_database() -> Result<(), toolu_orm_connection::DbError> {
+  let raw = rusqlite::Connection::open_in_memory().unwrap();
+  raw
+    .execute_batch(
+      "CREATE TABLE adopted (id INTEGER PRIMARY KEY, label TEXT NOT NULL);
+       INSERT INTO adopted (id, label) VALUES (7, 'pre-existing');",
+    )
+    .unwrap();
+
+  let conn = RusqliteConnection::from_connection(raw);
+
+  let rows: Vec<LabelRow> = conn
+    .query_map("SELECT label FROM adopted WHERE id = 7", vec![])
+    .await?;
+  assert_eq!(rows.len(), 1);
+  assert_eq!(
+    rows.first().map(|row| row.label.as_str()),
+    Some("pre-existing")
+  );
+  Ok(())
+}
+
+/// Connection-scoped configuration applied before adoption survives it.
+///
+/// rusqlite 0.32's bundled SQLite is compiled with `SQLITE_DEFAULT_FOREIGN_KEYS`,
+/// so `foreign_keys` reads `1` unless the caller turns it off; turning it off is
+/// therefore the deviation worth pinning. The control connection, left at that
+/// default, reads `1` through the same path, so a wrapper that reset or reopened
+/// the connection instead of adopting it would fail here.
+#[tokio::test]
+async fn from_connection_preserves_connection_pragmas() -> Result<(), toolu_orm_connection::DbError>
+{
+  let configured = rusqlite::Connection::open_in_memory().unwrap();
+  configured
+    .execute_batch("PRAGMA foreign_keys = OFF;")
+    .unwrap();
+  let configured = RusqliteConnection::from_connection(configured);
+
+  let control =
+    RusqliteConnection::from_connection(rusqlite::Connection::open_in_memory().unwrap());
+
+  assert_eq!(scalar(&configured, "PRAGMA foreign_keys").await?, 0);
+  assert_eq!(scalar(&control, "PRAGMA foreign_keys").await?, 1);
+  Ok(())
+}
+
+/// `open` still reaches a real file after being routed through
+/// `from_connection`: a second wrapper reads what the first one wrote.
+#[tokio::test]
+async fn open_persists_to_a_file() -> Result<(), toolu_orm_connection::DbError> {
+  let nanos = std::time::SystemTime::now()
+    .duration_since(std::time::UNIX_EPOCH)
+    .unwrap()
+    .as_nanos();
+  let path = std::env::temp_dir().join(format!("toolu-orm-open-{}-{nanos}.db", std::process::id()));
+  let path_str = path.to_str().unwrap();
+
+  let writer = RusqliteConnection::open(path_str).await?;
+  writer
+    .execute_batch("CREATE TABLE persisted (count INTEGER NOT NULL)")
+    .await?;
+  writer
+    .execute_sql(
+      "INSERT INTO persisted (count) VALUES (?1)",
+      vec![Value::Integer(99)],
+    )
+    .await?;
+  drop(writer);
+
+  let reader = RusqliteConnection::open(path_str).await?;
+  let count = scalar(&reader, "SELECT count FROM persisted").await?;
+  drop(reader);
+  std::fs::remove_file(&path).unwrap();
+
+  assert_eq!(count, 99);
   Ok(())
 }
