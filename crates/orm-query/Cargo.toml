@@ -96,5 +96,60 @@ name = "executor_test"
 path = "tests/executor_test.rs"
 required-features = ["libsql"]
 
+# Execution scenario suites, one per driver lane. Each compiles only when its
+# driver is the sole backend feature on this crate (see `cfg_single_backend!`).
+# Shared setup lives in tests/fixtures/ and is wired with `#[path]`.
+[[test]]
+name = "libsql_mutations_test"
+path = "tests/libsql_mutations_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "libsql_reads_test"
+path = "tests/libsql_reads_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "libsql_relational_test"
+path = "tests/libsql_relational_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "rusqlite_mutations_test"
+path = "tests/rusqlite_mutations_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "rusqlite_reads_test"
+path = "tests/rusqlite_reads_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "rusqlite_relational_test"
+path = "tests/rusqlite_relational_test.rs"
+required-features = ["rusqlite"]
+
+# Need a live Postgres (docker-compose.test.yaml) and the five-crate postgres
+# lane, which gives orm-core the postgres+libsql FromRow shape.
+[[test]]
+name = "postgres_mutations_test"
+path = "tests/postgres_mutations_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_reads_test"
+path = "tests/postgres_reads_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_relational_test"
+path = "tests/postgres_relational_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_transaction_test"
+path = "tests/postgres_transaction_test.rs"
+required-features = ["postgres"]
+
 [lints]
 workspace = true

@@ -27,13 +27,7 @@ struct TestUser {
 impl FromRow for TestUser {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "name", "age"];
 
-  fn from_pg_row(_: &tokio_postgres::Row) -> Result<Self, DbCoreError> {
-    Err(DbCoreError::RowMapping(
-      "TestUser is only decoded from libsql rows in this test".into(),
-    ))
-  }
-
-  fn from_libsql_row(row: &libsql::Row) -> Result<Self, DbCoreError> {
+  fn from_row(row: &libsql::Row) -> Result<Self, DbCoreError> {
     Ok(Self {
       id: row
         .get(0)
