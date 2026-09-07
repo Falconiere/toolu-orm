@@ -27,7 +27,8 @@ The trait is feature-gated on `toolu-orm-core`:
 | `postgres` + `rusqlite` | `from_pg_row`, `from_rusqlite_row` |
 | `libsql` + `rusqlite` | `from_libsql_row`, `from_rusqlite_row` |
 
-An application runs one driver, so `from_row` is the usual shape.
+An application runs one driver, so `from_row` is the usual shape — and the one
+`#[derive(FromRow)]` cannot produce.
 
 ## `#[derive(FromRow)]`
 
@@ -44,9 +45,14 @@ pub struct User {
 field is read positionally at its own index with the field's own Rust type, so an
 `Option<T>` field decodes SQL `NULL` as `None`.
 
-> The derive currently emits the `postgres` + `libsql` shape (its libsql method
-> is an error stub), so it compiles when both features are active on
-> `toolu-orm-core`. With a single driver, write the impl by hand.
+> **The derive only compiles on the postgres + libsql shape.** It always emits
+> `from_pg_row` (real decoding) plus a `from_libsql_row` error stub, so on a
+> single-driver lane — libsql-only, rusqlite-only, or postgres-only — the trait
+> asks for `from_row` and the derive does not provide it: the build fails with a
+> missing-method error. Only the postgres lane, where both features are unified
+> on `toolu-orm-core`, can derive it. Everywhere else, write the impl by hand as
+> shown below. Its libsql method is a stub even there, so a derived type decodes
+> Postgres rows and returns `DbCoreError::RowMapping` on a libsql row.
 
 ## Writing the impl by hand
 
