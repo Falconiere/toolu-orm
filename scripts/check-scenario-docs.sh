@@ -9,7 +9,7 @@
 #
 # Lanes (must match CLAUDE.md / .github/workflows/ci.yml):
 #   default       cargo nextest list --workspace
-#   postgres      cargo nextest list -p <seven crates> --features postgres
+#   postgres      cargo nextest list $PKGS --features postgres   (see PKGS below)
 #   libsql-only   cargo nextest list -p toolu-orm-query --features libsql
 #   rusqlite-only cargo nextest list -p toolu-orm-query --features rusqlite
 #                 cargo nextest list -p toolu-orm-connection --features rusqlite

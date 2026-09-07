@@ -14,6 +14,7 @@
 
 use toolu_orm::core::column::{EnumSchema, Integer, Text};
 use toolu_orm::core::dialect::Dialect;
+use toolu_orm::core::error::DbCoreError;
 use toolu_orm::core::query_column::CommonOps;
 use toolu_orm::core::relational_row::FromRelationalRow;
 use toolu_orm::core::serde_json::{self, Value};
@@ -62,6 +63,14 @@ pub struct FacadeOnlyUserWithPosts {
 
 fn row(json: &str) -> Result<Vec<Value>, Box<dyn std::error::Error>> {
   Ok(serde_json::from_str(json)?)
+}
+
+/// Compile-time proof that the `serde_json` reached through the facade is the
+/// one the `Relational` expansion names: the derive's signature is
+/// `&[<resolved core path>::serde_json::Value]`, so this call type-checks only
+/// if that is the same crate instance as `toolu_orm::core::serde_json`.
+fn decode(values: &[Value]) -> Result<FacadeOnlyUserWithPosts, DbCoreError> {
+  FacadeOnlyUserWithPosts::from_relational_values(values)
 }
 
 #[test]
@@ -147,7 +156,7 @@ fn column_enum_derive_reports_renamed_variants() {
 fn relational_derive_decodes_a_json_row() -> Result<(), Box<dyn std::error::Error>> {
   let values = row(r#"["u1", "a@example.com", [["p1", "First"], ["p2", "Second"]]]"#)?;
 
-  let user = FacadeOnlyUserWithPosts::from_relational_values(&values)?;
+  let user = decode(&values)?;
 
   assert_eq!(FacadeOnlyUserWithPosts::SCALAR_COLUMNS, &["id", "email"]);
   assert_eq!(user.id, "u1");
@@ -161,7 +170,7 @@ fn relational_derive_decodes_a_json_row() -> Result<(), Box<dyn std::error::Erro
 fn relational_derive_decodes_a_null_relation_as_empty() -> Result<(), Box<dyn std::error::Error>> {
   let values = row(r#"["u2", "b@example.com", null]"#)?;
 
-  let user = FacadeOnlyUserWithPosts::from_relational_values(&values)?;
+  let user = decode(&values)?;
 
   assert_eq!(user.id, "u2");
   assert!(user.posts.is_empty());

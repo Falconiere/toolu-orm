@@ -33,12 +33,18 @@ the prelude instead.
 cargo nextest run -p toolu-orm -p toolu-orm-facade-consumer
 ```
 
-The `FromRow` case needs the full postgres lane, where selecting
-`toolu-orm-core` unifies its default `libsql` in alongside `postgres`:
+`facade_only_from_row_test` is postgres-lane only: the `FromRow` derive emits
+the postgres+libsql shape, so it needs `toolu-orm-core` selected too, which
+unifies its default `libsql` in alongside `postgres`. This command builds and
+runs that binary:
 
 ```sh
 cargo nextest run -p toolu-orm-core -p toolu-orm-facade-consumer --features postgres
 ```
+
+Selecting `toolu-orm-facade-consumer` alone with `--features postgres` does not
+work — `toolu-orm-core` would get `postgres` without `libsql`, and the derive
+would not match the trait shape.
 
 ## Tests
 

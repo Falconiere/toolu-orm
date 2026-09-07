@@ -71,6 +71,9 @@ impl CratePath {
 
 /// Resolves `direct` as a direct dependency, else the facade's `module`
 /// re-export, else `direct`'s own crate name.
+///
+/// `module` is the facade path segment only: a direct dependent names the
+/// crate itself (`::toolu_orm_core`), so there is no module to append there.
 fn resolve(direct: &str, module: &'static str) -> CratePath {
   if let Some(root) = found(direct) {
     return CratePath { root, module: None };
