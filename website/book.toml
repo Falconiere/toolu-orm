@@ -1,0 +1,32 @@
+[book]
+title = "toolu-orm"
+description = "Schema-first Rust ORM — one struct, three databases, migrations you can read."
+authors = ["Falconiere Barbosa"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+default-theme = "navy"
+preferred-dark-theme = "navy"
+no-section-label = true
+site-url = "/toolu-orm/"
+git-repository-url = "https://github.com/Falconiere/toolu-orm"
+git-repository-icon = "fa-github"
+edit-url-template = "https://github.com/Falconiere/toolu-orm/edit/main/website/{path}"
+additional-css = ["theme/custom.css"]
+
+[output.html.playground]
+runnable = false
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 20
+use-boolean-and = true

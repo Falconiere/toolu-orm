@@ -1,0 +1,333 @@
+/* toolu-orm docs theme — dark-first, lime accent, mono headings for code chrome. */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+:root {
+  --tu-accent: #c8ff4d;
+  --tu-accent-soft: rgba(200, 255, 77, 0.14);
+  --tu-accent-line: rgba(200, 255, 77, 0.4);
+  --tu-radius: 10px;
+  /* mdBook sets html { font-size: 62.5% }, so 1rem = 10px in this book. */
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ── Dark palette (navy is the default + preferred dark theme) ───────────── */
+
+.navy {
+  --bg: #0a0c0e;
+  --fg: #ccd3da;
+  --sidebar-bg: #07080a;
+  --sidebar-fg: #98a2ac;
+  --sidebar-non-existant: #4c555e;
+  --sidebar-active: var(--tu-accent);
+  --sidebar-spacer: #171c21;
+  --scrollbar: #2b3238;
+  --icons: #7c868f;
+  --icons-hover: var(--tu-accent);
+  --links: var(--tu-accent);
+  --inline-code-color: #dcf7a0;
+  --theme-popup-bg: #101418;
+  --theme-popup-border: #232a30;
+  --theme-hover: #1a2026;
+  --quote-bg: #101418;
+  --quote-border: var(--tu-accent-line);
+  --warning-border: #ffb84d;
+  --table-border-color: #1f262c;
+  --table-header-bg: #141a20;
+  --table-alternate-bg: #0e1215;
+  --searchbar-border-color: #232a30;
+  --searchbar-bg: #101418;
+  --searchbar-fg: #ccd3da;
+  --searchbar-shadow-color: #000;
+  --searchresults-header-fg: #8b959f;
+  --searchresults-border-color: #232a30;
+  --searchresults-li-bg: #0e1215;
+  --search-mark-bg: rgba(200, 255, 77, 0.35);
+  --color-scheme: dark;
+}
+
+/* Light stays readable: the lime accent has no contrast on white, so links and
+   active items switch to a dark olive. */
+.light,
+.rust {
+  --tu-accent: #3f6b0c;
+  --tu-accent-soft: rgba(63, 107, 12, 0.1);
+  --tu-accent-line: rgba(63, 107, 12, 0.35);
+  --links: var(--tu-accent);
+  --sidebar-active: var(--tu-accent);
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+
+html,
+body,
+.menu-title,
+.sidebar {
+  font-family: var(--sans);
+}
+
+code,
+pre,
+kbd,
+.hljs {
+  font-family: var(--mono);
+  font-feature-settings: "liga" 0;
+}
+
+.content main {
+  line-height: 1.7;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4 {
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin-top: 3.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.content h1 {
+  font-size: 3.4rem;
+  letter-spacing: -0.03em;
+}
+
+.content h2 {
+  font-size: 2.3rem;
+  padding-top: 2.4rem;
+  border-top: 1px solid var(--table-border-color);
+}
+
+.content h3 {
+  font-size: 1.8rem;
+}
+
+.content h1 + p,
+.content h2 + p {
+  color: var(--fg);
+}
+
+.content a,
+.content a:visited {
+  text-decoration: none;
+  border-bottom: 1px solid var(--tu-accent-line);
+}
+
+.content a:hover {
+  border-bottom-color: var(--tu-accent);
+}
+
+.content a.header,
+.content a.header:visited,
+.content a.header:hover {
+  border-bottom: none;
+  color: inherit;
+}
+
+/* ── Code ────────────────────────────────────────────────────────────────── */
+
+.content code:not(pre code) {
+  background: var(--tu-accent-soft);
+  border: 1px solid var(--table-border-color);
+  border-radius: 5px;
+  padding: 0.08em 0.36em;
+  font-size: 0.86em;
+  white-space: nowrap;
+}
+
+.content pre {
+  border: 1px solid var(--table-border-color);
+  border-radius: var(--tu-radius);
+  padding: 0.6rem 0.4rem;
+}
+
+.content pre > .buttons button {
+  border-radius: 6px;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+.content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 2rem 0;
+  font-size: 0.94em;
+}
+
+.content table th {
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.content table td,
+.content table th {
+  padding: 0.8rem 1.1rem;
+}
+
+/* ── Blockquote as a callout ─────────────────────────────────────────────── */
+
+.content blockquote {
+  border-left: 3px solid var(--tu-accent-line);
+  border-radius: 0 var(--tu-radius) var(--tu-radius) 0;
+  padding: 1.2rem 1.6rem;
+  margin: 2.2rem 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.sidebar .sidebar-scrollbox {
+  padding: 2rem 1.8rem 5rem;
+}
+
+.chapter li.part-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sidebar-non-existant);
+  margin: 2.6rem 0 0.6rem;
+  padding-left: 0.8rem;
+}
+
+.chapter li.chapter-item {
+  line-height: 1.5;
+  margin: 0.1rem 0;
+}
+
+.chapter li.chapter-item a {
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+}
+
+.chapter li.chapter-item a:hover {
+  background: var(--theme-hover);
+}
+
+.chapter li.chapter-item a.active {
+  background: var(--tu-accent-soft);
+  font-weight: 550;
+}
+
+#menu-bar {
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+.menu-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ── Landing page blocks (raw HTML in introduction.md) ───────────────────── */
+
+.hero {
+  margin: 0.5rem 0 4rem;
+}
+
+.hero .eyebrow {
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tu-accent);
+}
+
+.hero h1 {
+  font-size: 4.6rem;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  margin: 1.2rem 0 1.6rem;
+  border: none;
+  padding: 0;
+}
+
+.hero p {
+  font-size: 1.9rem;
+  line-height: 1.65;
+  color: var(--fg);
+  max-width: 62rem;
+  margin: 0 0 2.4rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2.4rem;
+}
+
+.hero-actions a {
+  display: inline-block;
+  padding: 0.9rem 1.8rem;
+  border-radius: 8px;
+  font-weight: 550;
+  font-size: 1.6rem;
+  border: 1px solid var(--table-border-color);
+}
+
+.hero-actions a.primary,
+.content .hero-actions a.primary {
+  background: var(--tu-accent);
+  border-color: var(--tu-accent);
+  color: #0a0c0e;
+}
+
+.content .hero-actions a {
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+.content .hero-actions a:hover {
+  border-color: var(--tu-accent);
+  background: var(--tu-accent-soft);
+}
+
+.content .hero-actions a.primary:hover {
+  background: var(--tu-accent);
+  opacity: 0.88;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  gap: 1.4rem;
+  margin: 2.4rem 0 3.2rem;
+}
+
+.card {
+  border: 1px solid var(--table-border-color);
+  border-radius: var(--tu-radius);
+  padding: 1.8rem 2rem;
+  background: var(--table-alternate-bg);
+}
+
+.card h3 {
+  margin: 0 0 0.8rem;
+  font-size: 1.7rem;
+  border: none;
+  padding-top: 0;
+}
+
+.card p {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--sidebar-fg);
+  line-height: 1.6;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 0 0 2.4rem;
+}
+
+.pill {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--tu-accent-line);
+  color: var(--tu-accent);
+}

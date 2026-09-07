@@ -7,3 +7,5 @@
 
 # Syncthing conflict copies
 *.sync-conflict-*
+
+/website/book

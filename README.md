@@ -13,11 +13,12 @@ against **libsql** (local file, in-memory, or Turso), **rusqlite**, or
 [![crates.io](https://img.shields.io/crates/v/toolu-orm-core?style=flat-square&color=blue)](https://crates.io/crates/toolu-orm-core)
 [![docs.rs](https://img.shields.io/docsrs/toolu-orm-core?style=flat-square)](https://docs.rs/toolu-orm-core)
 [![CI](https://img.shields.io/github/actions/workflow/status/Falconiere/toolu-orm/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/Falconiere/toolu-orm/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-toolu--orm-c8ff4d.svg?style=flat-square)](https://falconiere.github.io/toolu-orm/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 [![Rust 1.94](https://img.shields.io/badge/rust-1.94-orange.svg?style=flat-square)](rust-toolchain.toml)
 [![No unwrap](https://img.shields.io/badge/src-no%20unwrap%20%C2%B7%20no%20panic-purple.svg?style=flat-square)](#contributing)
 
-[Why](#why-toolu-orm) · [Features](#features) · [How it works](#how-it-works) · [Install](#install) · [Quickstart](#quickstart) · [Tables](#defining-tables) · [Queries](#query-builders) · [Relations](#relations) · [Migrations](#migrations) · [Drivers](#drivers) · [Contributing](#contributing)
+**[Documentation](https://falconiere.github.io/toolu-orm/)** · [Why](#why-toolu-orm) · [Features](#features) · [How it works](#how-it-works) · [Install](#install) · [Quickstart](#quickstart) · [Tables](#defining-tables) · [Queries](#query-builders) · [Relations](#relations) · [Migrations](#migrations) · [Drivers](#drivers) · [Contributing](#contributing)
 
 </div>
 
