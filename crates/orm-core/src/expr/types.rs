@@ -1,15 +1,20 @@
-//! Expression AST for WHERE clause generation across dialects.
+//! Expression types (`Expr`, `OrderBy`, `JoinCondition`, `JsonExpr`) and their
+//! constructors; rendering lives in `render.rs`.
 
 use crate::dialect::Dialect;
 use crate::query_column::Column;
 use crate::value::Value;
 
+use super::render::render_expr;
+
 // ── Public types ──────────────────────────────────────────────────────────────
 
+/// A WHERE-clause expression tree; render with [`Expr::to_sql_fragment_for`].
 pub struct Expr {
   pub(crate) kind: ExprKind,
 }
 
+/// Expression node kinds; rendered by `render_expr` per dialect.
 pub(crate) enum ExprKind {
   Comparison {
     column: String,
@@ -38,16 +43,19 @@ pub(crate) enum ExprKind {
   },
 }
 
+/// One `ORDER BY` term, built via `Column::asc` / `Column::desc`.
 pub struct OrderBy {
   pub(crate) column: String,
   pub(crate) direction: &'static str,
 }
 
+/// `left = right` pair for `JOIN ... ON`.
 pub struct JoinCondition {
   pub(crate) left: String,
   pub(crate) right: String,
 }
 
+/// A JSON access fragment usable inside expressions.
 pub struct JsonExpr {
   fragment: String,
 }
@@ -153,96 +161,4 @@ impl JsonExpr {
   pub fn like<V: Into<Value>>(self, val: V) -> Expr {
     Expr::comparison(self.fragment, "LIKE", val.into())
   }
-}
-
-// ── SQL rendering ─────────────────────────────────────────────────────────────
-
-fn render_expr(kind: &ExprKind, start: usize, params: &mut Vec<Value>, dialect: Dialect) -> String {
-  match kind {
-    ExprKind::Comparison { column, op, value } => {
-      let idx = start + params.len();
-      params.push(value.clone());
-      format!("{column} {op} {}", dialect.param(idx))
-    },
-    ExprKind::InList {
-      column,
-      values,
-      negated,
-    } => {
-      let base = start + params.len();
-      let placeholders: Vec<String> = values
-        .iter()
-        .enumerate()
-        .map(|(i, _)| dialect.param(base + i))
-        .collect();
-      params.extend(values.iter().cloned());
-      let keyword = if *negated { "NOT IN" } else { "IN" };
-      format!("{column} {keyword} ({})", placeholders.join(", "))
-    },
-    ExprKind::IsNull { column, negated } => {
-      if *negated {
-        format!("{column} IS NOT NULL")
-      } else {
-        format!("{column} IS NULL")
-      }
-    },
-    ExprKind::Between { column, low, high } => {
-      let low_idx = start + params.len();
-      params.push(low.clone());
-      let high_idx = start + params.len();
-      params.push(high.clone());
-      format!(
-        "{column} BETWEEN {} AND {}",
-        dialect.param(low_idx),
-        dialect.param(high_idx)
-      )
-    },
-    ExprKind::And(left, right) => {
-      let left_sql = render_expr(&left.kind, start, params, dialect);
-      let right_sql = render_expr(&right.kind, start, params, dialect);
-      format!("({left_sql} AND {right_sql})")
-    },
-    ExprKind::Or(left, right) => {
-      let left_sql = render_expr(&left.kind, start, params, dialect);
-      let right_sql = render_expr(&right.kind, start, params, dialect);
-      format!("({left_sql} OR {right_sql})")
-    },
-    ExprKind::Raw {
-      sql,
-      params: raw_params,
-    } => {
-      params.extend(raw_params.iter().cloned());
-      number_raw_params(sql, start, dialect)
-    },
-  }
-}
-
-/// Replace bare `?` (not already `?N`) with sequential placeholders starting at `start`.
-fn number_raw_params(sql: &str, start: usize, dialect: Dialect) -> String {
-  let mut result = String::with_capacity(sql.len() + 8);
-  let mut counter = start;
-  let mut chars = sql.chars().peekable();
-
-  while let Some(ch) = chars.next() {
-    if ch != '?' {
-      result.push(ch);
-      continue;
-    }
-    // ch == '?': check if next char is a digit (already numbered)
-    if chars.peek().is_some_and(|c| c.is_ascii_digit()) {
-      let mut num_str = String::new();
-      while chars.peek().is_some_and(|c| c.is_ascii_digit()) {
-        if let Some(d) = chars.next() {
-          num_str.push(d);
-        }
-      }
-      let idx: usize = num_str.parse().unwrap_or(counter);
-      result.push_str(&dialect.param(idx));
-    } else {
-      result.push_str(&dialect.param(counter));
-      counter += 1;
-    }
-  }
-
-  result
 }
