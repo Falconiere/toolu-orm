@@ -1,0 +1,11 @@
+[store]
+dir = "target/nextest"
+
+# Default: full parallelism for crates that don't touch databases.
+[profile.default]
+test-threads = "num-cpus"
+
+# Throttle DB-bound crates to avoid SQLite global mutex contention.
+[[profile.default.overrides]]
+filter = "package(toolu-orm-connection) | package(toolu-orm-query)"
+threads-required = 2

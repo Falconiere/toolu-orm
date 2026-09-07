@@ -1,0 +1,49 @@
+[package]
+name = "toolu-orm-cli"
+version = "0.1.0"
+edition = "2021"
+autotests = false
+
+[dependencies]
+toolu-orm-core = { path = "../orm-core", default-features = false }
+toolu-orm-connection = { path = "../orm-connection", default-features = false }
+libsql = { version = "0.9", default-features = false, features = ["core"], optional = true }
+tokio-postgres = { workspace = true, optional = true }
+tokio = { version = "1", features = ["full"] }
+thiserror = "2"
+
+[features]
+default = ["libsql"]
+libsql = ["dep:libsql", "toolu-orm-core/libsql", "toolu-orm-connection/libsql"]
+postgres = [
+  "dep:tokio-postgres",
+  "toolu-orm-core/postgres",
+  "toolu-orm-connection/postgres",
+]
+
+[[test]]
+name = "migrate_test"
+path = "tests/migrate_test.rs"
+required-features = ["libsql", "postgres"]
+
+[[test]]
+name = "status_test"
+path = "tests/status_test.rs"
+required-features = ["libsql", "postgres"]
+
+[[test]]
+name = "generate_test"
+path = "tests/generate_test.rs"
+
+[[test]]
+name = "migrations_table_ddl_test"
+path = "tests/migrations_table_ddl_test.rs"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { version = "1", features = ["full"] }
+tokio-postgres = { workspace = true }
+libsql = { version = "0.9", default-features = false, features = ["core"] }
+
+[lints]
+workspace = true

@@ -1,0 +1,96 @@
+[package]
+name = "toolu-orm-query"
+version = "0.1.0"
+edition = "2021"
+autotests = false
+
+[dependencies]
+toolu-orm-core = { path = "../orm-core", default-features = false }
+serde_json = "1"
+thiserror = "2"
+async-trait = "0.1"
+tokio = { version = "1", features = ["sync"], optional = true }
+
+# Driver dependencies — mutually exclusive per consumer
+libsql = { version = "0.9", optional = true, default-features = false, features = ["core"] }
+rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
+tokio-postgres = { version = "0.7", optional = true }
+
+[features]
+default = []
+libsql = ["dep:libsql", "dep:tokio", "toolu-orm-core/libsql"]
+rusqlite = ["dep:rusqlite", "toolu-orm-core/rusqlite"]
+postgres = [
+  "dep:tokio-postgres",
+  "dep:tokio",
+  "toolu-orm-core/postgres",
+]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
+serde = { version = "1", features = ["derive"] }
+toolu-orm-macros = { path = "../orm-macros", default-features = false }
+toolu-orm-core = { path = "../orm-core", default-features = false }
+tokio-postgres = { workspace = true }
+
+[[test]]
+name = "delete_test"
+path = "tests/delete_test.rs"
+
+[[test]]
+name = "insert_test"
+path = "tests/insert_test.rs"
+
+[[test]]
+name = "update_test"
+path = "tests/update_test.rs"
+
+[[test]]
+name = "tuple_append_test"
+path = "tests/tuple_append_test.rs"
+
+[[test]]
+name = "relational_test"
+path = "tests/relational_test.rs"
+
+[[test]]
+name = "relational_builder_test"
+path = "tests/relational_builder_test.rs"
+
+[[test]]
+name = "relational_execute_test"
+path = "tests/relational_execute_test.rs"
+
+[[test]]
+name = "relational_query_builder_test"
+path = "tests/relational_query_builder_test.rs"
+
+[[test]]
+name = "relational_sqlite_sql_test"
+path = "tests/relational_sqlite_sql_test.rs"
+
+[[test]]
+name = "relational_postgres_sql_test"
+path = "tests/relational_postgres_sql_test.rs"
+
+[[test]]
+name = "select_test"
+path = "tests/select_test/main.rs"
+
+[[test]]
+name = "integration_test"
+path = "tests/integration_test/mod.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "transaction_test"
+path = "tests/transaction_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "executor_test"
+path = "tests/executor_test.rs"
+required-features = ["libsql"]
+
+[lints]
+workspace = true

@@ -1,0 +1,9 @@
+/target
+/.claude/tmp/
+/.claude/settings.local.json
+
+# toolu workflow artifacts (specs/plans) — local, not committed
+/docs/toolu/
+
+# Syncthing conflict copies
+*.sync-conflict-*

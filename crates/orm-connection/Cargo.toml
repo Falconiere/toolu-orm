@@ -1,0 +1,43 @@
+[package]
+name = "toolu-orm-connection"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+toolu-orm-core = { path = "../orm-core", default-features = false, features = [] }
+async-trait.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "time"] }
+
+libsql = { version = "0.9", default-features = false, features = ["core", "remote", "replication", "sync", "tls"], optional = true }
+rusqlite = { workspace = true, optional = true }
+tokio-postgres = { workspace = true, optional = true }
+deadpool-postgres = { workspace = true, optional = true }
+postgres-types = { workspace = true, optional = true }
+tokio-postgres-rustls = { workspace = true, optional = true }
+rustls = { workspace = true, optional = true }
+rustls-native-certs = { workspace = true, optional = true }
+
+[features]
+default = []
+libsql = ["dep:libsql", "toolu-orm-core/libsql"]
+rusqlite = ["dep:rusqlite", "toolu-orm-core/rusqlite"]
+postgres = [
+  "dep:tokio-postgres",
+  "dep:deadpool-postgres",
+  "dep:postgres-types",
+  "dep:tokio-postgres-rustls",
+  "dep:rustls",
+  "dep:rustls-native-certs",
+  "toolu-orm-core/postgres",
+]
+
+[dev-dependencies]
+tokio-postgres = { workspace = true }
+libsql = { workspace = true, default-features = false, features = ["core"] }
+
+[lints]
+workspace = true

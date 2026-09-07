@@ -1,0 +1,53 @@
+[package]
+name = "toolu-orm-macros"
+version = "0.1.0"
+edition = "2021"
+autotests = false
+
+[lib]
+proc-macro = true
+
+[dependencies]
+toolu-orm-core = { path = "../orm-core", default-features = false }
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toolu-orm-core = { path = "../orm-core", default-features = false }
+toolu-orm-query = { path = "../orm-query", default-features = false }
+tokio-postgres = { workspace = true }
+libsql = { workspace = true, default-features = false, features = ["core"] }
+rusqlite.workspace = true
+
+[features]
+default = []
+libsql = ["toolu-orm-core/libsql"]
+rusqlite = ["toolu-orm-core/rusqlite"]
+postgres = ["toolu-orm-core/postgres"]
+
+# The FromRow derive emits the postgres+libsql trait shape (see
+# src/from_row_expand.rs), so suites that derive FromRow only compile on
+# the postgres lane: `cargo nextest run -p toolu-orm-macros --features postgres`.
+[[test]]
+name = "from_row_test"
+path = "tests/from_row_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "relation_parsing_test"
+path = "tests/relation_parsing_test.rs"
+
+[[test]]
+name = "relational_expansion_test"
+path = "tests/relational_expansion_test.rs"
+
+[[test]]
+name = "table_macro_test"
+path = "tests/table_macro_test/mod.rs"
+required-features = ["postgres"]
+
+[lints]
+workspace = true

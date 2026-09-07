@@ -1,0 +1,121 @@
+# toolu-orm — standalone Rust ORM workspace
+[workspace]
+resolver = "2"
+members = [
+  "crates/orm-core",
+  "crates/orm-macros",
+  "crates/orm-query",
+  "crates/orm-connection",
+  "crates/orm-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/Falconiere/toolu-orm"
+
+# ── Shared lint configuration ──────────────────────────────────────
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+unreachable = "deny"
+unimplemented = "deny"
+todo = "deny"
+indexing_slicing = "deny"
+result_large_err = "deny"
+map_err_ignore = "deny"
+cognitive_complexity = "deny"
+too_many_lines = "deny"
+too_many_arguments = "deny"
+fn_params_excessive_bools = "deny"
+struct_excessive_bools = "deny"
+single_match_else = "deny"
+manual_let_else = "deny"
+needless_pass_by_value = "deny"
+disallowed_methods = "deny"
+wildcard_enum_match_arm = "deny"
+cast_possible_truncation = "deny"
+cast_sign_loss = "deny"
+cast_possible_wrap = "deny"
+checked_conversions = "deny"
+lossy_float_literal = "deny"
+unnecessary_wraps = "deny"
+trivially_copy_pass_by_ref = "deny"
+cloned_instead_of_copied = "deny"
+flat_map_option = "deny"
+redundant_clone = "deny"
+clone_on_ref_ptr = "deny"
+large_types_passed_by_value = "deny"
+implicit_clone = "deny"
+str_to_string = "deny"
+verbose_file_reads = "deny"
+module_name_repetitions = "allow"
+similar_names = "warn"
+if_not_else = "warn"
+match_same_arms = "warn"
+redundant_else = "warn"
+missing_docs_in_private_items = "allow"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+unused_imports = "deny"
+deprecated = "deny"
+unused_must_use = "deny"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+# ── Shared dependencies ───────────────────────────────────────────
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "process", "net", "io-util", "fs", "signal"] }
+
+# Database
+libsql = { version = "0.9", default-features = false, features = ["core", "remote", "tls"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+tokio-postgres = { version = "0.7", features = ["with-uuid-1", "with-serde_json-1"] }
+deadpool-postgres = "0.14"
+postgres-types = { version = "0.2", features = ["with-uuid-1", "with-serde_json-1"] }
+tokio-postgres-rustls = "0.13"
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+rustls-native-certs = "0.8"
+
+# Error handling / tracing / async
+thiserror = "2"
+tracing = "0.1"
+async-trait = "0.1"
+
+# ── Build profiles ────────────────────────────────────────────────
+[profile.dev]
+opt-level = 0
+incremental = true
+split-debuginfo = "unpacked"
+debug = 1              # Line tables only — faster than full debuginfo (debug = 2)
+codegen-units = 256    # More parallel codegen units — faster compile, slower runtime
+
+[profile.dev.package.sha2]
+opt-level = 2
+
+[profile.dev.package.serde_json]
+opt-level = 2
+
+[profile.dev.package."*"]
+debug = 0
+
+[profile.test]
+opt-level = 0
+incremental = true
+debug = 0              # Tests rarely need debuginfo — saves compile time and disk
+codegen-units = 256
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.bench]
+inherits = "release"
