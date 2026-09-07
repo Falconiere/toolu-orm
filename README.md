@@ -134,7 +134,7 @@ the parent module never reaches them. Without it the expansion fails with
 `error[E0433]: cannot find module or crate toolu_orm_core`. Everything else
 resolves through the prelude. Emitting facade-relative paths
 (`proc-macro-crate`) would remove both the glob and this extra dependency, and
-is tracked as a follow-up. `crates/orm/tests/facade_test.rs` does not catch it:
+is tracked in [#15](https://github.com/Falconiere/toolu-orm/issues/15). `crates/orm/tests/facade_test.rs` does not catch it:
 that package depends on the four crates directly.
 
 `toolu-orm-cli` is not re-exported by the facade. Add it as a normal
