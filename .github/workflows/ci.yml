@@ -13,9 +13,32 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Live Postgres for the postgres lane (service container below).
+  TEST_DB_HOST: localhost
+  TEST_DB_PORT: "5432"
+  TEST_DB_USER: toolu
+  TEST_DB_PASSWORD: toolu
+
 jobs:
   rust:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: toolu
+          POSTGRES_PASSWORD: toolu
+          POSTGRES_DB: toolu
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U toolu -d toolu"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+
     steps:
       - uses: actions/checkout@v4
 
@@ -36,18 +59,47 @@ jobs:
       - name: Format check
         run: cargo fmt --all -- --check
 
-      # Default-feature lane: what a plain `cargo build` in this repo compiles
-      # (orm-core and orm-cli default to libsql).
+      # Lane 1, default features: what a plain `cargo build` in this repo
+      # compiles (orm-core and orm-cli default to libsql; orm-query has no
+      # driver, so only its SQL-generation tests run here).
       - name: Clippy (default features)
         run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Test (default features)
         run: cargo nextest run --workspace
 
-      # Postgres lane: enables the postgres+libsql FromRow shape, which is the
-      # only configuration where the FromRow derive suites compile.
+      # Lane 2, postgres: orm-core gets postgres+libsql (the FromRow derive
+      # shape) and orm-query gets postgres alone (its Postgres executor). Runs
+      # every live-Postgres suite against the service container.
       - name: Clippy (postgres)
         run: cargo clippy -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
 
       - name: Test (postgres)
         run: cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
+
+      # Lane 3, libsql-only: orm-query with libsql as its sole driver, which is
+      # the only way its libsql executor, transaction, and fetch code compiles.
+      - name: Clippy (orm-query, libsql only)
+        run: cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
+
+      - name: Test (orm-query, libsql only)
+        run: cargo nextest run -p toolu-orm-query --features libsql
+
+      # Lane 4, rusqlite-only: the sync executor in orm-query and the rusqlite
+      # connection in orm-connection.
+      - name: Clippy (orm-query, rusqlite only)
+        run: cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
+
+      - name: Test (orm-query, rusqlite only)
+        run: cargo nextest run -p toolu-orm-query --features rusqlite
+
+      - name: Clippy (orm-connection, rusqlite only)
+        run: cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
+
+      - name: Test (orm-connection, rusqlite only)
+        run: cargo nextest run -p toolu-orm-connection --features rusqlite
+
+      # docs/scenarios must name real tests, and every test in a scenario
+      # binary must be documented.
+      - name: Scenario docs in sync
+        run: bash scripts/check-scenario-docs.sh
