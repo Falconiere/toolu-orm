@@ -12,7 +12,9 @@ tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
 `toolu-orm-core` is listed a second time on purpose — see
-[the macro-path caveat](#the-macro-path-caveat) below.
+[the macro-path caveat](#the-macro-path-caveat) below. Keep the two on the same
+version: the crates share one workspace version, and a mismatch puts two
+different `toolu_orm_core` crates in the graph, whose types do not interoperate.
 
 `toolu-orm` contains no logic — it re-exports the four library crates and the
 proc macros:
@@ -64,7 +66,8 @@ and `toolu-orm-connection` stay behind the facade.
 ### Migrations are a separate crate
 
 The facade does not re-export `toolu-orm-cli`. Add it when you generate or apply
-migrations from your own binary:
+migrations from your own binary — despite the name it is a plain library crate
+with no `[[bin]]`, so there is nothing to `cargo install`:
 
 ```toml
 toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }

@@ -137,8 +137,17 @@ resolves through the prelude. Emitting facade-relative paths
 is tracked as a follow-up. `crates/orm/tests/facade_test.rs` does not catch it:
 that package depends on the four crates directly.
 
-The `toolu-orm-cli` migration binary stays separate — install it with
-`cargo install toolu-orm-cli --no-default-features --features libsql`.
+`toolu-orm-cli` is not re-exported by the facade. Add it as a normal
+dependency when you generate or apply migrations from your own binary — it is a
+library crate with no `[[bin]]` of its own:
+
+```toml
+toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
+```
+
+Keep `toolu-orm` and `toolu-orm-core` on the same version: they share one
+workspace version, and a mismatch means two different `toolu_orm_core` crates in
+the graph, whose types do not interoperate.
 
 ### Depending on the crates directly
 
@@ -180,8 +189,9 @@ toolu-orm-cli  = { version = "0.1", default-features = false, features = ["libsq
 tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
-`toolu-orm-cli` is a library here as well as a binary: `run_generate` and
-`run_migrate` are called from your own code.
+`toolu-orm-cli` is a plain library crate despite the name — it ships no
+binary, so `run_generate`, `run_migrate` and `get_status` are called from your
+own code (see [Migrations](#migrations) for the usual `bin/migrate.rs`).
 
 ```rust
 use toolu_orm::connection::Database;
@@ -211,8 +221,9 @@ pub struct User {
   pub created_at: i64,
 }
 
-// One driver is active (libsql), so `FromRow` asks for a single `from_row`.
-// See "Row mapping" for the derive and the other driver shapes.
+// One driver is active (libsql), so `FromRow` asks for a single `from_row` —
+// `#[derive(FromRow)]` emits the postgres+libsql shape and does NOT compile
+// here. See "Row mapping" for the derive and the other driver shapes.
 impl FromRow for User {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
 
@@ -241,7 +252,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // 3. Typed writes and reads through the generated builders.
   //    The builders run on the driver connection, which the wrapper exposes.
-  let exec = conn.inner_conn();   // &libsql::Connection
+  let exec = conn.inner_conn();   // &libsql::Connection — borrows `conn`, so
+                                  // keep `conn` alive for as long as `exec` is used
 
   UsersTable::insert()
     .set(&users::id, "u_1")
