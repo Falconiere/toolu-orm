@@ -9,6 +9,7 @@ use toolu_orm_core::journal::{compute_hash, Journal, JournalEntry};
 use super::error::MigrateError;
 use super::pending::get_pending_migrations;
 use super::store::{ensure_migrations_table, get_applied_migrations, record_migration};
+use super::transaction::{begin, commit, rollback_after};
 
 /// Applies pending migrations from the given directory to the database.
 ///
@@ -72,10 +73,7 @@ async fn apply_journal_entry(
     });
   }
 
-  conn
-    .execute_batch("BEGIN")
-    .await
-    .map_err(|e| MigrateError::Database(format!("begin transaction: {e}")))?;
+  begin(conn).await?;
 
   let exec_result = async {
     execute_migration_statements(conn, &content, &entry.name).await?;
@@ -85,21 +83,7 @@ async fn apply_journal_entry(
 
   match exec_result {
     Err(e) => Err(rollback_after(conn, e).await),
-    Ok(()) => conn
-      .execute_batch("COMMIT")
-      .await
-      .map_err(|e| MigrateError::Database(format!("commit transaction: {e}"))),
-  }
-}
-
-/// Rolls back after `err`. A ROLLBACK that fails itself (connection lost) is
-/// appended to the message so neither error is lost.
-async fn rollback_after(conn: &impl DbConnection, err: MigrateError) -> MigrateError {
-  match conn.execute_batch("ROLLBACK").await {
-    Ok(()) => err,
-    Err(rollback_err) => {
-      MigrateError::Database(format!("{err}; rollback also failed: {rollback_err}"))
-    },
+    Ok(()) => commit(conn).await,
   }
 }
 
@@ -141,10 +125,7 @@ async fn apply_migration_legacy(
   let sql = std::fs::read_to_string(&path)
     .map_err(|e| MigrateError::ReadFile(format!("{}: {e}", path.display())))?;
 
-  conn
-    .execute_batch("BEGIN")
-    .await
-    .map_err(|e| MigrateError::Database(format!("begin transaction: {e}")))?;
+  begin(conn).await?;
 
   let result = async {
     conn
@@ -159,10 +140,5 @@ async fn apply_migration_legacy(
     return Err(rollback_after(conn, e).await);
   }
 
-  conn
-    .execute_batch("COMMIT")
-    .await
-    .map_err(|e| MigrateError::Database(format!("commit transaction: {e}")))?;
-
-  result
+  commit(conn).await
 }

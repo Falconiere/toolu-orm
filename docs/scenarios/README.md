@@ -22,6 +22,7 @@ test, update its page.
 | [Postgres connection](postgres-connection.md) | `PgDatabase` pool, `PgConnection`, error mapping with SQLSTATE, unreachable server. |
 | [FromRow derive](from-row-derive.md) | `#[derive(FromRow)]` on real Postgres rows, NULL to `None`, missing columns, and the documented libsql stub. |
 | [Migration loop](migration-loop.md) | generate → migrate → evolve → generate → migrate, asserted through `PRAGMA` / `information_schema`. |
+| [Migration baseline](migration-baseline.md) | `mark_applied` / `mark_applied_through` adopt an existing database by recording journal entries without running their SQL. |
 | [Migration failures](migration-failures.md) | Rollback after a failing statement, unreadable inputs, malformed journal, absent directory, comment-only chunks. |
 | [Expression fragments](expr-fragments.md) | `Expr` SQL fragments with parameter offsets per dialect, nesting, and the empty-list constant. |
 | [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |

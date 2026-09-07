@@ -53,6 +53,39 @@ CREATE TABLE "posts" (
 CREATE INDEX IF NOT EXISTS "idx_posts_author" ON "posts" ("author_id");
 ```
 
+## Baseline an existing database
+
+A database that already carries the schema — built by a previous migration
+system — must not have those migrations replayed against it. Record them as
+applied instead:
+
+```rust
+use toolu_orm_cli::migrate::{mark_applied, mark_applied_through};
+
+// "my database is already at 0016"
+let recorded: u32 = mark_applied_through(&conn, "migrations", "0016_add_tags.sql", dialect).await?;
+
+// or name them explicitly
+let recorded = mark_applied(&conn, "migrations", &["0001_init.sql", "0002_add_posts.sql"], dialect).await?;
+```
+
+Both create `_migrations` if needed and insert one row per named journal entry,
+carrying the hash from `_journal.json` — no SQL from those files is executed, and
+the files themselves are never even read. The next `run_migrate` therefore starts
+at the first entry you did not baseline, and a later edit to a still-pending file
+is still caught by `MigrateError::HashMismatch`.
+
+The rules worth knowing:
+
+- A name with no journal entry is rejected with `MigrateError::NotInJournal`,
+  which lists every unknown name and leaves the database untouched — silently
+  recording an unknown name would throw away the hash check.
+- Names already recorded are skipped, so a baseline is idempotent; the returned
+  count is how many rows were newly written.
+- The inserts share one transaction: a baseline either lands whole or not at all.
+- Baselining asserts that the database really is at that version; nothing is
+  introspected to verify it.
+
 ## Status
 
 ```rust
