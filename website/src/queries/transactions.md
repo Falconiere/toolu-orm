@@ -76,6 +76,11 @@ conn.execute_batch("BEGIN; UPDATE counters SET n = n + 1; COMMIT;").await?;
 sqlite_conn.execute_batch("BEGIN; UPDATE counters SET n = n + 1; COMMIT;")?;
 ```
 
+The wrapper has a sync path too:
+`DbConnectionBlocking::execute_batch(&conn, "BEGIN; …; COMMIT;")?` sends the same
+script with no runtime involved. See
+[Without a runtime](../drivers/rusqlite.md#without-a-runtime).
+
 ## Migrations
 
 `run_migrate` does not need any of this: each migration file is applied inside

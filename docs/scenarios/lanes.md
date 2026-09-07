@@ -7,7 +7,7 @@
 | default | `cargo nextest run --workspace` | orm-core and orm-cli with libsql, orm-query with no driver (SQL-generation tests only), the `toolu-orm` facade with no driver |
 | postgres | `cargo nextest run -p <six crates> --features postgres` | orm-core postgres+libsql (the derive shape), orm-query postgres alone, every live-Postgres suite |
 | libsql-only | `cargo nextest run -p toolu-orm-query --features libsql` | orm-query's libsql executor, `run_transaction`, fetch methods |
-| rusqlite-only | `cargo nextest run -p toolu-orm-query --features rusqlite` and `-p toolu-orm-connection --features rusqlite` | orm-query's sync rusqlite executor and the rusqlite `DbConnection` |
+| rusqlite-only | `cargo nextest run -p toolu-orm-query --features rusqlite` and `-p toolu-orm-connection --features rusqlite` | orm-query's sync rusqlite executor, and the rusqlite `DbConnection` plus its `DbConnectionBlocking` twin (see [Blocking connection](blocking-connection.md)) |
 
 Before this program, only the first two lanes ran. The four suites below existed but could not compile (`E0407: method from_pg_row is not a member of trait FromRow`): they implemented the two-driver shape while their `required-features` resolved to one driver. They now implement `from_row` and run on their lane.
 

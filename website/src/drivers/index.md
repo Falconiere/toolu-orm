@@ -1,11 +1,12 @@
 # Connections
 
-There are two connection abstractions, and knowing which one a function wants
+There are three connection abstractions, and knowing which one a function wants
 saves a compile error.
 
 | Trait | Crate | Implemented for | Used by |
 |---|---|---|---|
 | `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `toolu_orm_connection::PgTransaction` | `run_migrate`, `get_status`, and your own code |
+| `DbConnectionBlocking` | `toolu-orm-connection` | `RusqliteConnection` only | your own code, with no runtime |
 | `Executor` | `toolu-orm-query` | `libsql::Connection`, `rusqlite::Connection`, `tokio_postgres::Client`, `toolu_orm_query::executor::PgTransaction` | the query builders' `.execute()` and `fetch_*` |
 
 Both rows end in a `PgTransaction`, and they are **two different types** — the
@@ -28,6 +29,21 @@ pub trait DbConnection: Send + Sync {
 
 Take `&impl DbConnection` in your own repository functions and the driver becomes
 a Cargo feature rather than a rewrite.
+
+`DbConnectionBlocking` is the same surface without the `async`, and only rusqlite
+implements it — it is the one in-process driver, so it is the one that can run a
+statement without a runtime:
+
+```rust
+pub trait DbConnectionBlocking: Send + Sync {
+  fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError>;
+  fn query_map<T: FromRow>(&self, sql: &str, params: Vec<Value>) -> Result<Vec<T>, DbError>;
+  fn execute_batch(&self, sql: &str) -> Result<(), DbError>;
+}
+```
+
+Note the missing `Send + 'static` on `T`: rows are decoded on the calling thread.
+See [rusqlite](rusqlite.md#without-a-runtime).
 
 `Executor` is the narrower trait the builders run on, and it is implemented on
 the **driver's own connection type**. The wrappers expose it:
@@ -55,14 +71,15 @@ let users: Vec<User> = UsersTable::select_for::<User>().fetch_all(exec).await?;
 let users: Vec<User> = UsersTable::select_for::<User>().fetch_all(&sqlite_conn)?;
 ```
 
-`RusqliteConnection` from the connection crate is the async side of the same
-driver: it wraps the calls in `spawn_blocking`, which is what lets it implement
-the async `DbConnection` and run migrations.
+`RusqliteConnection` from the connection crate implements both: `DbConnection`,
+by wrapping the calls in `spawn_blocking` so it can run migrations alongside the
+async drivers, and `DbConnectionBlocking` natively, for consumers with no runtime.
+The async impl delegates to the blocking one, so the two cannot drift.
 
 ## Choosing
 
 | Driver | Reach for it when |
 |---|---|
 | [libsql](libsql.md) | Turso, embedded replicas, or a local SQLite file in an async application. |
-| [rusqlite](rusqlite.md) | Plain local SQLite with no async runtime requirement, or tests. |
+| [rusqlite](rusqlite.md) | Plain local SQLite with no async runtime requirement (`DbConnectionBlocking`), or tests. |
 | [Postgres](postgres.md) | A server database, connection pooling, TLS. |
