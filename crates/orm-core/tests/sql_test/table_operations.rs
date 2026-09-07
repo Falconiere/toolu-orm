@@ -25,6 +25,7 @@ fn test_create_table_sql() {
       ],
       indexes: vec![],
       strict: false,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -57,6 +58,7 @@ fn test_create_strict_table() {
       columns: vec![col("id", ColumnType::Uuid, true, false)],
       indexes: vec![],
       strict: true,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -79,9 +81,11 @@ fn test_non_strict_keeps_fk_references() {
         on_delete: Some(ForeignKeyAction::Cascade),
         on_update: None,
         check: None,
+        unindexed: false,
       }],
       indexes: vec![],
       strict: false,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   // `references` is a foreign key regardless of `strict`; `strict` only
@@ -118,10 +122,12 @@ fn test_non_strict_uses_compat_types() {
           on_delete: None,
           on_update: None,
           check: None,
+          unindexed: false,
         },
       ],
       indexes: vec![],
       strict: false,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -172,6 +178,7 @@ fn create_table_postgres_uses_uuid_and_boolean() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
       ColumnDef {
         name: "active".to_owned(),
@@ -184,10 +191,12 @@ fn create_table_postgres_uses_uuid_and_boolean() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
     ],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
 
   let ops = vec![Operation::CreateTable { table }];

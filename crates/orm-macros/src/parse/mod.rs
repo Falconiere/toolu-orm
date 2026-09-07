@@ -15,6 +15,7 @@
 //! let indexes = parse_index_attrs(&mut item_struct)?;
 //! ```
 
+mod column_flags;
 mod column_parsing;
 mod index_parsing;
 pub mod relation_parsing;

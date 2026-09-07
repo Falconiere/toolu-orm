@@ -20,9 +20,11 @@ fn test_column_with_unique_constraint() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       }],
       indexes: vec![],
       strict: false,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -45,9 +47,11 @@ fn test_column_with_references() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       }],
       indexes: vec![],
       strict: true,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -70,9 +74,11 @@ fn test_create_table_with_on_delete_cascade() {
         on_delete: Some(ForeignKeyAction::Cascade),
         on_update: None,
         check: None,
+        unindexed: false,
       }],
       indexes: vec![],
       strict: true,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -102,9 +108,11 @@ fn test_create_table_with_check_constraint() {
         on_delete: None,
         on_update: None,
         check: Some(r#"CHECK("status" IN ('draft', 'active', 'archived'))"#.to_owned()),
+        unindexed: false,
       }],
       indexes: vec![],
       strict: true,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);

@@ -13,6 +13,7 @@ fn create_enum_before_create_table() {
         columns: vec![],
         indexes: vec![],
         strict: false,
+        kind: toolu_orm_core::table::TableKind::Ordinary,
       },
     },
     Operation::CreateEnum {
@@ -45,6 +46,7 @@ fn drop_index_before_alter_column() {
         columns: vec![],
         indexes: vec![],
         strict: false,
+        kind: toolu_orm_core::table::TableKind::Ordinary,
       },
     },
     Operation::DropIndex {
@@ -107,6 +109,7 @@ fn add_column_before_create_index() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
     },
   ];

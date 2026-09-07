@@ -22,6 +22,7 @@ fn snapshot_roundtrip_with_btreemap_columns() -> Result<(), Box<dyn std::error::
       on_delete: None,
       on_update: None,
       check: None,
+      unindexed: false,
     },
   );
   columns.insert(
@@ -37,6 +38,7 @@ fn snapshot_roundtrip_with_btreemap_columns() -> Result<(), Box<dyn std::error::
       on_delete: None,
       on_update: None,
       check: None,
+      unindexed: false,
     },
   );
 
@@ -47,6 +49,7 @@ fn snapshot_roundtrip_with_btreemap_columns() -> Result<(), Box<dyn std::error::
     foreign_keys: BTreeMap::new(),
     check_constraints: BTreeMap::new(),
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
 
   let mut tables = BTreeMap::new();
@@ -111,6 +114,7 @@ fn snapshot_indexes_use_btreemap() -> Result<(), Box<dyn std::error::Error>> {
     foreign_keys: BTreeMap::new(),
     check_constraints: BTreeMap::new(),
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
 
   let json = serde_json::to_string(&table)?;

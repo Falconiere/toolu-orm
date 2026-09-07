@@ -3,7 +3,6 @@
 //! # Public API
 //!
 //! - [`ColumnInput`] — parsed column definition
-//! - [`ColumnFlags`] — bitflag constraints (primary_key, not_null, etc.)
 //! - [`TypeSpec`] — simple or varchar type specification
 //! - [`parse_struct`] — parse named fields into column inputs
 //! - [`strip_column_attrs`] — remove `#[column]` attrs before re-emission
@@ -17,57 +16,7 @@
 
 use syn::{Attribute, Error, Fields, ItemStruct, Lit, Result};
 
-/// Column constraint flags (avoids excessive bools in structs for Clippy).
-#[derive(Clone, Copy, Default)]
-pub struct ColumnFlags(u8);
-
-const FLAG_PRIMARY_KEY: u8 = 1 << 0;
-const FLAG_NOT_NULL: u8 = 1 << 1;
-const FLAG_UNIQUE: u8 = 1 << 2;
-const FLAG_AS_TEXT: u8 = 1 << 3;
-
-impl ColumnFlags {
-  pub const fn primary_key(self) -> bool {
-    (self.0 & FLAG_PRIMARY_KEY) != 0
-  }
-  pub const fn not_null(self) -> bool {
-    (self.0 & FLAG_NOT_NULL) != 0
-  }
-  pub const fn unique(self) -> bool {
-    (self.0 & FLAG_UNIQUE) != 0
-  }
-  pub const fn as_text(self) -> bool {
-    (self.0 & FLAG_AS_TEXT) != 0
-  }
-  fn set_primary_key(&mut self, v: bool) {
-    if v {
-      self.0 |= FLAG_PRIMARY_KEY;
-    } else {
-      self.0 &= !FLAG_PRIMARY_KEY;
-    }
-  }
-  fn set_not_null(&mut self, v: bool) {
-    if v {
-      self.0 |= FLAG_NOT_NULL;
-    } else {
-      self.0 &= !FLAG_NOT_NULL;
-    }
-  }
-  fn set_unique(&mut self, v: bool) {
-    if v {
-      self.0 |= FLAG_UNIQUE;
-    } else {
-      self.0 &= !FLAG_UNIQUE;
-    }
-  }
-  fn set_as_text(&mut self, v: bool) {
-    if v {
-      self.0 |= FLAG_AS_TEXT;
-    } else {
-      self.0 &= !FLAG_AS_TEXT;
-    }
-  }
-}
+use super::column_flags::ColumnFlags;
 
 pub enum TypeSpec {
   Simple(String),
@@ -141,7 +90,7 @@ fn parse_column_attrs(attrs: &[Attribute]) -> Result<ColumnAttrs> {
     }
     attr.parse_nested_meta(|meta| {
       if meta.path.is_ident("as_text") {
-        result.flags.set_as_text(true);
+        result.flags.set_as_text();
       } else if meta.path.is_ident("column_type") {
         let value = meta.value()?;
         let expr: syn::Expr = value.parse()?;
@@ -155,11 +104,13 @@ fn parse_column_attrs(attrs: &[Attribute]) -> Result<ColumnAttrs> {
           }
         }
       } else if meta.path.is_ident("primary_key") {
-        result.flags.set_primary_key(true);
+        result.flags.set_primary_key();
       } else if meta.path.is_ident("not_null") {
-        result.flags.set_not_null(true);
+        result.flags.set_not_null();
       } else if meta.path.is_ident("unique") {
-        result.flags.set_unique(true);
+        result.flags.set_unique();
+      } else if meta.path.is_ident("unindexed") {
+        result.flags.set_unindexed();
       } else if meta.path.is_ident("default") {
         let value = meta.value()?;
         let lit: Lit = value.parse()?;

@@ -48,6 +48,7 @@ fn text_column(name: &str, primary_key: bool) -> ColumnDef {
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   }
 }
 
@@ -62,6 +63,7 @@ fn registry_with_table(table_name: &str, column_names: &[&str]) -> SchemaRegistr
     columns,
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   }])
 }
 
@@ -131,7 +133,8 @@ fn table_rename_produces_rename_table_op_and_no_create_drop_table() {
     new: "people",
   };
 
-  let ops = diff_with_resolver(&old_snapshot, &new_registry, &resolver);
+  let ops =
+    diff_with_resolver(&old_snapshot, &new_registry, &resolver).expect("diff should succeed");
 
   assert!(ops.iter().any(|op| matches!(
     op,
@@ -153,7 +156,8 @@ fn table_rename_sql_contains_alter_table_rename_to() {
     new: "people",
   };
 
-  let ops = diff_with_resolver(&old_snapshot, &new_registry, &resolver);
+  let ops =
+    diff_with_resolver(&old_snapshot, &new_registry, &resolver).expect("diff should succeed");
 
   let sqlite_sql = generate_sql_for(&ops, Dialect::Sqlite);
   assert!(sqlite_sql.contains(r#"ALTER TABLE "users" RENAME TO "people""#));
@@ -175,7 +179,8 @@ fn column_rename_produces_rename_column_op_and_no_add_drop_column() {
     new: "full_name",
   };
 
-  let ops = diff_with_resolver(&old_snapshot, &new_registry, &resolver);
+  let ops =
+    diff_with_resolver(&old_snapshot, &new_registry, &resolver).expect("diff should succeed");
 
   assert!(ops.iter().any(|op| matches!(
     op,
@@ -199,7 +204,8 @@ fn column_rename_sql_contains_rename_column_to() {
     new: "full_name",
   };
 
-  let ops = diff_with_resolver(&old_snapshot, &new_registry, &resolver);
+  let ops =
+    diff_with_resolver(&old_snapshot, &new_registry, &resolver).expect("diff should succeed");
 
   let sqlite_sql = generate_sql_for(&ops, Dialect::Sqlite);
   assert!(sqlite_sql.contains(r#"ALTER TABLE "users" RENAME COLUMN "name" TO "full_name""#));
@@ -216,7 +222,8 @@ fn empty_resolver_yields_drop_and_create_instead_of_rename() {
   let old_snapshot = Snapshot::from_registry(&old_registry);
   let new_registry = registry_with_table("people", &["id", "name"]);
 
-  let ops = diff_with_resolver(&old_snapshot, &new_registry, &NoRenames);
+  let ops =
+    diff_with_resolver(&old_snapshot, &new_registry, &NoRenames).expect("diff should succeed");
 
   assert!(ops
     .iter()

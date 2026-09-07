@@ -55,6 +55,11 @@ path = "tests/migration_loop_postgres_test.rs"
 required-features = ["libsql", "postgres"]
 
 [[test]]
+name = "fts5_loop_sqlite_test"
+path = "tests/fts5_loop_sqlite_test.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "migrate_failure_test"
 path = "tests/migrate_failure_test.rs"
 required-features = ["libsql"]

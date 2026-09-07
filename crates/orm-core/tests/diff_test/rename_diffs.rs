@@ -43,7 +43,7 @@ fn diff_rename_table_via_resolver() {
     column_renames: vec![],
   };
 
-  let ops = diff_with_resolver(&old, &new_reg, &resolver);
+  let ops = diff_with_resolver(&old, &new_reg, &resolver).expect("diff should succeed");
   match ops.as_slice() {
     [Operation::RenameTable { old, new }] => {
       assert_eq!(old, "users");
@@ -76,7 +76,7 @@ fn diff_rename_column_via_resolver() {
     column_renames: vec![("name".to_owned(), "full_name".to_owned())],
   };
 
-  let ops = diff_with_resolver(&old, &new_reg, &resolver);
+  let ops = diff_with_resolver(&old, &new_reg, &resolver).expect("diff should succeed");
   match ops.as_slice() {
     [Operation::RenameColumn { table, old, new }] => {
       assert_eq!(table, "users");

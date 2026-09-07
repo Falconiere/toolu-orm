@@ -5,7 +5,7 @@ use toolu_orm_core::column::{ColumnDef, ColumnType};
 use toolu_orm_core::diff::{diff, Operation};
 use toolu_orm_core::schema::SchemaRegistry;
 use toolu_orm_core::snapshot::Snapshot;
-use toolu_orm_core::table::TableDef;
+use toolu_orm_core::table::{TableDef, TableKind};
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -28,6 +28,7 @@ fn users_column(name: &str, primary_key: bool, not_null: bool) -> ColumnDef {
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   }
 }
 
@@ -40,6 +41,7 @@ fn matching_registry() -> SchemaRegistry {
     ],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   let mut author_id = users_column("author_id", false, true);
   author_id.references = Some("users(id)".to_owned());
@@ -48,6 +50,7 @@ fn matching_registry() -> SchemaRegistry {
     columns: vec![users_column("id", true, true), author_id],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   SchemaRegistry::from_tables(vec![users, posts])
 }
@@ -87,12 +90,34 @@ fn legacy_snapshot_columns_are_keyed_by_name() -> TestResult {
   Ok(())
 }
 
+/// The fixture predates virtual tables: it has no `kind` on a table and no
+/// `unindexed` on a column, and must still load as an ordinary table whose
+/// columns are all indexed.
+#[test]
+fn legacy_tables_default_to_ordinary_kind_and_indexed_columns() -> TestResult {
+  let snapshot = Snapshot::read_from_path(&fixture_path())?;
+  for (name, table) in &snapshot.tables {
+    assert_eq!(table.kind, TableKind::Ordinary, "{name} is not ordinary");
+    for (column_name, column) in &table.columns {
+      assert!(
+        !column.unindexed,
+        "{name}.{column_name} came back unindexed"
+      );
+    }
+  }
+  let restored = snapshot.to_registry();
+  for table in restored.tables() {
+    assert!(!table.is_virtual(), "{} became virtual", table.name);
+  }
+  Ok(())
+}
+
 #[test]
 fn diff_against_legacy_snapshot_yields_single_add_foreign_key() -> TestResult {
   let legacy = Snapshot::read_from_path(&fixture_path())?;
   let registry = matching_registry();
 
-  let ops = diff(&legacy, &registry);
+  let ops = diff(&legacy, &registry).expect("diff should succeed");
   assert_eq!(ops.len(), 1);
   let op = ops.first().ok_or("expected one operation")?;
   let Operation::AddForeignKey { table, fk } = op else {

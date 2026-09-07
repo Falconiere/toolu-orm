@@ -2,6 +2,7 @@ mod column_enum;
 mod expand;
 mod from_row;
 mod from_row_expand;
+mod fts5;
 mod parse;
 mod paths;
 mod relational;
@@ -64,6 +65,76 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
   };
 
   output.into()
+}
+
+/// Declares a `CREATE VIRTUAL TABLE … USING fts5(…)` table.
+///
+/// ```ignore
+/// #[fts5_table(name = "memory_fts", tokenize = "porter unicode61")]
+/// pub struct MemoryFts {
+///   #[column(unindexed)]
+///   pub memory_id: Text,
+///   pub body: Text,
+/// }
+/// ```
+///
+/// Accepts `name` (required), `tokenize`, `prefix`, `content`,
+/// `content_rowid`, `columnsize` and `detail`. Indexes are rejected: SQLite
+/// cannot index a virtual table.
+#[proc_macro_attribute]
+pub fn fts5_table(attr: TokenStream, item: TokenStream) -> TokenStream {
+  match expand_fts5_table(attr, item) {
+    Ok(tokens) => tokens,
+    Err(e) => e.to_compile_error().into(),
+  }
+}
+
+fn expand_fts5_table(attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream> {
+  let item_struct = syn::parse::<ItemStruct>(item)?;
+  let parser = syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated;
+  let metas: Vec<Meta> = parser.parse(attr)?.into_iter().collect();
+  let attrs = fts5::parse_attrs(&metas)?;
+
+  for struct_attr in &item_struct.attrs {
+    if struct_attr.path().is_ident("index") || struct_attr.path().is_ident("unique_index") {
+      return Err(syn::Error::new_spanned(
+        struct_attr,
+        "virtual tables cannot declare indexes; remove it from #[fts5_table]",
+      ));
+    }
+  }
+
+  let columns = parse::parse_struct(&item_struct)?;
+  if columns.is_empty() {
+    return Err(syn::Error::new_spanned(
+      &item_struct,
+      "an fts5 table needs at least one column",
+    ));
+  }
+
+  let table_name = attrs.name.clone().unwrap_or_default();
+  let input = parse::TableInput {
+    table_name,
+    strict: false,
+    struct_name: item_struct.ident.clone(),
+    columns,
+    indexes: Vec::new(),
+  };
+
+  let schema_impl = fts5::expand(&attrs, &input);
+  let columns_mod = expand::expand_columns_module(&input);
+  let builder_methods = expand::expand_builder_methods(&input);
+  let clean_struct = parse::strip_column_attrs(item_struct);
+
+  Ok(
+    quote::quote! {
+      #clean_struct
+      #schema_impl
+      #builder_methods
+      #columns_mod
+    }
+    .into(),
+  )
 }
 
 fn parse_view_attrs(item: &mut ItemStruct) -> syn::Result<Vec<view::ViewInput>> {

@@ -5,6 +5,7 @@ mod engine;
 mod enums;
 mod fk;
 mod operation;
+mod virtual_tables;
 
 pub use engine::{diff, diff_with_resolver};
 pub use enums::diff_enums;

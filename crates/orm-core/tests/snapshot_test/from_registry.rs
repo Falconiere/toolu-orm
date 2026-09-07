@@ -19,6 +19,7 @@ fn from_registry_extracts_foreign_keys() -> Result<(), Box<dyn std::error::Error
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
       ColumnDef {
         name: "author_id".to_owned(),
@@ -31,10 +32,12 @@ fn from_registry_extracts_foreign_keys() -> Result<(), Box<dyn std::error::Error
         on_delete: Some(ForeignKeyAction::Cascade),
         on_update: None,
         check: None,
+        unindexed: false,
       },
     ],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
 
   let registry = SchemaRegistry::from_tables(vec![table]);
@@ -66,6 +69,7 @@ fn from_registry_columns_are_btreemap_keyed_by_name() -> Result<(), Box<dyn std:
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
       ColumnDef {
         name: "email".to_owned(),
@@ -78,10 +82,12 @@ fn from_registry_columns_are_btreemap_keyed_by_name() -> Result<(), Box<dyn std:
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
     ],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
 
   let registry = SchemaRegistry::from_tables(vec![table]);
@@ -116,9 +122,11 @@ fn from_registry_extracts_check_constraints() -> Result<(), Box<dyn std::error::
       on_delete: None,
       on_update: None,
       check: Some("CHECK(\"status\" IN ('draft', 'active'))".to_owned()),
+      unindexed: false,
     }],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
 
   let registry = SchemaRegistry::from_tables(vec![table]);

@@ -61,6 +61,7 @@ Cargo feature; the application code does not change.
 | 🏗️ **Four builders, one executor** | `SelectBuilder`, `InsertBuilder` (with `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
 | 🌐 **Dialect-aware SQL** | `to_sql_for(Dialect::Sqlite)` emits `?N` placeholders; `Dialect::Postgres` emits `$N`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`, and `LEFT JOIN LATERAL` + `json_agg` for relations. |
 | 🕸️ **Relational loads without N+1** | `#[derive(Relational)]` with `#[has_many]`, `#[belongs_to]`, `#[many_to_many]`; `RelationalQuery` fetches parent + children as JSON arrays in a single statement per dialect. |
+| 🔎 **Full-text search** | `#[fts5_table]` (or the `Fts5Table` builder) declares an SQLite FTS5 virtual table with `UNINDEXED` columns, a free-form tokenizer, and external content. Migrations emit `CREATE VIRTUAL TABLE ... USING fts5(...)`. |
 | 🧬 **Enums and views** | `#[derive(ColumnEnum)]` stores a Rust enum as text; `#[view(Name, pick(...))]` / `omit(...)` generates subset structs from a table. |
 | 🔄 **Transactions** | `conn.run_transaction(|tx| async move { ... })` commits on `Ok`, rolls back on `Err`. |
 | 🔌 **Three drivers, one trait** | `DbConnection` over libsql (async, Turso embedded replica with sync retry), rusqlite (sync, wrapped in `spawn_blocking`), and Postgres (`deadpool-postgres` pool, rustls TLS). |
@@ -332,6 +333,43 @@ That is the single-driver shape. With two drivers unified on `toolu-orm-core`
 the trait asks for one method per driver instead — `from_pg_row`,
 `from_libsql_row`, `from_rusqlite_row` — which is the shape
 `#[derive(FromRow)]` emits.
+
+### Virtual tables (SQLite FTS5)
+
+`#[fts5_table]` declares a full-text index. It generates the same items as
+`#[table]` — a `TableSchema`, typed `Column<T>` constants, builder factories —
+but the `TableDef` carries `TableKind::Virtual { module: "fts5", args }`:
+
+```rust
+use toolu_orm_macros::fts5_table;
+
+#[fts5_table(name = "memory_fts", tokenize = "porter unicode61 remove_diacritics 2")]
+pub struct MemoryFts {
+  #[column(unindexed)]
+  pub memory_id: Text,
+  pub body: Text,
+  pub tags: Text,
+}
+```
+
+```sql
+CREATE VIRTUAL TABLE IF NOT EXISTS "memory_fts" USING fts5("memory_id" UNINDEXED,
+  "body", "tags", tokenize = 'porter unicode61 remove_diacritics 2');
+```
+
+`name` is required; `tokenize`, `prefix`, `content`, `content_rowid`,
+`columnsize` and `detail` are passed through to the module verbatim, so a
+tokenizer this crate has never heard of still works. `#[column(unindexed)]`
+appends `UNINDEXED`: the value is stored and readable but not searchable.
+`Fts5Table` is the same thing without the macro, for a `TableDef` built at
+runtime.
+
+SQLite cannot `ALTER` a virtual table, so `run_generate` refuses any in-place
+change to one — a new column, a different tokenizer, a switched module — with
+`DbCoreError::VirtualTableChange` and writes no migration; drop and recreate it
+instead. Creating, dropping and renaming work as usual. On Postgres the table is
+skipped with a comment naming it. Other modules (`vec0`, `rtree`) need no new
+code: build the `TableDef` with `TableKind::virtual_table(module, args)`.
 
 ---
 

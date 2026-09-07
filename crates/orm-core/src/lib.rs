@@ -17,6 +17,7 @@ pub mod dialect;
 pub mod diff;
 pub mod error;
 pub mod expr;
+pub mod fts5;
 pub mod index;
 pub mod journal;
 pub mod ordering;

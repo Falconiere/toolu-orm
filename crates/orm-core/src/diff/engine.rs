@@ -3,6 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::column::ColumnDef;
+use crate::error::DbCoreError;
 use crate::index::IndexDef;
 use crate::rename::{NoRenames, RenameResolver};
 use crate::schema::SchemaRegistry;
@@ -13,20 +14,32 @@ use super::column::compute_column_changes;
 use super::enums::diff_enums;
 use super::fk::{diff_check_constraints_inner, diff_foreign_keys_inner};
 use super::operation::Operation;
+use super::virtual_tables::{check_new_virtual_table, check_virtual_pair};
 
-pub fn diff(old_snapshot: &Snapshot, new_schema: &SchemaRegistry) -> Vec<Operation> {
+/// # Errors
+///
+/// Returns [`DbCoreError::VirtualTableChange`] when a virtual table changed in
+/// a way SQLite cannot apply. See [`super::virtual_tables`].
+pub fn diff(
+  old_snapshot: &Snapshot,
+  new_schema: &SchemaRegistry,
+) -> Result<Vec<Operation>, DbCoreError> {
   diff_with_resolver(old_snapshot, new_schema, &NoRenames)
 }
 
+/// # Errors
+///
+/// Returns [`DbCoreError::VirtualTableChange`] when a virtual table changed in
+/// a way SQLite cannot apply. See [`super::virtual_tables`].
 pub fn diff_with_resolver(
   old_snapshot: &Snapshot,
   new_schema: &SchemaRegistry,
   resolver: &impl RenameResolver,
-) -> Vec<Operation> {
+) -> Result<Vec<Operation>, DbCoreError> {
   let new_snap = Snapshot::from_registry(new_schema);
   let mut ops = diff_enums(old_snapshot, &new_snap);
-  ops.extend(diff_tables(old_snapshot, &new_snap, new_schema, resolver));
-  ops
+  ops.extend(diff_tables(old_snapshot, &new_snap, new_schema, resolver)?);
+  Ok(ops)
 }
 
 fn diff_tables(
@@ -34,7 +47,7 @@ fn diff_tables(
   new_snap: &Snapshot,
   new_schema: &SchemaRegistry,
   resolver: &impl RenameResolver,
-) -> Vec<Operation> {
+) -> Result<Vec<Operation>, DbCoreError> {
   let mut ops = Vec::new();
   let old_names: BTreeSet<String> = old_snapshot.tables.keys().cloned().collect();
   let new_names: BTreeSet<String> = new_snap.tables.keys().cloned().collect();
@@ -68,6 +81,7 @@ fn diff_tables(
 
   for table in new_schema.tables() {
     if pure_added.contains(&table.name) {
+      check_new_virtual_table(table)?;
       ops.push(Operation::CreateTable {
         table: table.clone(),
       });
@@ -90,6 +104,9 @@ fn diff_tables(
     let Some(new_st) = new_snap.tables.get(&table.name) else {
       continue;
     };
+    if check_virtual_pair(&table.name, old_st, new_st)? {
+      continue;
+    }
 
     diff_columns_for_table(
       &mut ops,
@@ -114,7 +131,7 @@ fn diff_tables(
     );
   }
 
-  ops
+  Ok(ops)
 }
 
 fn diff_columns_for_table(

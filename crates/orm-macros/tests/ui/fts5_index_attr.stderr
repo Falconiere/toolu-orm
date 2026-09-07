@@ -1,0 +1,5 @@
+error: virtual tables cannot declare indexes; remove it from #[fts5_table]
+ --> tests/ui/fts5_index_attr.rs:6:1
+  |
+6 | #[index("idx_memory_fts_body", body)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

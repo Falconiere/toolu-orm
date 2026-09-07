@@ -9,7 +9,7 @@ use crate::column::{ColumnDef, ForeignKeyAction};
 use crate::error::DbCoreError;
 use crate::index::IndexDef;
 use crate::schema::SchemaRegistry;
-use crate::table::TableDef;
+use crate::table::{TableDef, TableKind};
 
 use super::extract;
 use super::serde_compat;
@@ -92,6 +92,9 @@ pub struct SnapshotTable {
   pub foreign_keys: BTreeMap<String, ForeignKeyDef>,
   pub check_constraints: BTreeMap<String, String>,
   pub strict: bool,
+  /// [`TableKind::Ordinary`] for every table written before virtual tables
+  /// existed, and omitted from the JSON when ordinary.
+  pub kind: TableKind,
 }
 
 impl serde::Serialize for SnapshotTable {
@@ -141,6 +144,7 @@ impl Snapshot {
           foreign_keys: fks,
           check_constraints: checks,
           strict: table.strict,
+          kind: table.kind.clone(),
         },
       );
     }
@@ -168,6 +172,7 @@ impl Snapshot {
           columns: ordered_columns(&snap_table),
           indexes: snap_table.indexes.values().cloned().collect(),
           strict: snap_table.strict,
+          kind: snap_table.kind.clone(),
         }
       })
       .collect();

@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::column::ColumnDef;
 use crate::index::IndexDef;
+use crate::table::TableKind;
 
 use super::types::{ForeignKeyDef, SnapshotTable};
 
@@ -26,6 +27,8 @@ where
     foreign_keys: &'a BTreeMap<String, ForeignKeyDef>,
     check_constraints: &'a BTreeMap<String, String>,
     strict: bool,
+    #[serde(skip_serializing_if = "TableKind::is_ordinary")]
+    kind: &'a TableKind,
   }
   SnapshotTableSer {
     column_order: &table.column_order,
@@ -34,6 +37,7 @@ where
     foreign_keys: &table.foreign_keys,
     check_constraints: &table.check_constraints,
     strict: table.strict,
+    kind: &table.kind,
   }
   .serialize(serializer)
 }
@@ -55,6 +59,8 @@ where
     check_constraints: BTreeMap<String, String>,
     #[serde(default)]
     strict: bool,
+    #[serde(default)]
+    kind: TableKind,
   }
   let w = Wire::deserialize(deserializer)?;
   let (columns, inferred_order) =
@@ -76,6 +82,7 @@ where
     foreign_keys: w.foreign_keys,
     check_constraints: w.check_constraints,
     strict: w.strict,
+    kind: w.kind,
   })
 }
 

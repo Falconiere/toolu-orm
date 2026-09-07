@@ -54,7 +54,7 @@ pub fn run_generate(
     }
   };
 
-  let ops = diff(&old_snapshot, registry);
+  let ops = diff(&old_snapshot, registry)?;
   if ops.is_empty() {
     return Ok(None);
   }

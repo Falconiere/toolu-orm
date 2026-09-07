@@ -43,6 +43,7 @@ fn test_alter_column_generates_table_recreation_sqlite() {
       ],
       indexes: vec![],
       strict: false,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);

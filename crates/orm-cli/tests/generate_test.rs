@@ -2,7 +2,7 @@ use toolu_orm_core::column::{ColumnDef, ColumnType};
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::journal::Journal;
 use toolu_orm_core::schema::SchemaRegistry;
-use toolu_orm_core::table::TableDef;
+use toolu_orm_core::table::{TableDef, TableKind};
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -18,6 +18,7 @@ fn col(name: &str, ct: ColumnType, pk: bool, nn: bool) -> ColumnDef {
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   }
 }
 
@@ -30,6 +31,7 @@ fn sample_registry() -> SchemaRegistry {
     ],
     indexes: vec![],
     strict: false,
+    kind: TableKind::Ordinary,
   }])
 }
 
@@ -53,9 +55,11 @@ fn test_generate_creates_journal_and_snapshot() -> TestResult {
       on_delete: None,
       on_update: None,
       check: None,
+      unindexed: false,
     }],
     indexes: vec![],
     strict: true,
+    kind: TableKind::Ordinary,
   }]);
 
   let result =
@@ -91,6 +95,7 @@ fn test_generate_incremental_migration() -> TestResult {
     columns: vec![col("id", ColumnType::Text, true, false)],
     indexes: vec![],
     strict: false,
+    kind: TableKind::Ordinary,
   }]);
   toolu_orm_cli::generate::run_generate(&initial, mig_path, "initial", Dialect::Sqlite)?;
 
@@ -147,9 +152,11 @@ fn generate_creates_postgres_migration() -> TestResult {
       on_delete: None,
       on_update: None,
       check: None,
+      unindexed: false,
     }],
     indexes: vec![],
     strict: false,
+    kind: TableKind::Ordinary,
   }]);
 
   let result =
@@ -185,9 +192,11 @@ fn generate_creates_sqlite_migration() -> TestResult {
       on_delete: None,
       on_update: None,
       check: None,
+      unindexed: false,
     }],
     indexes: vec![],
     strict: false,
+    kind: TableKind::Ordinary,
   }]);
 
   let result = toolu_orm_cli::generate::run_generate(&registry, mig_path, "init", Dialect::Sqlite)?;
@@ -221,9 +230,11 @@ fn generate_sets_dialect_in_snapshot() -> TestResult {
       on_delete: None,
       on_update: None,
       check: None,
+      unindexed: false,
     }],
     indexes: vec![],
     strict: false,
+    kind: TableKind::Ordinary,
   }]);
 
   toolu_orm_cli::generate::run_generate(&registry, mig_path, "init", Dialect::Postgres)?;
