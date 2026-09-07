@@ -15,7 +15,7 @@ use crate::paths;
 /// Parsed `#[fts5_table(...)]` arguments.
 #[derive(Default)]
 pub struct Fts5Attrs {
-  pub name: Option<String>,
+  name: Option<String>,
   tokenize: Option<String>,
   prefix: Option<String>,
   content: Option<String>,
@@ -53,13 +53,19 @@ pub fn parse_attrs(metas: &[Meta]) -> syn::Result<Fts5Attrs> {
       _ => return Err(syn::Error::new_spanned(&nv.path, KNOWN_KEYS)),
     }
   }
-  if attrs.name.is_none() {
-    return Err(syn::Error::new(
-      Span::call_site(),
-      "missing `name` in #[fts5_table(name = \"...\")]",
-    ));
-  }
   Ok(attrs)
+}
+
+impl Fts5Attrs {
+  /// The table name, the one attribute an FTS5 table cannot do without.
+  pub fn table_name(&self) -> syn::Result<String> {
+    self.name.clone().ok_or_else(|| {
+      syn::Error::new(
+        Span::call_site(),
+        "missing `name` in #[fts5_table(name = \"...\")]",
+      )
+    })
+  }
 }
 
 fn string_value(expr: &Expr) -> syn::Result<String> {
