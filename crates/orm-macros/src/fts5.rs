@@ -56,6 +56,34 @@ pub fn parse_attrs(metas: &[Meta]) -> syn::Result<Fts5Attrs> {
   Ok(attrs)
 }
 
+/// FTS5 stores every column as unconstrained text, so a constraint on one is
+/// a mistake the DDL would silently swallow.
+pub fn check_columns(columns: &[ColumnInput]) -> syn::Result<()> {
+  for column in columns {
+    let offender = if column.flags.primary_key() {
+      "primary_key"
+    } else if column.flags.not_null() {
+      "not_null"
+    } else if column.flags.unique() {
+      "unique"
+    } else if column.default.is_some() {
+      "default"
+    } else if column.references.is_some() {
+      "references"
+    } else {
+      continue;
+    };
+    return Err(syn::Error::new(
+      Span::call_site(),
+      format!(
+        "`{offender}` on `{}`: an fts5 column carries no constraints, only #[column(unindexed)]",
+        column.field_name
+      ),
+    ));
+  }
+  Ok(())
+}
+
 impl Fts5Attrs {
   /// The table name, the one attribute an FTS5 table cannot do without.
   pub fn table_name(&self) -> syn::Result<String> {

@@ -112,6 +112,7 @@ fn expand_fts5_table(attr: TokenStream, item: TokenStream) -> syn::Result<TokenS
     ));
   }
 
+  fts5::check_columns(&columns)?;
   let table_name = attrs.table_name()?;
   let input = parse::TableInput {
     table_name,
