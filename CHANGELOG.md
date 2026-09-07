@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- *(orm-cli)* `migrate::run_migrate_embedded` applies migrations from a
+  compile-time `&[EmbeddedMigration]` — SQL baked in with `include_str!` —
+  so a single-binary distribution needs no migrations directory on the target
+  machine ([#16](https://github.com/Falconiere/toolu-orm/issues/16)). It shares
+  the hash check, transaction boundary and rollback with `run_migrate`, so the
+  two sources are interchangeable; a repeated name is rejected with the new
+  `MigrateError::DuplicateMigration`, and `EmbeddedMigration::verify_hash`
+  checks a list without a database.
 - *(orm-cli)* `migrate::mark_applied` and `migrate::mark_applied_through` record
   journal entries as applied without executing their SQL, so a database whose
   schema was built by a previous migration system can adopt toolu-orm without

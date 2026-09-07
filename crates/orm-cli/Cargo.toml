@@ -64,6 +64,17 @@ name = "migrate_baseline_test"
 path = "tests/migrate_baseline_test.rs"
 required-features = ["libsql"]
 
+[[test]]
+name = "migrate_embedded_test"
+path = "tests/migrate_embedded_test.rs"
+required-features = ["libsql"]
+
+# Needs a live Postgres (docker-compose.test.yaml).
+[[test]]
+name = "migrate_embedded_postgres_test"
+path = "tests/migrate_embedded_postgres_test.rs"
+required-features = ["libsql", "postgres"]
+
 # Needs a live Postgres (docker-compose.test.yaml).
 [[test]]
 name = "migrate_baseline_postgres_test"

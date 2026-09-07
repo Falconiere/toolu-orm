@@ -53,6 +53,55 @@ CREATE TABLE "posts" (
 CREATE INDEX IF NOT EXISTS "idx_posts_author" ON "posts" ("author_id");
 ```
 
+## Ship the migrations inside the binary
+
+`run_migrate` reads its SQL from disk, which a single-binary distribution does
+not have: nothing installed by `cargo install`, a tap, or a `curl | sh` script
+drops a `migrations/` directory next to the executable. Bake the SQL in with
+`include_str!` instead:
+
+```rust
+use toolu_orm_cli::migrate::{run_migrate_embedded, EmbeddedMigration};
+
+const MIGRATIONS: &[EmbeddedMigration] = &[
+  EmbeddedMigration {
+    name: "0001_init.sql",
+    sql: include_str!("../migrations/0001_init.sql"),
+    hash: "sha256:2c8f…",          // the same string _journal.json carries
+  },
+  // …
+];
+
+let applied: u32 = run_migrate_embedded(&conn, MIGRATIONS, Dialect::Sqlite).await?;
+```
+
+Everything below the byte-fetch is shared with `run_migrate`: the same
+`_migrations` table, the same hash check, the same `--> statement-breakpoint`
+splitting, and the same one transaction per migration. A database migrated from
+a directory and one migrated from the equivalent list are indistinguishable, so
+a project can switch sources between releases without re-running anything.
+
+Embedding does not weaken the integrity check, it strengthens it. On disk the
+`.sql` can be edited after install; here the bytes are frozen at compile time,
+and the shipping project can catch an un-re-hashed edit in its own test suite:
+
+```rust
+#[test]
+fn migrations_match_their_hashes() {
+  for migration in MIGRATIONS {
+    migration.verify_hash().expect("re-generate the hash");
+  }
+}
+```
+
+Two rules that differ from the on-disk path:
+
+- Migrations apply in **list order**, not name order — the list is the
+  declaration of order, exactly as `_journal.json` is on disk.
+- A list naming the same migration twice is rejected with
+  `MigrateError::DuplicateMigration` before anything runs. A generated journal
+  cannot repeat a name; a hand-written array can.
+
 ## Baseline an existing database
 
 A database that already carries the schema — built by a previous migration

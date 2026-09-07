@@ -1,17 +1,22 @@
-//! Migration runner that applies pending migrations in order.
+//! Migration runner that applies pending migrations from a directory in order.
 
 use std::path::Path;
 
 use toolu_orm_connection::DbConnection;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::journal::{compute_hash, Journal, JournalEntry};
+use toolu_orm_core::journal::{Journal, JournalEntry};
 
+use super::apply::apply_migration;
 use super::error::MigrateError;
 use super::pending::get_pending_migrations;
 use super::store::{ensure_migrations_table, get_applied_migrations, record_migration};
 use super::transaction::{begin, commit, rollback_after};
 
 /// Applies pending migrations from the given directory to the database.
+///
+/// Migrations without a directory on the target machine — a single-binary
+/// distribution — use [`run_migrate_embedded`](super::run_migrate_embedded)
+/// instead; both share the same apply path.
 ///
 /// # Errors
 ///
@@ -52,8 +57,7 @@ pub async fn run_migrate(
   Ok(count)
 }
 
-/// Verifies the entry's hash, then applies its statements and records it in
-/// one transaction; any failure rolls the whole file back.
+/// Reads the entry's file and hands it to the shared apply path.
 async fn apply_journal_entry(
   conn: &impl DbConnection,
   migrations_dir: &str,
@@ -64,55 +68,7 @@ async fn apply_journal_entry(
   let content = std::fs::read_to_string(&sql_path)
     .map_err(|e| MigrateError::ReadFile(format!("{}: {e}", sql_path.display())))?;
 
-  let actual_hash = compute_hash(&content);
-  if actual_hash != entry.hash {
-    return Err(MigrateError::HashMismatch {
-      file: entry.name.clone(),
-      expected: entry.hash.clone(),
-      actual: actual_hash,
-    });
-  }
-
-  begin(conn).await?;
-
-  let exec_result = async {
-    execute_migration_statements(conn, &content, &entry.name).await?;
-    record_migration(conn, &entry.name, &entry.hash, dialect).await
-  }
-  .await;
-
-  match exec_result {
-    Err(e) => Err(rollback_after(conn, e).await),
-    Ok(()) => commit(conn).await,
-  }
-}
-
-async fn execute_migration_statements(
-  conn: &impl DbConnection,
-  content: &str,
-  file_label: &str,
-) -> Result<(), MigrateError> {
-  for statement in content.split("--> statement-breakpoint") {
-    if !has_statement(statement) {
-      continue;
-    }
-    conn
-      .execute_sql(statement.trim(), vec![])
-      .await
-      .map_err(|e| MigrateError::Database(format!("{file_label}: {e}")))?;
-  }
-  Ok(())
-}
-
-/// A chunk with only blank lines and `--` line comments (the generator emits
-/// such chunks for operations a dialect cannot express, and never emits block
-/// comments) must not reach the driver: libsql reports "not an error" when
-/// asked to execute an empty statement.
-fn has_statement(chunk: &str) -> bool {
-  chunk
-    .lines()
-    .map(str::trim)
-    .any(|line| !line.is_empty() && !line.starts_with("--"))
+  apply_migration(conn, &entry.name, &content, &entry.hash, dialect).await
 }
 
 async fn apply_migration_legacy(
