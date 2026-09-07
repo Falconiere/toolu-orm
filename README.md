@@ -172,17 +172,28 @@ For Postgres, replace `"libsql"` with `"postgres"`. `toolu-orm-core` and
 Define a table, generate and apply a migration, insert, and read back — against
 an in-memory libsql database.
 
+```toml
+[dependencies]
+toolu-orm      = { version = "0.1", features = ["libsql"] }
+toolu-orm-core = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm-cli  = { version = "0.1", default-features = false, features = ["libsql"] }
+tokio          = { version = "1", features = ["rt-multi-thread", "macros"] }
+```
+
+`toolu-orm-cli` is a library here as well as a binary: `run_generate` and
+`run_migrate` are called from your own code.
+
 ```rust
-use toolu_orm_connection::Database;
-use toolu_orm_core::column::{Integer, Text};
-use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::error::DbCoreError;
-use toolu_orm_core::libsql;                  // re-exported by orm-core
-use toolu_orm_core::query_column::CommonOps;
-use toolu_orm_core::row::FromRow;
-use toolu_orm_core::schema::SchemaRegistry;
-use toolu_orm_core::table::TableSchema;
-use toolu_orm_macros::table;
+use toolu_orm::connection::Database;
+use toolu_orm::core::column::{Integer, Text};
+use toolu_orm::core::dialect::Dialect;
+use toolu_orm::core::error::DbCoreError;
+use toolu_orm::core::query_column::CommonOps;
+use toolu_orm::core::row::FromRow;
+use toolu_orm::core::schema::SchemaRegistry;
+use toolu_orm::core::table::TableSchema;
+use toolu_orm::prelude::*;                   // required: the macros expand to
+                                             // toolu_orm_core / toolu_orm_query paths
 
 #[table(name = "users")]
 pub struct UsersTable {
@@ -201,7 +212,7 @@ pub struct User {
 }
 
 // One driver is active (libsql), so `FromRow` asks for a single `from_row`.
-// `#[derive(FromRow)]` emits the postgres + libsql shape — see the heads-up above.
+// See "Row mapping" for the derive and the other driver shapes.
 impl FromRow for User {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
 
@@ -229,7 +240,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("applied {applied} migration(s)");
 
   // 3. Typed writes and reads through the generated builders.
-  //    Migrations take the wrapper; the builders take the driver connection.
+  //    The builders run on the driver connection, which the wrapper exposes.
   let exec = conn.inner_conn();   // &libsql::Connection
 
   UsersTable::insert()
@@ -329,6 +340,10 @@ the trait asks for one method per driver instead — `from_pg_row`,
 ---
 
 ## Query builders
+
+The snippets below name the crates directly (`toolu_orm_core::…`,
+`toolu_orm_query::…`); through the facade the same items are
+`toolu_orm::core::…` and `toolu_orm::query::…`.
 
 Every builder renders with `to_sql()` (current dialect) or
 `to_sql_for(Dialect::…)` and returns `(String, Vec<Value>)`. Column references
