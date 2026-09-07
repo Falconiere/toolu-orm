@@ -21,7 +21,7 @@ The loop `generate(v1) → migrate → generate(v2) → migrate` is asserted on 
 | FK exists | `pragma_foreign_key_list('posts')` | `information_schema.table_constraints` (`FOREIGN KEY`) |
 | enum CHECK enforced | `INSERT ... status = 'bogus'` fails | `INSERT ... status = 'bogus'` fails; `information_schema.check_constraints` has it |
 | unique index enforced | duplicate email insert fails | duplicate email insert fails |
-| `ON DELETE CASCADE` | deleting the user removes the post (`PRAGMA foreign_keys = ON`) | (covered by the FK constraint assertion) |
+| `ON DELETE CASCADE` | deleting the user removes the post (`PRAGMA foreign_keys = ON`) | deleting the user removes the post |
 | `get_status` | applied = 2 files, pending = 0 | same |
 | nothing left to generate | third `run_generate` returns `None` | same |
 | legacy (no journal) mode | see [Migration failures](migration-failures.md) | applies a plain `.sql` file as one batch, records it with an empty hash |
