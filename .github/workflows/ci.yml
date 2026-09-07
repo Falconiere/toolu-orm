@@ -14,11 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Live Postgres for the postgres lane (service container below).
+  # Live Postgres for the postgres lane (service container below). The
+  # password comes from the TEST_DB_PASSWORD secret when the repository sets
+  # one; otherwise the throwaway service uses the documented default.
   TEST_DB_HOST: localhost
   TEST_DB_PORT: "5432"
   TEST_DB_USER: toolu
-  TEST_DB_PASSWORD: toolu
+  TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD || 'toolu' }}
 
 jobs:
   rust:
@@ -29,7 +31,7 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: toolu
-          POSTGRES_PASSWORD: toolu
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD || 'toolu' }}
           POSTGRES_DB: toolu
         ports:
           - 5432:5432

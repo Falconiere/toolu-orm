@@ -84,14 +84,22 @@ async fn apply_journal_entry(
   .await;
 
   match exec_result {
-    Err(e) => {
-      let _ = conn.execute_batch("ROLLBACK").await;
-      Err(e)
-    },
+    Err(e) => Err(rollback_after(conn, e).await),
     Ok(()) => conn
       .execute_batch("COMMIT")
       .await
       .map_err(|e| MigrateError::Database(format!("commit transaction: {e}"))),
+  }
+}
+
+/// Rolls back after `err`. A ROLLBACK that fails itself (connection lost) is
+/// appended to the message so neither error is lost.
+async fn rollback_after(conn: &impl DbConnection, err: MigrateError) -> MigrateError {
+  match conn.execute_batch("ROLLBACK").await {
+    Ok(()) => err,
+    Err(rollback_err) => {
+      MigrateError::Database(format!("{err}; rollback also failed: {rollback_err}"))
+    },
   }
 }
 
@@ -147,9 +155,8 @@ async fn apply_migration_legacy(
   }
   .await;
 
-  if result.is_err() {
-    let _ = conn.execute_batch("ROLLBACK").await;
-    return result;
+  if let Err(e) = result {
+    return Err(rollback_after(conn, e).await);
   }
 
   conn

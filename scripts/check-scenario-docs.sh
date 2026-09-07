@@ -27,10 +27,12 @@ trap 'rm -rf "$tmp"' EXIT
 list_lane() {
   local lane="$1"; shift
   local raw
-  if ! raw=$(cargo nextest list "$@" 2>&1); then
+  # --color never: CI exports CARGO_TERM_COLOR=always, and ANSI codes would
+  # make every line miss the pattern below.
+  if ! raw=$(cargo nextest list --color never "$@" 2>&1); then
     echo "scenario-docs: lane '$lane' failed to list tests:" >&2
     printf '%s\n' "$raw" | tail -20 >&2
-    exit 2
+    return 2
   fi
   printf '%s\n' "$raw" | awk '/^ *[a-z0-9-]+::[a-z0-9_]+ / { sub(/^ *[a-z0-9-]+::/, ""); print }' >> "$tmp/$lane"
 }

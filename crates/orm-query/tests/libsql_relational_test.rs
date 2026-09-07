@@ -177,8 +177,8 @@ async fn with_many_builds_structs_via_from_relational_values() -> TestResult {
 
     match id.as_str() {
       "u1" => {
-        assert_eq!(user.id, id);
-        assert_eq!(user.name, name);
+        assert_eq!(user.id, "u1");
+        assert_eq!(user.name, "Alice");
         let mut titles: Vec<&str> = user.posts.iter().map(|p| p.title.as_str()).collect();
         titles.sort_unstable();
         assert_eq!(titles, vec!["First", "Second"]);
@@ -188,7 +188,7 @@ async fn with_many_builds_structs_via_from_relational_values() -> TestResult {
         found_u1 = true;
       },
       "u2" => {
-        assert_eq!(user.name, name);
+        assert_eq!(user.name, "Bob");
         assert!(user.posts.is_empty());
         found_u2 = true;
       },
@@ -230,12 +230,12 @@ async fn with_one_returns_none_for_orphan_post_and_some_for_authored_post() -> T
     let post = PostWithAuthor::from_relational_values(&values)?;
 
     if id == "p3" {
-      assert_eq!(post.id, id);
-      assert_eq!(post.title, title);
+      assert_eq!(post.id, "p3");
+      assert_eq!(post.title, "Orphan");
       assert!(post.author.is_none());
       orphan_checked = true;
     } else if id == "p1" {
-      assert_eq!(post.title, title);
+      assert_eq!(post.title, "First");
       let author = post.author.as_ref().ok_or("expected author")?;
       assert_eq!(author.id, "u1");
       assert_eq!(author.name, "Alice");
