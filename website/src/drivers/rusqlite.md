@@ -29,6 +29,10 @@ The `Executor` impl is on `rusqlite::Connection` itself, and it is sync. With th
 `rusqlite` feature there is nothing to await:
 
 ```rust
+// Your own raw connection — RusqliteConnection keeps its inner one private,
+// so open this one yourself rather than deriving it from the wrapper.
+let sqlite_conn = rusqlite::Connection::open("data/app.db")?;
+
 let n = InsertBuilder::new("users")
   .set(&users::id, "u_1")
   .execute(&sqlite_conn)?;                // no .await
@@ -37,6 +41,12 @@ let rows: Vec<User> = UsersTable::select_for::<User>()
   .filter(users::id.eq("u_1"))
   .fetch_all(&sqlite_conn)?;              // no .await
 ```
+
+This is the one driver where the two surfaces do not connect:
+`RusqliteConnection` holds its `rusqlite::Connection` behind an
+`Arc<Mutex<…>>` with no accessor, so it serves `DbConnection` (migrations,
+`query_map`, `execute_batch`) while the builders run on a `rusqlite::Connection`
+you open directly. Point both at the same database file, or use one of them.
 
 Everything else — the builders, the expressions, the generated columns — is
 identical to the other drivers.
