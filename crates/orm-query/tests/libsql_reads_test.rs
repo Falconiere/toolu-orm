@@ -228,3 +228,12 @@ async fn empty_in_list_executes_without_driver_error() -> TestResult {
   );
   Ok(())
 }
+
+#[tokio::test]
+async fn empty_not_in_matches_every_row() -> TestResult {
+  let conn = seeded_conn().await?;
+  let values: [Value; 0] = [];
+  let got = filtered_ids(&conn, USER_NAME.not_in(&values)).await?;
+  assert_eq!(got, vec!["u1", "u2", "u3", "u4"]);
+  Ok(())
+}

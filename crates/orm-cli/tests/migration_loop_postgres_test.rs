@@ -149,6 +149,18 @@ async fn loop_v1_then_v2_applies_every_change_on_postgres() -> TestResult {
       .is_err(),
     "unique index on email was not applied"
   );
+  let deleted = conn
+    .execute_sql(
+      "DELETE FROM users WHERE id = $1",
+      vec![Value::Text("u1".into())],
+    )
+    .await?;
+  assert_eq!(deleted, 1);
+  assert_eq!(
+    count(&conn, "SELECT count(*) FROM posts").await?,
+    0,
+    "ON DELETE CASCADE"
+  );
   Ok(())
 }
 

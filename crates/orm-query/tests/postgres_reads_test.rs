@@ -159,3 +159,11 @@ async fn empty_in_list_executes_and_matches_nothing() -> TestResult {
   assert!(found.is_empty(), "got {found:?}");
   Ok(())
 }
+
+#[tokio::test]
+async fn empty_not_in_matches_every_row() -> TestResult {
+  let client = seeded("q_pg_empty_not_in").await?;
+  let found = ids(&client, vec![ID.not_in(&[])]).await?;
+  assert_eq!(found, ["u1", "u2", "u3", "u4"]);
+  Ok(())
+}
