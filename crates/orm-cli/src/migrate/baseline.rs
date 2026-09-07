@@ -88,24 +88,31 @@ pub async fn mark_applied_through(
 
 fn read_journal(migrations_dir: &str) -> Result<Journal, MigrateError> {
   let journal_path = Path::new(migrations_dir).join("_journal.json");
-  let journal_path_str = journal_path.to_str().unwrap_or_default();
+  let journal_path_str = journal_path.to_str().ok_or_else(|| {
+    MigrateError::ReadFile(format!("{} is not valid UTF-8", journal_path.display()))
+  })?;
   Journal::read_from_path(journal_path_str).map_err(|e| MigrateError::ReadFile(format!("{e}")))
 }
 
 /// Records `entries` in one transaction, skipping those `_migrations` already
 /// holds (its `name` column is UNIQUE, so re-inserting would fail).
+///
+/// The already-applied set is read *inside* the transaction, so the skip
+/// decision and the inserts see one state of the table. A baseline racing
+/// another writer on the same names still loses on the `UNIQUE` constraint, and
+/// then rolls back whole: no partial baseline, and the retry records nothing.
 async fn record_all(
   conn: &impl DbConnection,
   entries: &[&JournalEntry],
   dialect: Dialect,
 ) -> Result<u32, MigrateError> {
   ensure_migrations_table(conn, dialect).await?;
-  let applied = get_applied_migrations(conn).await?;
 
   begin(conn).await?;
 
   let mut count: u32 = 0;
   let result = async {
+    let applied = get_applied_migrations(conn).await?;
     for entry in entries {
       if applied.contains(&entry.name) {
         continue;
