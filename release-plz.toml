@@ -6,8 +6,6 @@
 [workspace]
 # All crates share `version.workspace = true`, so one changelog and one tag.
 changelog_path = "./CHANGELOG.md"
-git_tag_name = "v{{ version }}"
-git_release_name = "v{{ version }}"
 git_tag_enable = false
 git_release_enable = false
 
@@ -15,8 +13,20 @@ git_release_enable = false
 # (core + connection), so the tag lands after those are on the registry.
 # The `toolu-orm` facade is a separate leaf and may publish either side of
 # it; a partial failure is resumed by the next run on main.
+#
+# `git_tag_name` MUST stay on this package and never move to `[workspace]`.
+# release-plz decides whether a package is already released by looking for
+# its tag, so a workspace-wide `v{{ version }}` template makes every crate
+# share one tag name: the tag from the last release then marks a crate added
+# afterwards as "already published", `release` silently skips publishing it,
+# and `release-pr` dies with "package `x` not found in the registry, but the
+# git tag vX.Y.Z exists". Every other crate keeps the default
+# `{{ package }}-v{{ version }}` name, which is never created here, so their
+# released state is read from crates.io — the only source that is per-crate.
 [[package]]
 name = "toolu-orm-cli"
+git_tag_name = "v{{ version }}"
+git_release_name = "v{{ version }}"
 git_tag_enable = true
 git_release_enable = true
 
