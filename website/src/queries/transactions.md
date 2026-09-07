@@ -67,7 +67,13 @@ There is no transaction wrapper for the rusqlite driver. Issue the statements
 through `execute_batch`, which sends them as one script:
 
 ```rust
+// `conn` is a RusqliteConnection: DbConnection::execute_batch is async on every
+// driver, rusqlite included — it runs the blocking call on a worker thread.
+let conn = RusqliteConnection::open("data/app.db").await?;
 conn.execute_batch("BEGIN; UPDATE counters SET n = n + 1; COMMIT;").await?;
+
+// On a raw rusqlite::Connection it is rusqlite's own inherent method, and sync:
+sqlite_conn.execute_batch("BEGIN; UPDATE counters SET n = n + 1; COMMIT;")?;
 ```
 
 ## Migrations
