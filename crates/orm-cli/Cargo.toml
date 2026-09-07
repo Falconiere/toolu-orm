@@ -1,12 +1,16 @@
 [package]
 name = "toolu-orm-cli"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "Migration CLI (generate, migrate, status) for toolu-orm"
 autotests = false
 
 [dependencies]
-toolu-orm-core = { path = "../orm-core", default-features = false }
-toolu-orm-connection = { path = "../orm-connection", default-features = false }
+toolu-orm-core = { path = "../orm-core", version = "0.1.0", default-features = false }
+toolu-orm-connection = { path = "../orm-connection", version = "0.1.0", default-features = false }
 libsql = { version = "0.9", default-features = false, features = ["core"], optional = true }
 tokio-postgres = { workspace = true, optional = true }
 tokio = { version = "1", features = ["full"] }

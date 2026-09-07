@@ -1,0 +1,65 @@
+# Automated crates.io releases (config: release-plz.toml).
+#
+#   release-plz-pr      — on push to main, opens/updates the release PR
+#                         (version bump + CHANGELOG.md).
+#   release-plz-release — on push to main, publishes every crate whose
+#                         Cargo.toml version is not yet on crates.io, then
+#                         tags vX.Y.Z and creates the GitHub Release.
+#                         No-op when everything is already published.
+#
+# Uses the default GITHUB_TOKEN, so the release PR does not trigger the CI
+# workflow (GitHub suppresses runs for events raised by GITHUB_TOKEN). The PR
+# only touches versions and the changelog; `cargo publish` still verifies
+# each crate builds before upload.
+
+name: Release-plz
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-plz-release:
+    name: Release-plz release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+      - uses: release-plz/action@v0.5
+        with:
+          command: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+
+  release-plz-pr:
+    name: Release-plz PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: release-plz-pr-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+      - uses: release-plz/action@v0.5
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
