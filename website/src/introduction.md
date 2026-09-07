@@ -65,11 +65,12 @@ structs ──#[table]──▶ TableDef ──SchemaRegistry──▶ diff vs l
         ──▶ NNNN_name.sql + NNNN_name.snapshot.json + _journal.json
 ```
 
-Five crates. `toolu-orm-core` is the foundation and every other crate depends on
+Six crates. `toolu-orm-core` is the foundation and every other crate depends on
 it; only `toolu-orm-cli` depends on `toolu-orm-connection`.
 
 | Crate | What it holds |
 |---|---|
+| [`toolu-orm`](https://docs.rs/toolu-orm) | The facade: re-exports the four library crates and the macros behind one version and one feature list. |
 | [`toolu-orm-core`](https://docs.rs/toolu-orm-core) | `TableDef`, `ColumnType`, `Value`, `Expr`, `Column<T>`, snapshots, journal, diff, `Dialect`. |
 | [`toolu-orm-macros`](https://docs.rs/toolu-orm-macros) | `#[table]`, `#[derive(FromRow)]`, `#[derive(Relational)]`, `#[derive(ColumnEnum)]`, `#[view]`. |
 | [`toolu-orm-query`](https://docs.rs/toolu-orm-query) | `SelectBuilder`, `InsertBuilder`, `UpdateBuilder`, `DeleteBuilder`, `RelationalQuery`, executor and transactions. |
@@ -78,7 +79,7 @@ it; only `toolu-orm-cli` depends on `toolu-orm-connection`.
 
 ## Where to go next
 
-- [Installation](getting-started/installation.md) — crates, driver features, and how they must line up.
+- [Installation](getting-started/installation.md) — the facade, the prelude, driver features.
 - [Quickstart](getting-started/quickstart.md) — table, migration, insert and read against in-memory libsql.
 - [Defining tables](schema/tables.md) — every `#[table]` and `#[column]` attribute.
 - [Select](queries/select.md) — builders, joins, paging and the fetch methods.
