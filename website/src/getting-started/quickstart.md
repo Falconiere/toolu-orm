@@ -43,8 +43,9 @@ pub struct User {
   pub created_at: i64,
 }
 
-// One driver is active (libsql), so `FromRow` asks for a single `from_row`.
-// See "Row mapping" for the derive and the other driver shapes.
+// One driver is active (libsql), so `FromRow` asks for a single `from_row` —
+// `#[derive(FromRow)]` emits the postgres+libsql shape and does NOT compile
+// here. See "Row mapping" for the derive and the other driver shapes.
 impl FromRow for User {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
 
@@ -73,7 +74,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // 3. Typed writes and reads through the generated builders.
   //    The builders run on the driver connection, which the wrapper exposes.
-  let exec = conn.inner_conn();   // &libsql::Connection
+  let exec = conn.inner_conn();   // &libsql::Connection — borrows `conn`, so
+                                  // keep `conn` alive for as long as `exec` is used
 
   UsersTable::insert()
     .set(&users::id, "u_1")

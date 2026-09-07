@@ -18,12 +18,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Builds on every trigger, including pull requests, so a broken book fails in
+  # review. Keeps `contents: read` only: the artifact upload authenticates with
+  # the Actions runtime token, and nothing here needs the Pages scopes.
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: write
-      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -34,10 +35,6 @@ jobs:
 
       - name: Build the book
         run: mdbook build website
-
-      - name: Configure Pages
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
