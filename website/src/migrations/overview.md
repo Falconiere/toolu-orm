@@ -92,7 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let registry = app_schema();                    // your SchemaRegistry
   match std::env::args().nth(1).as_deref() {
     Some("generate") => {
-      let name = std::env::args().nth(2).unwrap_or_else(|| "change".to_owned());
+      let name = std::env::args().nth(2).ok_or("usage: migrate generate <name>")?;
       match run_generate(&registry, "migrations", &name, Dialect::Sqlite)? {
         Some(file) => println!("wrote {file}"),
         None => println!("no schema change"),

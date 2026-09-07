@@ -17,7 +17,7 @@ site-url = "/toolu-orm/"
 git-repository-url = "https://github.com/Falconiere/toolu-orm"
 git-repository-icon = "fa-github"
 edit-url-template = "https://github.com/Falconiere/toolu-orm/edit/main/website/{path}"
-additional-css = ["theme/custom.css"]
+additional-css = ["theme/custom.css", "theme/landing.css"]
 
 [output.html.playground]
 runnable = false
