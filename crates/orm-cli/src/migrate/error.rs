@@ -25,6 +25,11 @@ pub enum MigrateError {
   /// hash to record for it.
   #[error("no journal entry for migration(s): {0}")]
   NotInJournal(String),
+
+  /// An embedded migration list names the same migration more than once, so
+  /// there is no single SQL body for that name.
+  #[error("duplicate migration name(s) in the embedded list: {0}")]
+  DuplicateMigration(String),
 }
 
 pub(crate) fn map_db(err: &DbError) -> MigrateError {
