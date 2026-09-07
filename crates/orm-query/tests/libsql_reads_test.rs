@@ -50,7 +50,13 @@ async fn fetch_optional_returns_none_then_some() -> TestResult {
     .columns_raw(&USER_COLUMNS)
     .fetch_optional(&conn)
     .await?;
-  assert_eq!(after.map(|u| u.name), Some("Alice".to_owned()));
+  let expected = User {
+    id: "u1".into(),
+    name: "Alice".into(),
+    email: "alice@example.com".into(),
+    age: Some(30),
+  };
+  assert_eq!(after, Some(expected));
   Ok(())
 }
 
@@ -99,6 +105,8 @@ async fn fetch_one_with_two_matches_returns_first_by_order() -> TestResult {
     .await?;
 
   assert_eq!(user.id, "u2");
+  assert_eq!(user.name, "Alice");
+  assert_eq!(user.email, "a2@example.com");
   assert_eq!(user.age, Some(20));
   Ok(())
 }

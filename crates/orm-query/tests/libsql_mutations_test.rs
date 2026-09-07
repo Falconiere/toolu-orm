@@ -55,6 +55,21 @@ async fn or_replace_replaces_conflicting_row() -> TestResult {
     .fetch_one(&conn)
     .await?;
   assert_eq!(replaced.name, "Bea");
+  assert_eq!(replaced.email, "bea@example.com");
+  assert_eq!(replaced.age, Some(31));
+  let bystander: User = SelectBuilder::new("users")
+    .columns_raw(&USER_COLUMNS)
+    .filter(USER_ID.eq("bystander"))
+    .fetch_one(&conn)
+    .await?;
+  assert_eq!(
+    (
+      bystander.name.as_str(),
+      bystander.email.as_str(),
+      bystander.age
+    ),
+    ("Zoe", "zoe@example.com", Some(22))
+  );
   Ok(())
 }
 
@@ -87,6 +102,8 @@ async fn or_ignore_keeps_original_row() -> TestResult {
     .await?;
 
   assert_eq!(user.name, "Ann");
+  assert_eq!(user.email, "ann@example.com");
+  assert_eq!(user.age, Some(30));
   Ok(())
 }
 
