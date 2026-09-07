@@ -8,17 +8,18 @@ use crate::dialect::Dialect;
 
 /// `CREATE VIRTUAL TABLE IF NOT EXISTS "<name>" USING "<module>"(<args>);`
 ///
-/// The module name is quoted like any other identifier, so a name with a
-/// space or a quote in it cannot end the statement early. With no arguments
+/// The table and module names are quoted identifiers with their embedded
+/// quotes doubled, so neither can end the statement early. With no arguments
 /// the parentheses are omitted, which is what SQLite expects for modules that
 /// take none.
 pub(crate) fn create_virtual_table_sql(name: &str, module: &str, args: &[String]) -> String {
+  let name = quote_ident(name);
   let module = quote_ident(module);
   if args.is_empty() {
-    return format!("CREATE VIRTUAL TABLE IF NOT EXISTS \"{name}\" USING {module};");
+    return format!("CREATE VIRTUAL TABLE IF NOT EXISTS {name} USING {module};");
   }
   format!(
-    "CREATE VIRTUAL TABLE IF NOT EXISTS \"{name}\" USING {module}({});",
+    "CREATE VIRTUAL TABLE IF NOT EXISTS {name} USING {module}({});",
     args.join(", ")
   )
 }
@@ -33,7 +34,8 @@ fn quote_ident(ident: &str) -> String {
 /// constraints are reported on the other dialect.
 pub(crate) fn unsupported_dialect_comment(name: &str, module: &str, dialect: Dialect) -> String {
   format!(
-    "-- virtual table \"{name}\" USING {} is SQLite-only; skipped for {}",
+    "-- virtual table {} USING {} is SQLite-only; skipped for {}",
+    quote_ident(name),
     quote_ident(module),
     dialect.as_str()
   )

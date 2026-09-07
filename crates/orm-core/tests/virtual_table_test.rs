@@ -135,12 +135,12 @@ fn a_module_without_arguments_omits_the_parentheses() {
   );
 }
 
-/// The module name is an identifier like any other, so it is quoted and its
-/// quotes are doubled: it cannot end the statement and start a new one.
+/// Both names are identifiers like any other: quoted, with their own quotes
+/// doubled, so neither can end the statement and start a new one.
 #[test]
-fn a_module_name_cannot_end_the_statement() {
+fn neither_name_can_end_the_statement() {
   let table = TableDef {
-    name: "hostile".to_owned(),
+    name: "hostile\"; DROP TABLE users; --".to_owned(),
     columns: vec![],
     indexes: vec![],
     strict: false,
@@ -148,7 +148,8 @@ fn a_module_name_cannot_end_the_statement() {
   };
   assert_eq!(
     create_sql(&table, Dialect::Sqlite),
-    "CREATE VIRTUAL TABLE IF NOT EXISTS \"hostile\" USING \"fts5\"\"); DROP TABLE users; --\";"
+    "CREATE VIRTUAL TABLE IF NOT EXISTS \"hostile\"\"; DROP TABLE users; --\" \
+     USING \"fts5\"\"); DROP TABLE users; --\";"
   );
 }
 

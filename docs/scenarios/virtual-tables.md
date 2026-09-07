@@ -45,7 +45,7 @@ SQLite has no `ALTER TABLE` for virtual tables, so `diff` returns `DbCoreError::
 
 Create, drop and rename stay ordinary operations: `RenameTable` still works, and the fix for a refused change is to drop and recreate the table. A rename is not a way around the checks — a table renamed *and* changed in the same diff is refused with the same reason, and so is an ordinary table renamed onto a virtual definition.
 
-The module name is quoted like any other identifier and its embedded quotes are doubled, so a hostile module name cannot end the statement.
+The table and module names are quoted like any other identifier and their embedded quotes are doubled, so neither can end the statement.
 
 ### Old snapshots
 
@@ -79,7 +79,7 @@ cargo nextest run -p toolu-orm-connection --features rusqlite -E 'binary(fts5_ru
 | default | virtual_table_test | sqlite_ddl_creates_the_virtual_table |
 | default | virtual_table_test | sqlite_ddl_omits_types_strict_and_constraints |
 | default | virtual_table_test | a_module_without_arguments_omits_the_parentheses |
-| default | virtual_table_test | a_module_name_cannot_end_the_statement |
+| default | virtual_table_test | neither_name_can_end_the_statement |
 | default | virtual_table_test | postgres_reports_the_skipped_table_instead_of_emitting_ddl |
 | default | virtual_table_test | snapshot_round_trip_keeps_the_module_arguments |
 | default | virtual_table_test | ordinary_tables_write_no_kind_key |
