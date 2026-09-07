@@ -82,7 +82,12 @@ suites use.
 Anything that returns rows is generic over `FromRow`:
 
 ```rust
-let users: Vec<User> = UsersTable::select_for::<User>().fetch_all(&conn).await?;
-let one: User        = UsersTable::select_for::<User>().filter(users::id.eq("u_1")).fetch_one(&conn).await?;
+// `exec` is the driver connection (Executor); `conn` is the DbConnection wrapper.
+let exec = conn.inner_conn();
+
+let users: Vec<User> = UsersTable::select_for::<User>().fetch_all(exec).await?;
+let one: User        = UsersTable::select_for::<User>().filter(users::id.eq("u_1")).fetch_one(exec).await?;
 let rows: Vec<User>  = conn.query_map::<User>("SELECT id, email, created_at FROM users", vec![]).await?;
 ```
+
+The two are different surfaces — see [Connections](../drivers/index.md).
