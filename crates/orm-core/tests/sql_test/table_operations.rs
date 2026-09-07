@@ -64,7 +64,7 @@ fn test_create_strict_table() {
 }
 
 #[test]
-fn test_non_strict_omits_fk_references() {
+fn test_non_strict_keeps_fk_references() {
   let ops = vec![Operation::CreateTable {
     table: TableDef {
       name: "messages".to_owned(),
@@ -84,15 +84,15 @@ fn test_non_strict_omits_fk_references() {
       strict: false,
     },
   }];
-  let sql = generate_sql_for(&ops, Dialect::Sqlite);
-  assert!(
-    !sql.contains("REFERENCES"),
-    "non-strict should omit REFERENCES, got: {sql}"
-  );
-  assert!(
-    !sql.contains("CASCADE"),
-    "non-strict should omit ON DELETE, got: {sql}"
-  );
+  // `references` is a foreign key regardless of `strict`; `strict` only
+  // switches the SQLite column type set (README, "Defining tables").
+  for dialect in [Dialect::Sqlite, Dialect::Postgres] {
+    let sql = generate_sql_for(&ops, dialect);
+    assert!(
+      sql.contains(r#"REFERENCES "conversations"("id") ON DELETE CASCADE"#),
+      "{dialect:?}: non-strict table must keep its FK clause, got: {sql}"
+    );
+  }
 }
 
 #[test]
