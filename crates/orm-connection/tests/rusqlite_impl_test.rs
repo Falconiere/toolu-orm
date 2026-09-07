@@ -168,18 +168,41 @@ async fn from_connection_preserves_connection_pragmas() -> Result<(), toolu_orm_
   Ok(())
 }
 
+/// A temp database path that deletes itself, so a failed assertion or an early
+/// `?` cannot leave the file behind.
+struct TempDbPath(String);
+
+impl TempDbPath {
+  /// Process id plus a nanosecond timestamp: parallel test processes cannot
+  /// collide on the same name.
+  fn new() -> Self {
+    let nanos = std::time::SystemTime::now()
+      .duration_since(std::time::UNIX_EPOCH)
+      .unwrap_or_default()
+      .as_nanos();
+    let path =
+      std::env::temp_dir().join(format!("toolu-orm-open-{}-{nanos}.db", std::process::id()));
+    Self(path.to_string_lossy().into_owned())
+  }
+
+  fn as_str(&self) -> &str {
+    &self.0
+  }
+}
+
+impl Drop for TempDbPath {
+  fn drop(&mut self) {
+    drop(std::fs::remove_file(&self.0));
+  }
+}
+
 /// `open` still reaches a real file after being routed through
 /// `from_connection`: a second wrapper reads what the first one wrote.
 #[tokio::test]
 async fn open_persists_to_a_file() -> Result<(), toolu_orm_connection::DbError> {
-  let nanos = std::time::SystemTime::now()
-    .duration_since(std::time::UNIX_EPOCH)
-    .unwrap()
-    .as_nanos();
-  let path = std::env::temp_dir().join(format!("toolu-orm-open-{}-{nanos}.db", std::process::id()));
-  let path_str = path.to_str().unwrap();
+  let path = TempDbPath::new();
 
-  let writer = RusqliteConnection::open(path_str).await?;
+  let writer = RusqliteConnection::open(path.as_str()).await?;
   writer
     .execute_batch("CREATE TABLE persisted (count INTEGER NOT NULL)")
     .await?;
@@ -191,11 +214,7 @@ async fn open_persists_to_a_file() -> Result<(), toolu_orm_connection::DbError> 
     .await?;
   drop(writer);
 
-  let reader = RusqliteConnection::open(path_str).await?;
-  let count = scalar(&reader, "SELECT count FROM persisted").await?;
-  drop(reader);
-  std::fs::remove_file(&path).unwrap();
-
-  assert_eq!(count, 99);
+  let reader = RusqliteConnection::open(path.as_str()).await?;
+  assert_eq!(scalar(&reader, "SELECT count FROM persisted").await?, 99);
   Ok(())
 }
