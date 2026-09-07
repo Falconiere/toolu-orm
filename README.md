@@ -164,10 +164,13 @@ an in-memory libsql database.
 use toolu_orm_connection::Database;
 use toolu_orm_core::column::{Integer, Text};
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::error::DbCoreError;
+use toolu_orm_core::libsql;                  // re-exported by orm-core
 use toolu_orm_core::query_column::CommonOps;
+use toolu_orm_core::row::FromRow;
 use toolu_orm_core::schema::SchemaRegistry;
 use toolu_orm_core::table::TableSchema;
-use toolu_orm_macros::{table, FromRow};
+use toolu_orm_macros::table;
 
 #[table(name = "users")]
 pub struct UsersTable {
@@ -179,11 +182,25 @@ pub struct UsersTable {
   pub created_at: Integer,
 }
 
-#[derive(FromRow)]
 pub struct User {
   pub id: String,
   pub email: String,
   pub created_at: i64,
+}
+
+// One driver is active (libsql), so `FromRow` asks for a single `from_row`.
+// `#[derive(FromRow)]` emits the postgres + libsql shape — see the heads-up above.
+impl FromRow for User {
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
+
+  fn from_row(row: &libsql::Row) -> Result<Self, DbCoreError> {
+    let col = |i: i32, e: libsql::Error| DbCoreError::RowMapping(format!("col {i}: {e}"));
+    Ok(Self {
+      id: row.get(0).map_err(|e| col(0, e))?,
+      email: row.get(1).map_err(|e| col(1, e))?,
+      created_at: row.get(2).map_err(|e| col(2, e))?,
+    })
+  }
 }
 
 #[tokio::main]
@@ -199,16 +216,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let applied = toolu_orm_cli::migrate::run_migrate(&conn, "migrations", Dialect::Sqlite).await?;
   println!("applied {applied} migration(s)");
 
-  // 3. Typed writes and reads through the generated builders
+  // 3. Typed writes and reads through the generated builders.
+  //    Migrations take the wrapper; the builders take the driver connection.
+  let exec = conn.inner_conn();   // &libsql::Connection
+
   UsersTable::insert()
     .set(&users::id, "u_1")
     .set(&users::email, "ada@example.com")
-    .execute(&conn)
+    .execute(exec)
     .await?;
 
   let found: Vec<User> = UsersTable::select_for::<User>()
     .filter(users::email.eq("ada@example.com"))
-    .fetch_all(&conn)
+    .fetch_all(exec)
     .await?;
   println!("{} user(s)", found.len());
   Ok(())
@@ -218,6 +238,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 `#[table]` generated everything used above: the `users` companion module with
 one `Column<T>` per field, `UsersTable::table_def()`, and the `select()` /
 `select_for::<T>()` / `insert()` / `update()` / `delete()` factories.
+
+Two connection surfaces show up there. `DbConnection` — what `db.connect()`
+returns — is what `run_migrate` and `get_status` take. `Executor` is what the
+query builders run on, and it is implemented for the **driver's own** connection
+type (`libsql::Connection`, `rusqlite::Connection`, `tokio_postgres::Client`,
+`PgTransaction`), which `conn.inner_conn()` hands out.
 
 ---
 
@@ -261,9 +287,10 @@ Field types map to `ColumnType`: `Text`, `Integer`, `Real`, `Blob`, `Uuid`,
 `BigInt`, `SmallInt`, `Varchar(n)`, `Serial`, `BigSerial`, `Jsonb`, `Numeric`,
 `Char(n)`, `Array`.
 
-**Row mapping.** `#[derive(FromRow)]` maps columns to fields by name and exposes
-`REQUIRED_COLUMNS`, which `select_for::<T>()` uses to pick exactly the columns
-`T` needs. A hand-written impl is a few lines when you run a single driver:
+**Row mapping.** `#[derive(FromRow)]` fills `REQUIRED_COLUMNS` from the field
+names in declaration order and reads each field positionally at its own index, so
+`select_for::<T>()` picks exactly the columns `T` needs, in the order it decodes
+them. A hand-written impl is a few lines when you run a single driver:
 
 ```rust
 use toolu_orm_core::{error::DbCoreError, row::FromRow};
@@ -271,7 +298,7 @@ use toolu_orm_core::{error::DbCoreError, row::FromRow};
 impl FromRow for User {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
 
-  fn from_libsql_row(row: &libsql::Row) -> Result<Self, DbCoreError> {
+  fn from_row(row: &libsql::Row) -> Result<Self, DbCoreError> {
     let col = |i: i32, e: libsql::Error| DbCoreError::RowMapping(format!("col {i}: {e}"));
     Ok(Self {
       id: row.get(0).map_err(|e| col(0, e))?,
@@ -282,7 +309,10 @@ impl FromRow for User {
 }
 ```
 
-With `postgres` enabled the trait also asks for `from_pg_row(&tokio_postgres::Row)`.
+That is the single-driver shape. With two drivers unified on `toolu-orm-core`
+the trait asks for one method per driver instead — `from_pg_row`,
+`from_libsql_row`, `from_rusqlite_row` — which is the shape
+`#[derive(FromRow)]` emits.
 
 ---
 
@@ -331,14 +361,20 @@ DeleteBuilder::new("users").filter(users::id.eq("user-1")).to_sql_for(Dialect::P
 // DELETE FROM "users" WHERE "users"."id" = $1
 ```
 
-**Executing.** All four builders share `.execute(&conn) -> u64`. Select adds:
+**Executing.** All four builders share `.execute(exec) -> u64`, where `exec` is
+the driver connection (`&libsql::Connection`, `&rusqlite::Connection`,
+`&tokio_postgres::Client`, or a transaction) — not the `DbConnection` wrapper.
+Select adds:
 
 ```rust
-let users: Vec<User> = SelectBuilder::new("users").columns_raw(&["id", "email", "created_at"]).fetch_all(&conn).await?;
-let one: User        = UsersTable::select_for::<User>().filter(users::id.eq("u_1")).fetch_one(&conn).await?;   // QueryError::NotFound if empty
-let maybe: Option<User> = UsersTable::select_for::<User>().filter(users::id.eq("nope")).fetch_optional(&conn).await?;
-let n: i64           = UsersTable::select().count(&conn).await?;
+let users: Vec<User> = SelectBuilder::new("users").columns_raw(&["id", "email", "created_at"]).fetch_all(exec).await?;
+let one: User        = UsersTable::select_for::<User>().filter(users::id.eq("u_1")).fetch_one(exec).await?;   // QueryError::NotFound if empty
+let maybe: Option<User> = UsersTable::select_for::<User>().filter(users::id.eq("nope")).fetch_optional(exec).await?;
+let n: i64           = UsersTable::select().count(exec).await?;
+let any: bool        = UsersTable::select().exists(exec).await?;
 ```
+
+On the `rusqlite` driver these are synchronous: same names, no `.await`.
 
 Also available: `to_count_sql_for`, `to_exists_sql_for`,
 `SelectBuilder::raw().column_expr(expr, alias)`, and
@@ -349,6 +385,7 @@ Also available: `to_count_sql_for`, `to_exists_sql_for`,
 ```rust
 use toolu_orm_query::transaction::TransactionExt;
 
+// `conn` is a libsql::Connection — TransactionExt is implemented on the driver type.
 conn.run_transaction(|tx| async move {
   InsertBuilder::new("users").set(&users::id, "tx1").set(&users::email, "tx@example.com").execute(&tx).await?;
   UpdateBuilder::new("counters").set_expr(&counters::users, "users + 1").execute(&tx).await?;
