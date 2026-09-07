@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## `toolu-orm-connection` - [0.1.3](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.1.2...toolu-orm-connection-v0.1.3) - 2026-09-07
+
+### Added
+- *(connection)* adopt a pre-configured rusqlite connection ([#24](https://github.com/Falconiere/toolu-orm/pull/24))
+
 ## `toolu-orm-cli` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/v0.1.1...v0.1.2) - 2026-09-07
 
 ### Fixed
