@@ -8,7 +8,7 @@
 
 use crate::error::DbCoreError;
 use crate::snapshot::SnapshotTable;
-use crate::table::{TableDef, TableKind};
+use crate::table::TableDef;
 
 /// Checked before emitting `CreateTable` for a table the snapshot has not seen.
 pub(crate) fn check_new_virtual_table(table: &TableDef) -> Result<(), DbCoreError> {
@@ -28,11 +28,27 @@ pub(crate) fn check_virtual_pair(
   old: &SnapshotTable,
   new: &SnapshotTable,
 ) -> Result<bool, DbCoreError> {
-  if old.kind.is_ordinary() && new.kind.is_ordinary() {
-    return Ok(false);
-  }
-  if old.kind.module() != new.kind.module() {
-    return Err(refuse(name, &kind_reason(&old.kind, &new.kind)));
+  match (old.kind.module(), new.kind.module()) {
+    (None, None) => return Ok(false),
+    (None, Some(module)) => {
+      return Err(refuse(
+        name,
+        &format!("it became a virtual table using {module}"),
+      ))
+    },
+    (Some(module), None) => {
+      return Err(refuse(
+        name,
+        &format!("it is no longer a virtual table using {module}"),
+      ))
+    },
+    (Some(old_module), Some(new_module)) if old_module != new_module => {
+      return Err(refuse(
+        name,
+        &format!("its module changed from {old_module} to {new_module}"),
+      ))
+    },
+    (Some(_), Some(_)) => {},
   }
   if old.column_order != new.column_order || old.columns != new.columns {
     return Err(refuse(name, "its columns changed"));
@@ -47,18 +63,6 @@ pub(crate) fn check_virtual_pair(
 }
 
 const NO_INDEXES: &str = "virtual tables cannot declare indexes";
-
-/// Only called when the two modules differ, so every arm names one.
-fn kind_reason(old: &TableKind, new: &TableKind) -> String {
-  match (old.module(), new.module()) {
-    (Some(old_module), Some(new_module)) => {
-      format!("its module changed from {old_module} to {new_module}")
-    },
-    (None, Some(new_module)) => format!("it became a virtual table using {new_module}"),
-    (Some(old_module), None) => format!("it is no longer a virtual table using {old_module}"),
-    (None, None) => "its table kind changed".to_owned(),
-  }
-}
 
 fn refuse(table: &str, reason: &str) -> DbCoreError {
   DbCoreError::VirtualTableChange {

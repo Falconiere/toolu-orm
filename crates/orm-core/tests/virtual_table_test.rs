@@ -99,7 +99,7 @@ fn sqlite_ddl_creates_the_virtual_table() {
   let sql = create_sql(&memory_fts(), Dialect::Sqlite);
   assert_eq!(
     sql,
-    "CREATE VIRTUAL TABLE IF NOT EXISTS \"memory_fts\" USING fts5(\"memory_id\" UNINDEXED, \
+    "CREATE VIRTUAL TABLE IF NOT EXISTS \"memory_fts\" USING \"fts5\"(\"memory_id\" UNINDEXED, \
      \"body\", \"tags\", tokenize = 'porter unicode61 remove_diacritics 2');"
   );
 }
@@ -131,7 +131,24 @@ fn a_module_without_arguments_omits_the_parentheses() {
   };
   assert_eq!(
     create_sql(&table, Dialect::Sqlite),
-    "CREATE VIRTUAL TABLE IF NOT EXISTS \"series\" USING series;"
+    "CREATE VIRTUAL TABLE IF NOT EXISTS \"series\" USING \"series\";"
+  );
+}
+
+/// The module name is an identifier like any other, so it is quoted and its
+/// quotes are doubled: it cannot end the statement and start a new one.
+#[test]
+fn a_module_name_cannot_end_the_statement() {
+  let table = TableDef {
+    name: "hostile".to_owned(),
+    columns: vec![],
+    indexes: vec![],
+    strict: false,
+    kind: TableKind::virtual_table("fts5\"); DROP TABLE users; --", vec![]),
+  };
+  assert_eq!(
+    create_sql(&table, Dialect::Sqlite),
+    "CREATE VIRTUAL TABLE IF NOT EXISTS \"hostile\" USING \"fts5\"\"); DROP TABLE users; --\";"
   );
 }
 
@@ -140,7 +157,7 @@ fn postgres_reports_the_skipped_table_instead_of_emitting_ddl() {
   let sql = create_sql(&memory_fts(), Dialect::Postgres);
   assert_eq!(
     sql,
-    "-- virtual table \"memory_fts\" USING fts5 is SQLite-only; skipped for postgres"
+    "-- virtual table \"memory_fts\" USING \"fts5\" is SQLite-only; skipped for postgres"
   );
   assert!(!sql.contains("CREATE"), "emitted DDL for Postgres: {sql}");
 }

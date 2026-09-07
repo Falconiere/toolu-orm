@@ -39,7 +39,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
                       #(#index_defs),*
                   ],
                   strict: #strict,
-                  kind: toolu_orm_core::table::TableKind::Ordinary,
+                  kind: #core::table::TableKind::Ordinary,
               }
           }
       }

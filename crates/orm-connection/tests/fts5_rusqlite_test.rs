@@ -85,7 +85,7 @@ async fn generated_ddl_creates_a_virtual_table() -> Result<(), Box<dyn std::erro
     .await?;
   let ddl = &rows.first().ok_or("memory_fts is missing")?.value;
   assert!(ddl.contains("CREATE VIRTUAL TABLE"), "actual DDL: {ddl}");
-  assert!(ddl.contains("USING fts5"), "actual DDL: {ddl}");
+  assert!(ddl.contains("USING \"fts5\""), "actual DDL: {ddl}");
   Ok(())
 }
 

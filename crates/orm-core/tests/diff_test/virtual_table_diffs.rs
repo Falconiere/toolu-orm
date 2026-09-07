@@ -14,6 +14,8 @@ use toolu_orm_core::table::{TableDef, TableKind};
 
 use super::test_helpers::{col, table};
 
+const NO_INDEXES_REASON: &str = "virtual tables cannot declare indexes";
+
 fn memory_fts() -> TableDef {
   Fts5Table::new("memory_fts")
     .unindexed_column("memory_id", ColumnType::Text)
@@ -174,7 +176,7 @@ fn declaring_an_index_on_a_new_virtual_table_is_refused() {
   });
   assert_eq!(
     refusal(&Snapshot::empty(), &registry(vec![indexed])),
-    "memory_fts: virtual tables cannot declare indexes"
+    format!("memory_fts: {NO_INDEXES_REASON}")
   );
 }
 
@@ -211,5 +213,64 @@ fn renaming_a_virtual_table_renames_it_without_recreating() {
       old: "memory_fts".to_owned(),
       new: "note_fts".to_owned()
     }]
+  );
+}
+
+/// The rename path reaches the same checks as the unrenamed one: a rename is
+/// not a way to smuggle an in-place change past them.
+#[test]
+fn renaming_a_virtual_table_while_changing_it_is_refused() {
+  let old = snapshot_of(vec![memory_fts()]);
+  let mut retokenized = Fts5Table::new("note_fts")
+    .unindexed_column("memory_id", ColumnType::Text)
+    .column("body", ColumnType::Text)
+    .tokenize("unicode61")
+    .build();
+  retokenized.indexes.clear();
+  let error = diff_with_resolver(&old, &registry(vec![retokenized]), &RenameMemoryFts)
+    .expect_err("expected the change to be refused");
+  assert!(
+    error
+      .to_string()
+      .contains("note_fts\" in place: its module arguments changed"),
+    "unexpected error: {error}"
+  );
+}
+
+#[test]
+fn renaming_a_virtual_table_onto_an_index_is_refused() {
+  let old = snapshot_of(vec![memory_fts()]);
+  let mut indexed = memory_fts();
+  indexed.name = "note_fts".to_owned();
+  indexed.indexes.push(IndexDef {
+    name: "idx_note_fts_body".to_owned(),
+    columns: vec!["body".to_owned()],
+    unique: false,
+  });
+  let error = diff_with_resolver(&old, &registry(vec![indexed]), &RenameMemoryFts)
+    .expect_err("expected the change to be refused");
+  assert!(
+    error.to_string().contains(NO_INDEXES_REASON),
+    "unexpected error: {error}"
+  );
+}
+
+/// Renaming an ordinary table onto a virtual one is still a kind change.
+#[test]
+fn renaming_an_ordinary_table_into_a_virtual_one_is_refused() {
+  let ordinary = table(
+    "memory_fts",
+    vec![col("body", ColumnType::Text, false, false)],
+  );
+  let old = snapshot_of(vec![ordinary]);
+  let mut renamed = memory_fts();
+  renamed.name = "note_fts".to_owned();
+  let error = diff_with_resolver(&old, &registry(vec![renamed]), &RenameMemoryFts)
+    .expect_err("expected the change to be refused");
+  assert!(
+    error
+      .to_string()
+      .contains("it became a virtual table using fts5"),
+    "unexpected error: {error}"
   );
 }

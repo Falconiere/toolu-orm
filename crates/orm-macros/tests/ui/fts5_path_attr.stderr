@@ -1,0 +1,5 @@
+error: expected a simple identifier
+ --> tests/ui/fts5_path_attr.rs:5:35
+  |
+5 | #[fts5_table(name = "memory_fts", fts5::tokenize = "porter")]
+  |                                   ^^^^^^^^^^^^^^

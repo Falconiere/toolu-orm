@@ -101,7 +101,7 @@ async fn migrate_creates_the_virtual_table() -> TestResult {
   )
   .await?;
   assert!(ddl.contains("CREATE VIRTUAL TABLE"), "actual DDL: {ddl}");
-  assert!(ddl.contains("USING fts5"), "actual DDL: {ddl}");
+  assert!(ddl.contains("USING \"fts5\""), "actual DDL: {ddl}");
   assert!(ddl.contains("UNINDEXED"), "actual DDL: {ddl}");
   assert_eq!(
     scalar(

@@ -2,7 +2,9 @@
 //! the typed column module, and the builder factories.
 
 use toolu_orm_core::column::Text;
+use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::table::TableSchema;
+use toolu_orm_core::value::Value;
 use toolu_orm_macros::fts5_table;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -87,8 +89,35 @@ fn the_column_module_is_generated() {
   assert_eq!(memory_fts::body.qualified(), "\"memory_fts\".\"body\"");
 }
 
+/// The same four factories `#[table]` generates, each addressing the virtual
+/// table by name — an FTS5 table is read and written like any other. The
+/// dialect is pinned because `to_sql` follows the active driver feature and
+/// this suite runs on the default and postgres lanes both.
 #[test]
 fn the_builder_factories_are_generated() {
-  assert!(MemoryFts::select().to_sql().0.contains("memory_fts"));
-  assert!(MemoryFts::delete().to_sql().0.contains("memory_fts"));
+  assert_eq!(
+    MemoryFts::select()
+      .columns_raw(memory_fts::ALL_COLUMNS)
+      .to_sql_for(Dialect::Sqlite)
+      .0,
+    "SELECT \"memory_id\", \"body\", \"tags\" FROM \"memory_fts\""
+  );
+  assert_eq!(
+    MemoryFts::insert()
+      .set(&memory_fts::body, Value::Text("hello".to_owned()))
+      .to_sql_for(Dialect::Sqlite)
+      .0,
+    "INSERT INTO \"memory_fts\" (\"body\") VALUES (?1)"
+  );
+  assert_eq!(
+    MemoryFts::update()
+      .set(&memory_fts::body, Value::Text("hello".to_owned()))
+      .to_sql_for(Dialect::Sqlite)
+      .0,
+    "UPDATE \"memory_fts\" SET \"body\" = ?1"
+  );
+  assert_eq!(
+    MemoryFts::delete().to_sql_for(Dialect::Sqlite).0,
+    "DELETE FROM \"memory_fts\""
+  );
 }

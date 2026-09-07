@@ -21,6 +21,7 @@
 | `fts5_missing_name.rs` | `#[fts5_table]` without `name` | missing `name` in #[fts5_table(name = "...")] |
 | `fts5_unknown_attr.rs` | `#[fts5_table(name = "t", strict = "yes")]` | unknown attribute, expected `name`, `tokenize`, `prefix`, `content`, `content_rowid`, `columnsize` or `detail` |
 | `fts5_index_attr.rs` | `#[index(...)]` on an FTS5 struct | virtual tables cannot declare indexes; remove it from #[fts5_table] |
+| `fts5_path_attr.rs` | `#[fts5_table(fts5::tokenize = "porter")]` | expected a simple identifier |
 
 Not covered because the macros do not validate them today (spec Q6): unknown `#[column]` attributes, unknown `column_type` strings, invalid `on_delete` values, indexes on unknown columns, `pick` of unknown fields.
 
