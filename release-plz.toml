@@ -1,0 +1,35 @@
+# release-plz: on every push to main it opens/updates a release PR (workspace
+# version bump + CHANGELOG.md). Merging that PR publishes the five crates to
+# crates.io in dependency order, then pushes one `vX.Y.Z` tag and one GitHub
+# Release. Workflow: .github/workflows/release-plz.yml.
+
+[workspace]
+# All crates share `version.workspace = true`, so one changelog and one tag.
+changelog_path = "./CHANGELOG.md"
+git_tag_name = "v{{ version }}"
+git_release_name = "v{{ version }}"
+git_tag_enable = false
+git_release_enable = false
+
+# Tag/release hang off orm-cli: it is published last (depends on core +
+# connection), so the tag exists only once every crate is on the registry.
+[[package]]
+name = "toolu-orm-cli"
+git_tag_enable = true
+git_release_enable = true
+
+[changelog]
+body = """
+
+## `{{ package }}` - [{{ version }}]{%- if release_link -%}({{ release_link }}){% endif %} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}
+{%- if commit.scope -%}
+- *({{commit.scope}})* {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message }}
+{% else -%}
+- {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message }}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
+"""

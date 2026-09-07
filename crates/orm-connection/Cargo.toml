@@ -4,9 +4,11 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+readme.workspace = true
+description = "Connection pooling and driver adapters (libsql, rusqlite, Postgres) for toolu-orm"
 
 [dependencies]
-toolu-orm-core = { path = "../orm-core", default-features = false, features = [] }
+toolu-orm-core = { path = "../orm-core", version = "0.1.0", default-features = false, features = [] }
 async-trait.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

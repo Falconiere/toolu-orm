@@ -1,14 +1,18 @@
 [package]
 name = "toolu-orm-macros"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "Proc macros (Table, FromRow, relations) for toolu-orm"
 autotests = false
 
 [lib]
 proc-macro = true
 
 [dependencies]
-toolu-orm-core = { path = "../orm-core", default-features = false }
+toolu-orm-core = { path = "../orm-core", version = "0.1.0", default-features = false }
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
