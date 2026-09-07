@@ -103,6 +103,15 @@ fn to_sql_params(params: &[Value]) -> Vec<&dyn rusqlite::types::ToSql> {
     .collect()
 }
 
+/// A blocking task that never finished -- it panicked, or the runtime cancelled
+/// it -- says nothing about the statement and leaves the connection in an
+/// unknown state, so it is a connection failure rather than a query failure.
+fn join_failure(error: &tokio::task::JoinError) -> DbError {
+  DbError::Connection(format!(
+    "the rusqlite blocking task did not complete: {error}"
+  ))
+}
+
 impl DbConnectionBlocking for RusqliteConnection {
   fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
     let guard = self.lock()?;
@@ -117,24 +126,23 @@ impl DbConnectionBlocking for RusqliteConnection {
     let mut stmt = guard
       .prepare(sql)
       .map_err(|e| DbError::Query(e.to_string()))?;
-    let rows = stmt
-      .query_map(to_sql_params(&params).as_slice(), |row| {
-        #[cfg(all(feature = "rusqlite", any(feature = "postgres", feature = "libsql"),))]
-        let mapped = T::from_rusqlite_row(row);
-        #[cfg(all(
-          feature = "rusqlite",
-          not(feature = "postgres"),
-          not(feature = "libsql"),
-        ))]
-        let mapped = T::from_row(row);
-        mapped.map_err(|e| {
-          rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Null, Box::new(e))
-        })
-      })
+    let mut rows = stmt
+      .query(to_sql_params(&params).as_slice())
       .map_err(|e| DbError::Query(e.to_string()))?;
     let mut results = Vec::new();
-    for row_result in rows {
-      results.push(row_result.map_err(|e| DbError::Query(e.to_string()))?);
+    // Rows are decoded here rather than in a `query_map` callback so a `FromRow`
+    // failure keeps its own message and lands in `DbError::RowMapping`, the way
+    // the libsql backend reports it; routing it through a rusqlite error would
+    // need a column index and type this layer does not know.
+    while let Some(row) = rows.next().map_err(|e| DbError::Query(e.to_string()))? {
+      #[cfg(all(feature = "rusqlite", any(feature = "postgres", feature = "libsql"),))]
+      results.push(T::from_rusqlite_row(row).map_err(DbError::from)?);
+      #[cfg(all(
+        feature = "rusqlite",
+        not(feature = "postgres"),
+        not(feature = "libsql"),
+      ))]
+      results.push(T::from_row(row).map_err(DbError::from)?);
     }
     Ok(results)
   }
@@ -149,6 +157,8 @@ impl DbConnectionBlocking for RusqliteConnection {
 
 /// Every method hands off to its [`DbConnectionBlocking`] twin on a blocking
 /// thread, so the two surfaces run the same statement code and cannot drift.
+/// Statement errors therefore arrive unchanged; only a task that never finished
+/// is classified here, by [`join_failure`].
 #[async_trait::async_trait]
 impl DbConnection for RusqliteConnection {
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
@@ -156,7 +166,7 @@ impl DbConnection for RusqliteConnection {
     let sql = sql.to_owned();
     tokio::task::spawn_blocking(move || DbConnectionBlocking::execute_sql(&handle, &sql, params))
       .await
-      .map_err(|e| DbError::Query(e.to_string()))?
+      .map_err(|e| join_failure(&e))?
   }
 
   async fn query_map<T: FromRow + Send + 'static>(
@@ -168,7 +178,7 @@ impl DbConnection for RusqliteConnection {
     let sql = sql.to_owned();
     tokio::task::spawn_blocking(move || DbConnectionBlocking::query_map(&handle, &sql, params))
       .await
-      .map_err(|e| DbError::Query(e.to_string()))?
+      .map_err(|e| join_failure(&e))?
   }
 
   async fn execute_batch(&self, sql: &str) -> Result<(), DbError> {
@@ -176,6 +186,6 @@ impl DbConnection for RusqliteConnection {
     let sql = sql.to_owned();
     tokio::task::spawn_blocking(move || DbConnectionBlocking::execute_batch(&handle, &sql))
       .await
-      .map_err(|e| DbError::Query(e.to_string()))?
+      .map_err(|e| join_failure(&e))?
   }
 }

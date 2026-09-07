@@ -92,6 +92,17 @@ fn concurrent_threads_serialize_on_the_connection() -> Result<(), Box<dyn std::e
   Ok(())
 }
 
+/// Unwinds on purpose.
+///
+/// `panic!` is not available at this spot: `clippy::panic` is denied for the
+/// whole workspace and exempts only test *functions*, while this runs inside a
+/// `FromRow` impl. Removing from an empty vector is a real panic, which is all
+/// the poisoning needs.
+fn unwind_deliberately() -> DbCoreError {
+  let mut empty: Vec<DbCoreError> = Vec::new();
+  empty.remove(0)
+}
+
 /// A `FromRow` that panics mid-iteration, to unwind out of a `query_map` while
 /// the connection lock is held.
 struct PanicRow;
@@ -100,12 +111,38 @@ impl FromRow for PanicRow {
   const REQUIRED_COLUMNS: &'static [&'static str] = &[];
 
   fn from_row(_row: &rusqlite::Row<'_>) -> Result<Self, DbCoreError> {
-    // The workspace denies `panic!` / `panic_any` outside test *functions*, and
-    // this is a trait impl, so the deliberate unwind comes from a real operation
-    // that panics: taking element 0 out of an empty vector.
-    let mut empty: Vec<Self> = Vec::new();
-    Ok(empty.remove(0))
+    Err(unwind_deliberately())
   }
+}
+
+/// A panic inside the delegated blocking task reaches the async caller as a
+/// `JoinError`, which says nothing about the statement and leaves the connection
+/// in an unknown state. It is reported as `DbError::Connection`, not as a query
+/// failure.
+#[tokio::test]
+async fn async_reports_a_panicking_task_as_a_connection_error()
+-> Result<(), Box<dyn std::error::Error>> {
+  let conn = open_in_memory()?;
+  DbConnectionBlocking::execute_batch(
+    &conn,
+    "CREATE TABLE panicking (label TEXT NOT NULL);
+     INSERT INTO panicking (label) VALUES ('row');",
+  )?;
+
+  let previous_hook = std::panic::take_hook();
+  std::panic::set_hook(Box::new(|_info| {}));
+  let outcome =
+    DbConnection::query_map::<PanicRow>(&conn, "SELECT label FROM panicking", vec![]).await;
+  std::panic::set_hook(previous_hook);
+
+  let error = outcome
+    .err()
+    .ok_or("the panicking decode should have failed the query")?;
+  assert!(
+    matches!(&error, DbError::Connection(message) if message.contains("blocking task did not complete")),
+    "expected the join failure to be reported as a connection error, got {error:?}"
+  );
+  Ok(())
 }
 
 /// After a panic unwinds through a statement the connection can be left

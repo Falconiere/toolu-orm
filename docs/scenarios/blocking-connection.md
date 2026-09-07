@@ -11,6 +11,8 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 - **No runtime.** `blocking_roundtrip_without_a_runtime` is a plain `#[test]`: DDL, an insert returning `1`, and a decoded `SELECT` on an in-memory database. A `spawn_blocking` left anywhere on the path would fail it with "there is no reactor running".
 - **No `Send` bound.** `query_map_accepts_a_non_send_row` decodes into a struct holding an `Rc<String>`. The async `query_map` requires `T: Send + 'static`; the blocking one decodes on the caller's thread and does not.
 - **Errors, not panics.** `bad_sql_returns_a_query_error` gets `DbError::Query` naming the missing table, the same variant the async path returns.
+- **Decode failures are mapping failures.** `decode_failure_returns_a_row_mapping_error` gets `DbError::RowMapping` carrying the `FromRow` message, matching the libsql backend and the documented `DbConnection` contract. Rows are decoded in the driver rather than in rusqlite's `query_map` callback, which would have needed a column index and column type this layer does not know.
+- **A panicking task is a connection failure.** `async_reports_a_panicking_task_as_a_connection_error` panics inside the delegated blocking task; the resulting `JoinError` says nothing about the statement, so the async path reports `DbError::Connection` rather than a query failure.
 - **The two paths cannot drift.** The async `DbConnection` impl delegates to the blocking methods inside `spawn_blocking`. `async_and_blocking_share_one_connection` writes through one path and reads through the other, in both directions, on one connection.
 - **Callable from inside a runtime.** `blocking_calls_work_inside_a_runtime` runs the blocking methods inside `spawn_blocking` on a multi-thread runtime — the "already offloads" consumer. This is the case that pins the connection's `std::sync::Mutex`: `tokio::sync::Mutex::blocking_lock` panics in an async execution context.
 - **Contention.** `concurrent_threads_serialize_on_the_connection` shares `&RusqliteConnection` across two OS threads writing 50 rows each; all 100 land.
@@ -23,8 +25,10 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 | rusqlite-only | rusqlite_blocking_test | blocking_roundtrip_without_a_runtime |
 | rusqlite-only | rusqlite_blocking_test | query_map_accepts_a_non_send_row |
 | rusqlite-only | rusqlite_blocking_test | bad_sql_returns_a_query_error |
+| rusqlite-only | rusqlite_blocking_test | decode_failure_returns_a_row_mapping_error |
 | rusqlite-only | rusqlite_blocking_test | async_and_blocking_share_one_connection |
 | rusqlite-only | rusqlite_blocking_concurrency_test | blocking_calls_work_inside_a_runtime |
 | rusqlite-only | rusqlite_blocking_concurrency_test | concurrent_threads_serialize_on_the_connection |
+| rusqlite-only | rusqlite_blocking_concurrency_test | async_reports_a_panicking_task_as_a_connection_error |
 | rusqlite-only | rusqlite_blocking_concurrency_test | a_poisoned_connection_reports_it |
 | default | blocking_trait_def_test | trait_is_importable |

@@ -39,8 +39,8 @@ pub trait DbConnectionBlocking: Send + Sync {
   ///
   /// # Errors
   ///
-  /// Returns `DbError::Query` if the SQL execution fails or if a row cannot be
-  /// converted into `T`.
+  /// Returns `DbError::Query` if the SQL execution fails or `DbError::RowMapping`
+  /// if a row cannot be converted into `T`.
   fn query_map<T: FromRow>(&self, sql: &str, params: Vec<Value>) -> Result<Vec<T>, DbError>;
 
   /// Execute a batch of SQL statements (e.g., DDL, migrations).

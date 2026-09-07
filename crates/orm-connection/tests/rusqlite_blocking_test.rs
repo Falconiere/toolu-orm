@@ -112,6 +112,44 @@ fn bad_sql_returns_a_query_error() -> Result<(), Box<dyn std::error::Error>> {
   Ok(())
 }
 
+/// A row type that refuses to decode, with a message of its own.
+struct RejectingRow;
+
+impl FromRow for RejectingRow {
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["label"];
+
+  fn from_row(_row: &rusqlite::Row<'_>) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "label is not a colour name".to_owned(),
+    ))
+  }
+}
+
+/// A `FromRow` failure is a mapping failure, not a query failure, and it keeps
+/// its own message: rows are decoded in the driver rather than handed to
+/// rusqlite's `query_map` callback, which would have needed a column index and
+/// a column type this layer does not know.
+#[test]
+fn decode_failure_returns_a_row_mapping_error() -> Result<(), Box<dyn std::error::Error>> {
+  let conn = open_in_memory()?;
+  DbConnectionBlocking::execute_batch(
+    &conn,
+    "CREATE TABLE rejecting (label TEXT NOT NULL);
+     INSERT INTO rejecting (label) VALUES ('not-a-colour');",
+  )?;
+
+  let error =
+    DbConnectionBlocking::query_map::<RejectingRow>(&conn, "SELECT label FROM rejecting", vec![])
+      .err()
+      .ok_or("the decode should have failed")?;
+
+  assert!(
+    matches!(&error, DbError::RowMapping(message) if message.contains("not a colour name")),
+    "expected the FromRow message inside DbError::RowMapping, got {error:?}"
+  );
+  Ok(())
+}
+
 /// The async impl delegates to the blocking one, so both address the same
 /// connection and run the same statement code. A second, drifted implementation
 /// of the statement path would fail one of these two reads.
