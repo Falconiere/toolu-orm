@@ -57,8 +57,8 @@ pub mod prelude {
 
   #[cfg(feature = "libsql")]
   pub use toolu_orm_core::libsql;
-  #[cfg(feature = "postgres")]
-  pub use toolu_orm_core::tokio_postgres;
   #[cfg(feature = "rusqlite")]
   pub use toolu_orm_core::rusqlite;
+  #[cfg(feature = "postgres")]
+  pub use toolu_orm_core::tokio_postgres;
 }
