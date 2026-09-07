@@ -4,9 +4,11 @@
 //!
 //! Enable exactly one backend per consumer:
 //! - `libsql`    -- async libsql (Turso embedded replica)
-//! - `rusqlite`  -- sync rusqlite (wrapped with spawn_blocking)
+//! - `rusqlite`  -- sync rusqlite (native `DbConnectionBlocking`, wrapped with
+//!   spawn_blocking for `DbConnection`)
 //! - `postgres`  -- async tokio-postgres + deadpool connection pool
 
+pub mod blocking_trait_def;
 pub mod error;
 pub mod trait_def;
 
@@ -19,6 +21,7 @@ pub mod rusqlite_impl;
 #[cfg(feature = "postgres")]
 pub mod postgres_impl;
 
+pub use blocking_trait_def::DbConnectionBlocking;
 pub use error::DbError;
 pub use trait_def::DbConnection;
 

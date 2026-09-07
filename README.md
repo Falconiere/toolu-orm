@@ -511,7 +511,7 @@ migrations/
 | Feature | Backing crate | Mode | Open with |
 |---|---|---|---|
 | `libsql` | [libsql](https://crates.io/crates/libsql) | async; local file, `:memory:`, or Turso embedded replica | `Database::init_local(path)` · `Database::init_remote(RemoteConfig)` |
-| `rusqlite` | [rusqlite](https://crates.io/crates/rusqlite) (bundled) | sync, wrapped in `spawn_blocking` | `RusqliteConnection::open(path)` · `::open_in_memory()` |
+| `rusqlite` | [rusqlite](https://crates.io/crates/rusqlite) (bundled) | sync natively (`DbConnectionBlocking`), wrapped in `spawn_blocking` for the async `DbConnection` | `RusqliteConnection::from_connection(conn)` (no runtime) · `::open(path)` · `::open_in_memory()` |
 | `postgres` | [tokio-postgres](https://crates.io/crates/tokio-postgres) + [deadpool](https://crates.io/crates/deadpool-postgres) | async pool, rustls TLS | `PgDatabase::init(&PgConfig)` then `.connect()` |
 
 ```rust

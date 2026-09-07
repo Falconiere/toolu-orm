@@ -8,40 +8,12 @@
 
 use toolu_orm_connection::DbConnection;
 use toolu_orm_connection::rusqlite_impl::RusqliteConnection;
-use toolu_orm_core::row::FromRow;
 use toolu_orm_core::value::Value;
 
-/// Any one-column integer result -- a `count`, a `PRAGMA` value. It reads
-/// column 0 positionally, so it names no required column.
-struct ScalarRow {
-  value: i64,
-}
+#[path = "fixtures/rusqlite_rows.rs"]
+pub mod rusqlite_rows;
 
-impl FromRow for ScalarRow {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &[];
-
-  fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
-    let value: i64 = row
-      .get(0)
-      .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(e.to_string()))?;
-    Ok(Self { value })
-  }
-}
-
-struct LabelRow {
-  label: String,
-}
-
-impl FromRow for LabelRow {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &["label"];
-
-  fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
-    let label: String = row
-      .get(0)
-      .map_err(|e| toolu_orm_core::error::DbCoreError::RowMapping(e.to_string()))?;
-    Ok(Self { label })
-  }
-}
+use rusqlite_rows::{LabelRow, ScalarRow};
 
 /// Read the single scalar a one-row, one-column query returns.
 async fn scalar(
