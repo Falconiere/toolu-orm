@@ -29,7 +29,11 @@ fn table_macro_expands_through_the_facade() {
 
   assert_eq!(def.name, "facade_users");
   assert_eq!(
-    def.columns.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(),
+    def
+      .columns
+      .iter()
+      .map(|c| c.name.as_str())
+      .collect::<Vec<_>>(),
     vec!["id", "email", "age"]
   );
   assert_eq!(facade_users::TABLE, "facade_users");
