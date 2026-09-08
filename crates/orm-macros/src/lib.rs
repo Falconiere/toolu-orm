@@ -6,17 +6,18 @@ mod fts5;
 mod parse;
 mod paths;
 mod relational;
+mod vec0;
 mod view;
 
 use proc_macro::TokenStream;
 use syn::parse::Parser;
-use syn::{parse_macro_input, Expr, ItemStruct, Lit, Meta};
+use syn::{parse_macro_input, ItemStruct, Meta};
 
 #[proc_macro_attribute]
 pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
   let mut item_struct = parse_macro_input!(item as ItemStruct);
 
-  let (table_name, strict) = match parse_table_attrs(attr) {
+  let (table_name, strict) = match parse::parse_table_attrs(attr) {
     Ok(attrs) => attrs,
     Err(e) => return e.to_compile_error().into(),
   };
@@ -138,6 +139,39 @@ fn expand_fts5_table(attr: TokenStream, item: TokenStream) -> syn::Result<TokenS
   )
 }
 
+/// Declares a `CREATE VIRTUAL TABLE … USING vec0(…)` table.
+///
+/// ```ignore
+/// #[vec0_table(name = "memory_vec")]
+/// pub struct MemoryVec {
+///   #[column(primary_key)]
+///   pub memory_id: Text,
+///   #[column(dim = 1024, distance_metric = "cosine")]
+///   pub embedding: Vector,
+///   #[column(partition_key)]
+///   pub user_id: Integer,
+///   pub label: Text,
+///   #[column(auxiliary)]
+///   pub contents: Text,
+/// }
+/// ```
+///
+/// `name` is the only table-level attribute. A `Vector` field needs
+/// `#[column(dim = N)]` and takes `element` (`"float"`, `"int8"`, `"bit"`) and
+/// `distance_metric` (`"l2"`, `"cosine"`, `"l1"`); a field with none of
+/// `primary_key`, `partition_key` and `auxiliary` is a metadata column.
+/// Indexes are rejected: SQLite cannot index a virtual table.
+///
+/// `vec0` is not built into SQLite. The connection has to load `sqlite-vec`
+/// before any migration containing one of these tables runs.
+#[proc_macro_attribute]
+pub fn vec0_table(attr: TokenStream, item: TokenStream) -> TokenStream {
+  match vec0::expand_vec0_table(attr, item) {
+    Ok(tokens) => tokens,
+    Err(e) => e.to_compile_error().into(),
+  }
+}
+
 fn parse_view_attrs(item: &mut ItemStruct) -> syn::Result<Vec<view::ViewInput>> {
   let mut views = Vec::new();
   let mut remaining_attrs = Vec::new();
@@ -150,68 +184,6 @@ fn parse_view_attrs(item: &mut ItemStruct) -> syn::Result<Vec<view::ViewInput>> 
   }
   item.attrs = remaining_attrs;
   Ok(views)
-}
-
-/// Parses `#[table(name = "table_name")]` or `#[table(name = "table_name", strict = true)]`.
-/// Returns (table_name, strict). Strict defaults to false (standard SQLite compatibility).
-fn parse_table_attrs(attr: TokenStream) -> syn::Result<(String, bool)> {
-  let parser = syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated;
-  let metas = parser.parse(attr)?;
-
-  let mut table_name = None;
-  let mut strict = false; // default: non-strict for SQLite/libsql compatibility
-
-  for meta in &metas {
-    let Meta::NameValue(nv) = meta else {
-      return Err(syn::Error::new_spanned(
-        meta,
-        "expected name = value pairs in #[table(...)]",
-      ));
-    };
-    if nv.path.is_ident("name") {
-      let Expr::Lit(expr_lit) = &nv.value else {
-        return Err(syn::Error::new_spanned(
-          &nv.value,
-          "expected a string literal",
-        ));
-      };
-      let Lit::Str(s) = &expr_lit.lit else {
-        return Err(syn::Error::new_spanned(
-          &expr_lit.lit,
-          "expected a string literal",
-        ));
-      };
-      table_name = Some(s.value());
-    } else if nv.path.is_ident("strict") {
-      let Expr::Lit(expr_lit) = &nv.value else {
-        return Err(syn::Error::new_spanned(
-          &nv.value,
-          "expected a bool literal",
-        ));
-      };
-      let Lit::Bool(b) = &expr_lit.lit else {
-        return Err(syn::Error::new_spanned(
-          &expr_lit.lit,
-          "expected true or false",
-        ));
-      };
-      strict = b.value();
-    } else {
-      return Err(syn::Error::new_spanned(
-        &nv.path,
-        "unknown attribute, expected `name` or `strict`",
-      ));
-    }
-  }
-
-  let Some(name) = table_name else {
-    return Err(syn::Error::new(
-      proc_macro2::Span::call_site(),
-      "missing `name` in #[table(name = \"...\")]",
-    ));
-  };
-
-  Ok((name, strict))
 }
 
 #[proc_macro_derive(ColumnEnum)]

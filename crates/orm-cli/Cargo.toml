@@ -60,6 +60,11 @@ path = "tests/fts5_loop_sqlite_test.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "vec0_loop_sqlite_test"
+path = "tests/vec0_loop_sqlite_test.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "migrate_failure_test"
 path = "tests/migrate_failure_test.rs"
 required-features = ["libsql"]

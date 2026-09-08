@@ -1,0 +1,5 @@
+error: `dim` on `label`: only a Vector column carries it
+  --> tests/ui/vec0_dim_on_non_vector.rs:12:14
+   |
+12 |   pub label: Text,
+   |              ^^^^

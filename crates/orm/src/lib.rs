@@ -44,7 +44,7 @@ pub use toolu_orm_connection as connection;
 pub use toolu_orm_core as core;
 pub use toolu_orm_query as query;
 
-pub use toolu_orm_macros::{fts5_table, table, ColumnEnum, FromRow, Relational};
+pub use toolu_orm_macros::{fts5_table, table, vec0_table, ColumnEnum, FromRow, Relational};
 
 /// The macros plus the crate names they used to require.
 ///
@@ -56,7 +56,7 @@ pub mod prelude {
   pub use toolu_orm_core;
   pub use toolu_orm_query;
 
-  pub use toolu_orm_macros::{fts5_table, table, ColumnEnum, FromRow, Relational};
+  pub use toolu_orm_macros::{fts5_table, table, vec0_table, ColumnEnum, FromRow, Relational};
 
   #[cfg(feature = "libsql")]
   pub use toolu_orm_core::libsql;

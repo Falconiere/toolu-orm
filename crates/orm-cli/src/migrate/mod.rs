@@ -3,6 +3,7 @@ mod baseline;
 mod ddl;
 mod embedded;
 mod error;
+mod missing_extension;
 mod pending;
 mod run;
 mod store;

@@ -1,0 +1,5 @@
+error: `memory_id` is a vec0 key, so its type must be one of Text, Integer, not `Real`
+  --> tests/ui/vec0_bad_key_type.rs:11:18
+   |
+11 |   pub memory_id: Real,
+   |                  ^^^^

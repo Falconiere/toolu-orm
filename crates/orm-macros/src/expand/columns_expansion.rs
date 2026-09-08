@@ -102,6 +102,7 @@ fn marker_name(name: &str) -> &'static str {
     "BigSerial" => "BigSerial",
     "Jsonb" => "Jsonb",
     "Numeric" => "Numeric",
+    "Vector" => "Vector",
     _ => "Text",
   }
 }

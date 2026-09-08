@@ -1,0 +1,5 @@
+error: `embedding` is a bit vector, and a bit vector has no distance_metric
+  --> tests/ui/vec0_bit_distance_metric.rs:13:18
+   |
+13 |   pub embedding: Vector,
+   |                  ^^^^^^

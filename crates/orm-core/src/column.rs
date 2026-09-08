@@ -4,6 +4,30 @@ use serde::{Deserialize, Serialize};
 
 use crate::dialect::Dialect;
 
+/// The element type of a `vec0` vector column.
+///
+/// Fixed at creation together with the dimension: `sqlite-vec` has no way to
+/// widen or re-type a vector in place.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VectorElement {
+  Float,
+  Int8,
+  Bit,
+}
+
+impl VectorElement {
+  /// The name `vec0` reads in a column definition, as in `float[768]`.
+  #[must_use]
+  pub fn as_vec0_sql(self) -> &'static str {
+    match self {
+      Self::Float => "float",
+      Self::Int8 => "int8",
+      Self::Bit => "bit",
+    }
+  }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ColumnType {
   // Core SQLite
@@ -28,6 +52,13 @@ pub enum ColumnType {
   Numeric,
   Char(u32),
   Array(Box<ColumnType>),
+  /// A `vec0` vector, e.g. `FLOAT[1024]`. Both parts are the column's
+  /// identity, so a change to either is a new column to the diff. Outside a
+  /// `vec0` table the value is just its bytes: `BLOB`, or `BYTEA` on Postgres.
+  Vector {
+    element: VectorElement,
+    dim: u32,
+  },
 }
 
 impl ColumnType {
@@ -37,7 +68,7 @@ impl ColumnType {
       Self::Text | Self::Jsonb | Self::Char(_) | Self::Array(_) => "TEXT".to_owned(),
       Self::Integer | Self::Serial | Self::BigSerial => "INTEGER".to_owned(),
       Self::Real | Self::Numeric => "REAL".to_owned(),
-      Self::Blob => "BLOB".to_owned(),
+      Self::Blob | Self::Vector { .. } => "BLOB".to_owned(),
       Self::Uuid => "uuid".to_owned(),
       Self::Boolean => "boolean".to_owned(),
       Self::Timestamp => "timestamp".to_owned(),
@@ -70,7 +101,7 @@ impl ColumnType {
       | Self::Serial
       | Self::BigSerial => "INTEGER".to_owned(),
       Self::Real | Self::Numeric => "REAL".to_owned(),
-      Self::Blob => "BLOB".to_owned(),
+      Self::Blob | Self::Vector { .. } => "BLOB".to_owned(),
     }
   }
 
@@ -99,13 +130,13 @@ impl ColumnType {
         | Self::Serial
         | Self::BigSerial => "INTEGER".to_owned(),
         Self::Real | Self::Numeric => "REAL".to_owned(),
-        Self::Blob => "BLOB".to_owned(),
+        Self::Blob | Self::Vector { .. } => "BLOB".to_owned(),
       },
       Dialect::Postgres => match self {
         Self::Text => "TEXT".to_owned(),
         Self::Integer => "INTEGER".to_owned(),
         Self::Real => "DOUBLE PRECISION".to_owned(),
-        Self::Blob => "BYTEA".to_owned(),
+        Self::Blob | Self::Vector { .. } => "BYTEA".to_owned(),
         Self::Uuid => "UUID".to_owned(),
         Self::Boolean => "BOOLEAN".to_owned(),
         Self::Timestamp => "TIMESTAMPTZ".to_owned(),
@@ -194,3 +225,5 @@ pub struct BigSerial;
 pub struct Jsonb;
 pub struct Numeric;
 pub struct Char<const N: u32>;
+/// `#[vec0_table]`'s vector marker; the dimension comes from `#[column(dim = N)]`.
+pub struct Vector;

@@ -12,14 +12,14 @@
 //! could not reach the companion column module's nested scope anyway. Every
 //! path the expansions emit has to resolve on its own.
 
-use toolu_orm::core::column::{EnumSchema, Integer, Text};
+use toolu_orm::core::column::{EnumSchema, Integer, Text, Vector};
 use toolu_orm::core::dialect::Dialect;
 use toolu_orm::core::error::DbCoreError;
 use toolu_orm::core::query_column::CommonOps;
 use toolu_orm::core::relational_row::FromRelationalRow;
 use toolu_orm::core::serde_json::{self, Value};
 use toolu_orm::core::table::TableSchema;
-use toolu_orm::{fts5_table, table, ColumnEnum, Relational};
+use toolu_orm::{fts5_table, table, vec0_table, ColumnEnum, Relational};
 
 #[table(name = "facade_only_users")]
 #[view(FacadeOnlyUserPreview, pick(id, email))]
@@ -36,6 +36,14 @@ pub struct FacadeOnlyUserFts {
   #[column(unindexed)]
   pub user_id: Text,
   pub email: Text,
+}
+
+#[vec0_table(name = "facade_only_user_vec")]
+pub struct FacadeOnlyUserVec {
+  #[column(primary_key)]
+  pub user_id: Text,
+  #[column(dim = 8, distance_metric = "cosine")]
+  pub embedding: Vector,
 }
 
 #[derive(
@@ -149,6 +157,25 @@ fn fts5_table_macro_expands_without_the_prelude() {
   assert_eq!(
     facade_only_user_fts::email.qualified(),
     r#""facade_only_user_fts"."email""#
+  );
+}
+
+#[test]
+fn vec0_table_macro_expands_without_the_prelude() {
+  let def = FacadeOnlyUserVec::table_def();
+
+  assert!(def.is_virtual());
+  assert_eq!(def.kind.module(), Some("vec0"));
+  assert_eq!(
+    def.kind.args(),
+    [
+      "user_id text primary key",
+      "embedding float[8] distance_metric=cosine",
+    ]
+  );
+  assert_eq!(
+    facade_only_user_vec::embedding.qualified(),
+    r#""facade_only_user_vec"."embedding""#
   );
 }
 

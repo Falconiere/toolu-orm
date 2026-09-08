@@ -1,0 +1,7 @@
+error: `my table` cannot be a vec0 table name: vec0 parses its own arguments and has no quoting, so the name must match [A-Za-z][A-Za-z0-9_]*
+ --> tests/ui/vec0_bad_table_name.rs:8:1
+  |
+8 | #[vec0_table(name = "my table")]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `vec0_table` (in Nightly builds, run with -Z macro-backtrace for more info)
