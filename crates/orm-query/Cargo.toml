@@ -82,6 +82,10 @@ name = "select_test"
 path = "tests/select_test/main.rs"
 
 [[test]]
+name = "fts5_select_sql_test"
+path = "tests/fts5_select_sql_test.rs"
+
+[[test]]
 name = "integration_test"
 path = "tests/integration_test/mod.rs"
 required-features = ["libsql"]
@@ -114,6 +118,11 @@ name = "libsql_relational_test"
 path = "tests/libsql_relational_test.rs"
 required-features = ["libsql"]
 
+[[test]]
+name = "fts5_libsql_test"
+path = "tests/fts5_libsql_test.rs"
+required-features = ["libsql"]
+
 # The FromRow derive on each single-driver shape, decoded from real rows.
 [[test]]
 name = "libsql_derived_from_row_test"
@@ -138,6 +147,11 @@ required-features = ["rusqlite"]
 [[test]]
 name = "rusqlite_relational_test"
 path = "tests/rusqlite_relational_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "fts5_rusqlite_test"
+path = "tests/fts5_rusqlite_test.rs"
 required-features = ["rusqlite"]
 
 # Need a live Postgres (docker-compose.test.yaml) and the five-crate postgres

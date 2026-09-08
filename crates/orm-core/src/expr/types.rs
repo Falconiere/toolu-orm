@@ -35,6 +35,10 @@ pub(crate) enum ExprKind {
     low: Value,
     high: Value,
   },
+  Match {
+    target: String,
+    pattern: Value,
+  },
   And(Box<Expr>, Box<Expr>),
   Or(Box<Expr>, Box<Expr>),
   Raw {
@@ -140,6 +144,36 @@ impl Expr {
 impl OrderBy {
   pub fn to_sql(&self) -> String {
     format!("{} {}", self.column, self.direction)
+  }
+
+  /// `ORDER BY "<alias>" ASC` — order by a computed output rather than
+  /// repeating the expression that produced it.
+  ///
+  /// Pair it with `SelectBuilder::column_expr(expr, alias)`. For an FTS5
+  /// relevance score `ASC` is best first, because `bm25()` is negative.
+  #[must_use]
+  pub fn alias_asc(alias: &str) -> Self {
+    Self::raw_asc(&format!("\"{alias}\""))
+  }
+
+  /// `ORDER BY "<alias>" DESC`; see [`OrderBy::alias_asc`].
+  #[must_use]
+  pub fn alias_desc(alias: &str) -> Self {
+    Self::raw_desc(&format!("\"{alias}\""))
+  }
+
+  pub(crate) fn raw_asc(sql: &str) -> Self {
+    Self {
+      column: sql.to_owned(),
+      direction: "ASC",
+    }
+  }
+
+  pub(crate) fn raw_desc(sql: &str) -> Self {
+    Self {
+      column: sql.to_owned(),
+      direction: "DESC",
+    }
   }
 }
 
