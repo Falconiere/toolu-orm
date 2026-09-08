@@ -2,6 +2,7 @@
 
 #[cfg(feature = "postgres")]
 mod decode_postgres;
+mod derived;
 #[cfg(feature = "postgres")]
 mod pg_count_scalar;
 mod traits;

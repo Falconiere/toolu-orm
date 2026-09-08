@@ -1,8 +1,8 @@
-//! `#[derive(FromRow)]` against real rows.
+//! `#[derive(FromRow)]` against real rows, on the two-driver shape.
 //!
-//! The derive decodes Postgres rows positionally via `try_get(idx)`; its libsql
-//! method is a documented error stub (`orm-macros/src/from_row_expand.rs`).
-//! Needs the live Postgres from `docker-compose.test.yaml`.
+//! This lane unifies postgres + libsql onto `toolu-orm-core`, so the derive
+//! emits `from_pg_row` *and* `from_libsql_row`, both real decoders. Needs the
+//! live Postgres from `docker-compose.test.yaml`.
 #![cfg(all(feature = "libsql", feature = "postgres"))]
 
 use toolu_orm_connection::{Database, DbConnection, DbError, PgConfig, PgDatabase};
@@ -74,8 +74,12 @@ async fn derive_fewer_columns_than_required_is_row_mapping() -> TestResult {
   Ok(())
 }
 
+/// The other half of the two-driver shape. This used to assert a stub error
+/// (`"<Type> is only decoded from Postgres rows"`); the derive now generates a
+/// real libsql decoder, so the *same* derived struct decodes both drivers and
+/// the two assertions above and below are interchangeable.
 #[tokio::test]
-async fn derive_on_libsql_row_returns_documented_stub_error() -> TestResult {
+async fn derive_decodes_libsql_rows_with_null_as_none() -> TestResult {
   let db = Database::init_local(":memory:").await?;
   let conn = db.connect()?;
   conn
@@ -84,18 +88,32 @@ async fn derive_on_libsql_row_returns_documented_stub_error() -> TestResult {
   conn
     .execute_sql(
       "INSERT INTO people (id, age) VALUES (?1, ?2)",
-      vec![Value::Text("p1".into()), Value::Integer(30)],
+      vec![Value::Text("p1".into()), Value::Null],
     )
     .await?;
-  let result = conn
-    .query_map::<Person>("SELECT id, age FROM people", vec![])
-    .await;
-  let Err(DbError::RowMapping(msg)) = result else {
-    return Err("expected DbError::RowMapping".into());
-  };
-  assert!(
-    msg.ends_with("is only decoded from Postgres rows"),
-    "unexpected message: {msg}"
+  conn
+    .execute_sql(
+      "INSERT INTO people (id, age) VALUES (?1, ?2)",
+      vec![Value::Text("p2".into()), Value::Integer(30)],
+    )
+    .await?;
+
+  let people = conn
+    .query_map::<Person>("SELECT id, age FROM people ORDER BY id", vec![])
+    .await?;
+
+  assert_eq!(
+    people,
+    vec![
+      Person {
+        id: "p1".into(),
+        age: None
+      },
+      Person {
+        id: "p2".into(),
+        age: Some(30)
+      },
+    ]
   );
   Ok(())
 }

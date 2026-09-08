@@ -34,13 +34,12 @@ libsql = ["toolu-orm-core/libsql"]
 rusqlite = ["toolu-orm-core/rusqlite"]
 postgres = ["toolu-orm-core/postgres"]
 
-# The FromRow derive emits the postgres+libsql trait shape (see
-# src/from_row_expand.rs), so suites that derive FromRow only compile on
-# the postgres lane: `cargo nextest run -p toolu-orm-macros --features postgres`.
+# No driver gate: the FromRow derive expands to whatever shape orm-core
+# compiled (src/from_row_expand.rs), so this runs on every lane, including the
+# default one where orm-core has libsql alone.
 [[test]]
 name = "from_row_test"
 path = "tests/from_row_test.rs"
-required-features = ["postgres"]
 
 [[test]]
 name = "fts5_macro_test"

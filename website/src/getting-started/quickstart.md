@@ -17,13 +17,10 @@ through the facade — see [Installation](installation.md).
 use toolu_orm::connection::Database;
 use toolu_orm::core::column::{Integer, Text};
 use toolu_orm::core::dialect::Dialect;
-use toolu_orm::core::error::DbCoreError;
-use toolu_orm::core::libsql;                 // the driver crate, re-exported
 use toolu_orm::core::query_column::CommonOps;
-use toolu_orm::core::row::FromRow;
 use toolu_orm::core::schema::SchemaRegistry;
 use toolu_orm::core::table::TableSchema;
-use toolu_orm::table;
+use toolu_orm::{table, FromRow};
 
 #[table(name = "users")]
 pub struct UsersTable {
@@ -35,26 +32,13 @@ pub struct UsersTable {
   pub created_at: Integer,
 }
 
+// The derive follows the drivers active on `toolu-orm-core`: one driver
+// (libsql here) means a single `from_row`. See "Row mapping".
+#[derive(FromRow)]
 pub struct User {
   pub id: String,
   pub email: String,
   pub created_at: i64,
-}
-
-// One driver is active (libsql), so `FromRow` asks for a single `from_row` —
-// `#[derive(FromRow)]` emits the postgres+libsql shape and does NOT compile
-// here. See "Row mapping" for the derive and the other driver shapes.
-impl FromRow for User {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
-
-  fn from_row(row: &libsql::Row) -> Result<Self, DbCoreError> {
-    let col = |i: i32, e: libsql::Error| DbCoreError::RowMapping(format!("col {i}: {e}"));
-    Ok(Self {
-      id: row.get(0).map_err(|e| col(0, e))?,
-      email: row.get(1).map_err(|e| col(1, e))?,
-      created_at: row.get(2).map_err(|e| col(2, e))?,
-    })
-  }
 }
 
 #[tokio::main]

@@ -27,8 +27,10 @@ The trait is feature-gated on `toolu-orm-core`:
 | `postgres` + `rusqlite` | `from_pg_row`, `from_rusqlite_row` |
 | `libsql` + `rusqlite` | `from_libsql_row`, `from_rusqlite_row` |
 
-An application runs one driver, so `from_row` is the usual shape — and the one
-`#[derive(FromRow)]` cannot produce.
+An application runs one driver, so `from_row` is the usual shape.
+`#[derive(FromRow)]` follows this table: it expands to whichever shape the
+drivers on `toolu-orm-core` gave the trait, so it compiles on all seven
+combinations.
 
 ## `#[derive(FromRow)]`
 
@@ -45,18 +47,56 @@ pub struct User {
 field is read positionally at its own index with the field's own Rust type, so an
 `Option<T>` field decodes SQL `NULL` as `None`.
 
-> **The derive only compiles on the postgres + libsql shape.** It always emits
-> `from_pg_row` (real decoding) plus a `from_libsql_row` error stub, so on a
-> single-driver lane — libsql-only, rusqlite-only, or postgres-only — the trait
-> asks for `from_row` and the derive does not provide it: the build fails with a
-> missing-method error. Only the postgres lane, where both features are unified
-> on `toolu-orm-core`, can derive it. Everywhere else, write the impl by hand as
-> shown below. Its libsql method is a stub even there, so a derived type decodes
-> Postgres rows and returns `DbCoreError::RowMapping` on a libsql row.
+Each driver gets a real decoder, spelled the way that driver reads a column:
+`try_get::<usize, T>(i)` for Postgres, `get::<T>(i)` for libsql (which indexes
+with `i32`), `get::<usize, T>(i)` for rusqlite. A field the driver cannot read
+is a `DbCoreError::RowMapping` naming the column's index and name — never a
+panic:
+
+```text
+column 3 (age): Invalid column index: 3
+```
+
+How the derive knows the shape is worth a note, because it cannot see
+`toolu-orm-core`'s features: it expands inside *your* crate, where
+`feature = "postgres"` means your feature. So it emits one decoder per driver
+and hands all three to `toolu_orm_core::impl_derived_from_row!`, a macro whose
+eight definitions are each `#[cfg]`-gated on `toolu-orm-core`'s own features.
+A `macro_rules!` definition is compiled with its defining crate's features, so
+the surviving definition is the one matching the shape that build compiled, and
+the decoders for inactive drivers are dropped without ever being expanded. You
+need no build script and no feature flags on the derive.
+
+### Converting a field
+
+`#[from_row(with = "f")]` routes the decoded value through `f`, which takes and
+returns the field's own type (`FieldTy -> Result<FieldTy, E>`), so it normalizes
+or rejects rather than converting between types. `f`'s error becomes the same
+`RowMapping` message, naming the column.
+
+```rust
+fn normalize_email(raw: String) -> Result<String, DbCoreError> {
+  if raw.contains('@') {
+    Ok(raw.to_lowercase())
+  } else {
+    Err(DbCoreError::RowMapping(format!("{raw:?} is not an email")))
+  }
+}
+
+#[derive(FromRow)]
+pub struct Contact {
+  pub id: String,
+  #[from_row(with = "normalize_email")]
+  pub email: String,
+}
+```
 
 ## Writing the impl by hand
 
-Four lines per column, and no macro between you and the driver:
+Still supported, and the way out when a field type the active driver cannot
+decode needs a real conversion — libsql's `FromValue` is a sealed trait, so
+only its own set of types can decode there. Four lines per column, and no macro
+between you and the driver:
 
 ```rust
 use toolu_orm_core::{error::DbCoreError, row::FromRow};

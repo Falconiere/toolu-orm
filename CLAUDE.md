@@ -14,7 +14,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 ## Driver features
 - Features `libsql`, `rusqlite`, `postgres` exist on every crate and forward to orm-core.
 - Consumers activate the drivers they need on every crate they depend on.
-- `FromRow` changes shape per driver set: one driver on orm-core gives `from_row(&Row)`; two or more give `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`. `#[derive(FromRow)]` emits the postgres+libsql shape (its libsql method is an error stub), so suites that derive it compile only on the postgres lane; single-driver suites implement `from_row` by hand.
+- `FromRow` changes shape per driver set: one driver on orm-core gives `from_row(&Row)`; two or more give `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`. `#[derive(FromRow)]` follows that shape — it emits one decoder per driver and hands all of them to `toolu_orm_core::impl_derived_from_row!`, whose eight definitions are `#[cfg]`-gated on orm-core's own features (`crates/orm-core/src/row/derived.rs`). Deriving it therefore never pins a suite to a lane. Hand-written impls stay supported and stay covered (orm-cli's `migrate/store.rs`, orm-connection's rusqlite fixtures, orm-query's `integration_test`).
 - orm-query compiles its executor, transaction, and fetch code only when exactly one driver feature is active (`cfg_single_backend!`), which is why the libsql-only and rusqlite-only lanes exist.
 - orm-core emits `DEP_TOOLU_ORM_CORE_HAS_*` build metadata (`links = "toolu_orm_core"`) so orm-cli's `build.rs` can see which features Cargo actually unified.
 
@@ -38,7 +38,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Use `cargo nextest run`, never `cargo test`.
 
 ## Quality gate
-Four lanes plus the docs check, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`.
+Four lanes plus two checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight.
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -51,5 +51,6 @@ cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features rusqlite
 cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-connection --features rusqlite
+bash scripts/check-derive-matrix.sh
 bash scripts/check-scenario-docs.sh
 ```

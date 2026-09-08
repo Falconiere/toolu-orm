@@ -13,7 +13,9 @@ Procedural macros for toolu-orm. Transforms annotated structs into full ORM enti
 src/
 ├── lib.rs                       # 3 proc macros: table, FromRow, ColumnEnum
 ├── column_enum.rs               # #[derive(ColumnEnum)] implementation
-├── from_row.rs                  # #[derive(FromRow)] implementation
+├── from_row.rs                  # #[derive(FromRow)] field/attribute parsing
+├── from_row_expand.rs           # Per-driver row reads + impl_derived_from_row! call
+├── paths.rs                     # Absolute, consumer-resolved crate paths
 ├── view.rs                      # #[view] attribute processing
 ├── parse/
 │   ├── column_parsing.rs        # Parse #[column(...)] attributes

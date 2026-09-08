@@ -113,10 +113,8 @@ The `FromRow` trait changes shape with the active driver set:
 | exactly one | `from_row(&Row)` |
 | two or more | `from_pg_row`, `from_libsql_row`, `from_rusqlite_row` |
 
-`#[derive(FromRow)]` always emits the `postgres` + `libsql` shape, so it compiles
-only where both features are unified. On a single-driver setup the trait asks for
-`from_row` and the derive does not provide it — write the impl by hand, see
-[Row mapping](../schema/row-mapping.md).
+`#[derive(FromRow)]` follows that table, so it compiles on every combination
+including a single driver. See [Row mapping](../schema/row-mapping.md).
 
 ## Toolchain
 

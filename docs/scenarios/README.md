@@ -21,7 +21,7 @@ test, update its page.
 | [Transactions](transactions.md) | Commit persists; rollback and drop discard; reads inside see own writes (libsql `run_transaction`, orm-query `PgTransaction`, connection `PgTransaction`). |
 | [Postgres connection](postgres-connection.md) | `PgDatabase` pool, `PgConnection`, error mapping with SQLSTATE, unreachable server. |
 | [Blocking connection](blocking-connection.md) | `DbConnectionBlocking` on rusqlite with no runtime: non-`Send` rows, agreement with the async path, contention, poisoning. |
-| [FromRow derive](from-row-derive.md) | `#[derive(FromRow)]` on real Postgres rows, NULL to `None`, missing columns, and the documented libsql stub. |
+| [FromRow derive](from-row-derive.md) | `#[derive(FromRow)]` on every driver shape against real rows: NULL to `None`, missing columns, `#[from_row(with)]`. |
 | [Migration loop](migration-loop.md) | generate → migrate → evolve → generate → migrate, asserted through `PRAGMA` / `information_schema`. |
 | [Migration baseline](migration-baseline.md) | `mark_applied` / `mark_applied_through` adopt an existing database by recording journal entries without running their SQL. |
 | [Embedded migrations](embedded-migrations.md) | `run_migrate_embedded` applies an `include_str!`'d list with the same hashes and transactions as the directory runner, and the two sources interchange. |

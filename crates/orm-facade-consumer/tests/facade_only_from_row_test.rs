@@ -4,10 +4,12 @@
 //!
 //! Tests: the derived `FromRow` impl reports its required columns.
 //!
-//! The derive emits the postgres+libsql trait shape and names
-//! `tokio_postgres::Row` / `libsql::Row`, none of which this package depends
-//! on — they resolve through `toolu-orm-core`'s re-exports, which is why the
-//! file compiling at all is the assertion that matters. Postgres lane only.
+//! The derive names the active driver's row type and reaches
+//! `impl_derived_from_row!` at `toolu-orm-core`'s root, neither of which this
+//! package depends on — both resolve through the facade
+//! (`::toolu_orm::core::…`), which is why the file compiling at all is the
+//! assertion that matters. It compiles on every lane, so the default lane's
+//! single-driver shape is covered here too.
 
 use toolu_orm::core::row::FromRow;
 use toolu_orm::FromRow;

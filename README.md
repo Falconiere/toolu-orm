@@ -154,12 +154,6 @@ tokio                = { version = "1", features = ["rt-multi-thread", "macros"]
 For Postgres, replace `"libsql"` with `"postgres"`. `toolu-orm-core` and
 `toolu-orm-cli` default to `libsql`; the other crates have no default driver.
 
-> **Heads-up on `#[derive(FromRow)]`.** The derive currently emits the
-> `postgres` + `libsql` decoder shape, so it compiles only when `toolu-orm-core`
-> has **both** features on. With a single driver, implement `FromRow` by hand
-> (a few lines, see [Defining tables](#defining-tables)). Making the derive
-> follow the active driver set is tracked as a follow-up.
-
 ---
 
 ## Quickstart
@@ -182,13 +176,10 @@ own code (see [Migrations](#migrations) for the usual `bin/migrate.rs`).
 use toolu_orm::connection::Database;
 use toolu_orm::core::column::{Integer, Text};
 use toolu_orm::core::dialect::Dialect;
-use toolu_orm::core::error::DbCoreError;
-use toolu_orm::core::libsql;                 // the driver crate, re-exported
 use toolu_orm::core::query_column::CommonOps;
-use toolu_orm::core::row::FromRow;
 use toolu_orm::core::schema::SchemaRegistry;
 use toolu_orm::core::table::TableSchema;
-use toolu_orm::table;
+use toolu_orm::{table, FromRow};
 
 #[table(name = "users")]
 pub struct UsersTable {
@@ -200,26 +191,13 @@ pub struct UsersTable {
   pub created_at: Integer,
 }
 
+// The derive follows the drivers active on `toolu-orm-core`: one driver
+// (libsql here) means a single `from_row`. See "Row mapping".
+#[derive(FromRow)]
 pub struct User {
   pub id: String,
   pub email: String,
   pub created_at: i64,
-}
-
-// One driver is active (libsql), so `FromRow` asks for a single `from_row` —
-// `#[derive(FromRow)]` emits the postgres+libsql shape and does NOT compile
-// here. See "Row mapping" for the derive and the other driver shapes.
-impl FromRow for User {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
-
-  fn from_row(row: &libsql::Row) -> Result<Self, DbCoreError> {
-    let col = |i: i32, e: libsql::Error| DbCoreError::RowMapping(format!("col {i}: {e}"));
-    Ok(Self {
-      id: row.get(0).map_err(|e| col(0, e))?,
-      email: row.get(1).map_err(|e| col(1, e))?,
-      created_at: row.get(2).map_err(|e| col(2, e))?,
-    })
-  }
 }
 
 #[tokio::main]
@@ -310,7 +288,25 @@ Field types map to `ColumnType`: `Text`, `Integer`, `Real`, `Blob`, `Uuid`,
 **Row mapping.** `#[derive(FromRow)]` fills `REQUIRED_COLUMNS` from the field
 names in declaration order and reads each field positionally at its own index, so
 `select_for::<T>()` picks exactly the columns `T` needs, in the order it decodes
-them. A hand-written impl is a few lines when you run a single driver:
+them. An `Option<T>` field decodes SQL `NULL` as `None`; anything else missing
+or undecodable is a `DbCoreError::RowMapping` naming the column's index and
+name, never a panic.
+
+The derive expands to whichever shape the drivers on `toolu-orm-core` gave the
+trait, so it compiles on every combination — one driver means a single
+`from_row`, two or more mean one method per driver:
+
+| Drivers active | Methods the derive implements |
+|---|---|
+| one of `libsql` / `rusqlite` / `postgres` | `from_row` |
+| any two | two of `from_pg_row` / `from_libsql_row` / `from_rusqlite_row` |
+| all three | all three |
+
+`#[from_row(with = "f")]` on a field routes the decoded value through `f`
+(`FieldTy -> Result<FieldTy, E>`) to normalize or reject it.
+
+Writing the impl by hand stays supported, and is the way out when a field type
+the active driver cannot decode needs a conversion:
 
 ```rust
 use toolu_orm_core::{error::DbCoreError, row::FromRow};
@@ -328,11 +324,6 @@ impl FromRow for User {
   }
 }
 ```
-
-That is the single-driver shape. With two drivers unified on `toolu-orm-core`
-the trait asks for one method per driver instead — `from_pg_row`,
-`from_libsql_row`, `from_rusqlite_row` — which is the shape
-`#[derive(FromRow)]` emits.
 
 ### Virtual tables (SQLite FTS5)
 
@@ -609,6 +600,7 @@ cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features rusqlite
 cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-connection --features rusqlite
+bash scripts/check-derive-matrix.sh
 bash scripts/check-scenario-docs.sh
 ```
 

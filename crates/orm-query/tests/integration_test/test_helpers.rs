@@ -19,8 +19,9 @@ pub struct IntegrationUser {
   pub age: i64,
 }
 
-// `#[derive(FromRow)]` only decodes Postgres rows (its libsql method is a
-// stub), so the libsql-only lane maps rows by hand.
+// Hand-written on purpose: `#[derive(FromRow)]` would expand to this same
+// shape now, so keeping one manual impl live keeps the by-hand path the README
+// documents under test.
 impl FromRow for IntegrationUser {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "name", "email", "age"];
 
