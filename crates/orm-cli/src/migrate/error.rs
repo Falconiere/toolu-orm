@@ -30,6 +30,15 @@ pub enum MigrateError {
   /// there is no single SQL body for that name.
   #[error("duplicate migration name(s) in the embedded list: {0}")]
   DuplicateMigration(String),
+
+  /// A statement needed a SQLite module the connection has not loaded
+  /// (`vec0`, …). The fix is to register the extension on the connection
+  /// before `run_migrate`, not to change the migration.
+  #[error(
+    "{file}: this database has no \"{module}\" module — load the extension that \
+     provides it on the connection before running migrations"
+  )]
+  MissingExtension { file: String, module: String },
 }
 
 pub(crate) fn map_db(err: &DbError) -> MigrateError {

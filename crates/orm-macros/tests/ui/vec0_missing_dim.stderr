@@ -1,0 +1,5 @@
+error: `embedding` is a Vector and needs its dimension: #[column(dim = 1024)]
+  --> tests/ui/vec0_missing_dim.rs:12:18
+   |
+12 |   pub embedding: Vector,
+   |                  ^^^^^^

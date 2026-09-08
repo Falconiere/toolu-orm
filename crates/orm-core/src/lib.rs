@@ -31,3 +31,4 @@ pub mod snapshot;
 pub mod sql;
 pub mod table;
 pub mod value;
+pub mod vec0;

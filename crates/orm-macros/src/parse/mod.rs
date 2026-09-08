@@ -19,6 +19,9 @@ mod column_flags;
 mod column_parsing;
 mod index_parsing;
 pub mod relation_parsing;
+mod table_attrs;
+mod vec0_column;
 
 pub use column_parsing::{parse_struct, strip_column_attrs, ColumnInput, TypeSpec};
 pub use index_parsing::{parse_index_attrs, IndexInput, TableInput};
+pub use table_attrs::parse_table_attrs;

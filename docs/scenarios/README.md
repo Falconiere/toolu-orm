@@ -29,6 +29,7 @@ test, update its page.
 | [Expression fragments](expr-fragments.md) | `Expr` SQL fragments with parameter offsets per dialect, nesting, and the empty-list constant. |
 | [Virtual tables (FTS5)](virtual-tables.md) | `TableKind::Virtual` DDL, `#[fts5_table]`, real `MATCH` queries, and the refusal to alter one in place. |
 | [FTS5 queries](fts5-queries.md) | `MATCH` in `Expr`, `bm25` / `rank` / `snippet` / `highlight` as selectable and orderable expressions, validated weights, and the Postgres refusal. |
+| [vec0 virtual tables](vec0-virtual-tables.md) | `ColumnType::Vector`, `#[vec0_table]`, `Value::vector`, and `MigrateError::MissingExtension` when `sqlite-vec` is not loaded. |
 | [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |
 | [Renames](renames.md) | A `RenameResolver` turns drop+create into `RENAME TABLE` / `RENAME COLUMN`. |
 | [Macro compile errors](macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |

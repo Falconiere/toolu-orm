@@ -1,5 +1,7 @@
 //! ORM Value enum bridging Rust types to database driver parameters.
 
+use crate::error::DbCoreError;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
   Null,
@@ -7,6 +9,47 @@ pub enum Value {
   Real(f64),
   Text(String),
   Blob(Vec<u8>),
+}
+
+impl Value {
+  /// An embedding as the little-endian `f32` bytes a `vec0` `float[N]`
+  /// parameter is read from — the conversion every caller would otherwise
+  /// hand-roll.
+  ///
+  /// `int8` and `bit` vectors are already byte slices; pass those as
+  /// [`Value::Blob`].
+  ///
+  /// ```
+  /// use toolu_orm_core::value::Value;
+  ///
+  /// assert_eq!(Value::vector(&[1.0f32]), Value::Blob(vec![0, 0, 128, 63]));
+  /// ```
+  #[must_use]
+  pub fn vector(embedding: &[f32]) -> Self {
+    let mut bytes = Vec::with_capacity(size_of_val(embedding));
+    for element in embedding {
+      bytes.extend_from_slice(&element.to_le_bytes());
+    }
+    Value::Blob(bytes)
+  }
+
+  /// [`Self::vector`], refusing a slice that is not `dim` long.
+  ///
+  /// The declared dimension is known at the call site; `vec0` only discovers
+  /// the mismatch at insert time and reports it as a byte count.
+  ///
+  /// # Errors
+  ///
+  /// [`DbCoreError::VectorDimension`] when the slice length is not `dim`.
+  pub fn vector_with_dim(embedding: &[f32], dim: u32) -> Result<Self, DbCoreError> {
+    if u32::try_from(embedding.len()).ok() != Some(dim) {
+      return Err(DbCoreError::VectorDimension {
+        expected: dim,
+        actual: embedding.len(),
+      });
+    }
+    Ok(Self::vector(embedding))
+  }
 }
 
 impl From<&str> for Value {

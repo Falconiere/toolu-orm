@@ -62,6 +62,7 @@ Cargo feature; the application code does not change.
 | 🌐 **Dialect-aware SQL** | `to_sql_for(Dialect::Sqlite)` emits `?N` placeholders; `Dialect::Postgres` emits `$N`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`, and `LEFT JOIN LATERAL` + `json_agg` for relations. |
 | 🕸️ **Relational loads without N+1** | `#[derive(Relational)]` with `#[has_many]`, `#[belongs_to]`, `#[many_to_many]`; `RelationalQuery` fetches parent + children as JSON arrays in a single statement per dialect. |
 | 🔎 **Full-text search** | `#[fts5_table]` (or the `Fts5Table` builder) declares an SQLite FTS5 virtual table with `UNINDEXED` columns, a free-form tokenizer, and external content. Migrations emit `CREATE VIRTUAL TABLE ... USING fts5(...)`. |
+| 🧭 **Vector tables** | `#[vec0_table]` (or `Vec0Table`) declares an sqlite-vec `vec0` virtual table with a typed `Vector { dim, element }` column, partition keys, metadata and auxiliary columns. `Value::vector` encodes little-endian f32 embeddings. Load `sqlite-vec` on the connection before `run_migrate` (#12); otherwise migrate fails as `MissingExtension`. |
 | 🧬 **Enums and views** | `#[derive(ColumnEnum)]` stores a Rust enum as text; `#[view(Name, pick(...))]` / `omit(...)` generates subset structs from a table. |
 | 🔄 **Transactions** | `conn.run_transaction(|tx| async move { ... })` commits on `Ok`, rolls back on `Err`. |
 | 🔌 **Three drivers, one trait** | `DbConnection` over libsql (async, Turso embedded replica with sync retry), rusqlite (sync, wrapped in `spawn_blocking`), and Postgres (`deadpool-postgres` pool, rustls TLS). |
@@ -359,8 +360,60 @@ SQLite cannot `ALTER` a virtual table, so `run_generate` refuses any in-place
 change to one — a new column, a different tokenizer, a switched module — with
 `DbCoreError::VirtualTableChange` and writes no migration; drop and recreate it
 instead. Creating, dropping and renaming work as usual. On Postgres the table is
-skipped with a comment naming it. Other modules (`vec0`, `rtree`) need no new
-code: build the `TableDef` with `TableKind::virtual_table(module, args)`.
+skipped with a comment naming it. Other modules (`rtree`, …) can still use
+`TableKind::virtual_table(module, args)` directly; `vec0` has its own builder
+and macro below.
+
+### Virtual tables (sqlite-vec `vec0`)
+
+`#[vec0_table]` declares a vector index the same way `#[fts5_table]` declares a
+full-text one. The `TableDef` carries `TableKind::Virtual { module: "vec0", args }`
+and every vector column is `ColumnType::Vector { element, dim }`:
+
+```rust
+use toolu_orm_macros::vec0_table;
+use toolu_orm_core::column::{Integer, Text, Vector};
+
+#[vec0_table(name = "memory_vec")]
+pub struct MemoryVec {
+  #[column(primary_key)]
+  pub memory_id: Text,
+  #[column(dim = 1024, distance_metric = "cosine")]
+  pub embedding: Vector,
+  #[column(partition_key)]
+  pub user_id: Integer,
+  pub label: Text,
+  #[column(auxiliary)]
+  pub contents: Text,
+}
+```
+
+```sql
+CREATE VIRTUAL TABLE IF NOT EXISTS "memory_vec" USING "vec0"(
+  memory_id text primary key,
+  embedding float[1024] distance_metric=cosine,
+  user_id integer partition key,
+  label text,
+  +contents text
+);
+```
+
+`name` is required. A `Vector` field needs `#[column(dim = N)]` and may take
+`element` (`"float"` / `"int8"` / `"bit"`) and `distance_metric`
+(`"l2"` / `"cosine"` / `"l1"`). Fields with `partition_key` or `auxiliary` map
+to those `vec0` roles; everything else is metadata. `vec0` cannot quote
+identifiers, so a hostile name fails the build instead of being escaped.
+`Value::vector(&[f32])` (and `vector_with_dim`) produce the little-endian blob
+a `float[N]` parameter expects.
+
+Unlike FTS5, `vec0` is **not** built into SQLite. Register `sqlite-vec` on the
+connection (typically via `sqlite3_auto_extension` / the bindings' equivalent)
+**before** `run_migrate`. A migration that creates a `vec0` table against a
+connection that never loaded it fails as
+`MigrateError::MissingExtension { module: "vec0", … }`. Connection setup
+ordering is issue #12 (`from_connection`). Changing `dim`, the element type, or
+`distance_metric` is refused by the diff the same way FTS5 changes are — drop,
+recreate, and re-embed in a hand-written migration.
 
 ---
 

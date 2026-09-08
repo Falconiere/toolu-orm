@@ -17,6 +17,7 @@
 use syn::{Attribute, Error, Fields, ItemStruct, Lit, Result};
 
 use super::column_flags::ColumnFlags;
+use super::vec0_column::{parse_vec0_meta, Vec0ColumnInput};
 
 pub enum TypeSpec {
   Simple(String),
@@ -34,6 +35,8 @@ pub struct ColumnInput {
   pub references: Option<String>,
   pub on_delete: Option<String>,
   pub on_update: Option<String>,
+  /// Read only by `#[vec0_table]`; empty for every other column.
+  pub vec0: Vec0ColumnInput,
 }
 
 pub fn parse_struct(item: &ItemStruct) -> Result<Vec<ColumnInput>> {
@@ -60,6 +63,7 @@ pub fn parse_struct(item: &ItemStruct) -> Result<Vec<ColumnInput>> {
       references: col_attrs.references,
       on_delete: col_attrs.on_delete,
       on_update: col_attrs.on_update,
+      vec0: col_attrs.vec0,
     });
   }
   Ok(columns)
@@ -72,6 +76,7 @@ struct ColumnAttrs {
   references: Option<String>,
   on_delete: Option<String>,
   on_update: Option<String>,
+  vec0: Vec0ColumnInput,
 }
 
 fn parse_column_attrs(attrs: &[Attribute]) -> Result<ColumnAttrs> {
@@ -82,6 +87,7 @@ fn parse_column_attrs(attrs: &[Attribute]) -> Result<ColumnAttrs> {
     references: None,
     on_delete: None,
     on_update: None,
+    vec0: Vec0ColumnInput::default(),
   };
 
   for attr in attrs {
@@ -135,6 +141,8 @@ fn parse_column_attrs(attrs: &[Attribute]) -> Result<ColumnAttrs> {
         if let Lit::Str(s) = lit {
           result.on_update = Some(s.value());
         }
+      } else {
+        parse_vec0_meta(&meta, &mut result.vec0, &mut result.flags)?;
       }
       Ok(())
     })?;

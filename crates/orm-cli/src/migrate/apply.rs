@@ -9,6 +9,7 @@ use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::journal::compute_hash;
 
 use super::error::MigrateError;
+use super::missing_extension::map_statement_error;
 use super::store::record_migration;
 use super::transaction::{begin, commit, rollback_after};
 
@@ -62,7 +63,7 @@ async fn execute_statements(
     conn
       .execute_sql(statement.trim(), vec![])
       .await
-      .map_err(|e| MigrateError::Database(format!("{file_label}: {e}")))?;
+      .map_err(|e| map_statement_error(file_label, &e))?;
   }
   Ok(())
 }

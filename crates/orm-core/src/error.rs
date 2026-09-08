@@ -35,6 +35,24 @@ pub enum DbCoreError {
   #[error("invalid FTS5 argument for {function}: {reason}")]
   Fts5InvalidArgument { function: String, reason: String },
 
+  /// `vec0` parses its own constructor arguments with a scanner that has no
+  /// quoting, so a name outside `[A-Za-z][A-Za-z0-9_]*` cannot be rendered
+  /// safely at all — unlike FTS5, where quoting the name is enough.
+  #[error(
+    "\"{ident}\" cannot be a vec0 {context}: vec0 parses its own arguments and has no quoting, \
+     so the name must match [A-Za-z][A-Za-z0-9_]*"
+  )]
+  InvalidVec0Identifier {
+    context: &'static str,
+    ident: String,
+  },
+
+  #[error("vec0 column \"{column}\" is a bit vector, and a bit vector has no distance_metric")]
+  Vec0BitDistanceMetric { column: String },
+
+  #[error("expected a {expected}-element embedding, got {actual}")]
+  VectorDimension { expected: u32, actual: usize },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

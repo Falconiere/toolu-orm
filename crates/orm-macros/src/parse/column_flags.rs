@@ -11,6 +11,8 @@ const FLAG_NOT_NULL: u8 = 1 << 1;
 const FLAG_UNIQUE: u8 = 1 << 2;
 const FLAG_AS_TEXT: u8 = 1 << 3;
 const FLAG_UNINDEXED: u8 = 1 << 4;
+const FLAG_PARTITION_KEY: u8 = 1 << 5;
+const FLAG_AUXILIARY: u8 = 1 << 6;
 
 impl ColumnFlags {
   pub const fn primary_key(self) -> bool {
@@ -29,6 +31,14 @@ impl ColumnFlags {
   pub const fn unindexed(self) -> bool {
     self.has(FLAG_UNINDEXED)
   }
+  /// vec0 `partition key`: the index is sharded on it. Only `#[vec0_table]`.
+  pub const fn partition_key(self) -> bool {
+    self.has(FLAG_PARTITION_KEY)
+  }
+  /// vec0 `+column`: stored beside the index, never filtered on. Only `#[vec0_table]`.
+  pub const fn auxiliary(self) -> bool {
+    self.has(FLAG_AUXILIARY)
+  }
 
   pub(super) fn set_primary_key(&mut self) {
     self.0 |= FLAG_PRIMARY_KEY;
@@ -44,6 +54,12 @@ impl ColumnFlags {
   }
   pub(super) fn set_unindexed(&mut self) {
     self.0 |= FLAG_UNINDEXED;
+  }
+  pub(super) fn set_partition_key(&mut self) {
+    self.0 |= FLAG_PARTITION_KEY;
+  }
+  pub(super) fn set_auxiliary(&mut self) {
+    self.0 |= FLAG_AUXILIARY;
   }
 
   const fn has(self, flag: u8) -> bool {
