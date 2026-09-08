@@ -7,19 +7,32 @@
 # `postgres+libsql`, `rusqlite` or `postgres`, so half the definitions are
 # never expanded by a lane: a typo in one of the others would ship silently.
 #
-# orm-macros is the right vehicle. Its features forward straight to orm-core,
-# and its `from_row_test` derives `FromRow` with no `required-features`, so
-# selecting a combination here expands the derive against the matching
-# definition. `--all-targets` is what pulls that test in; without it this
-# would only build the proc-macro crate and prove nothing.
+# Two packages, because they prove different things:
 #
-# `cargo check`, not clippy: the lanes already lint these packages, and this
-# script is about whether each combination *resolves* — the inactive drivers'
-# decoder blocks are passed to the macro and dropped unexpanded, which is the
-# property worth guarding.
+#   toolu-orm-facade-consumer  The decisive case. `toolu-orm` is its only
+#                              dependency, so in the rusqlite-only build
+#                              `tokio-postgres` is absent from its dependency
+#                              graph entirely — yet the derive, which emits a
+#                              postgres decoder naming `tokio_postgres::Row`
+#                              unconditionally, still compiles. That is the
+#                              token-dropping claim in `derived.rs`'s docs
+#                              under test rather than merely asserted.
+#   toolu-orm-macros           The wider derive surface: `#[from_row(with)]`,
+#                              renamed columns, several structs. Its
+#                              dev-dependencies pull in all three driver
+#                              crates, so it cannot prove absence — it proves
+#                              the generated code itself type-checks.
+#
+# `--all-targets` is what pulls in the tests that do the deriving; without it
+# this would build library code that never invokes the macro and prove nothing.
+#
+# `cargo check`, not clippy: the lanes already lint these packages, and the
+# property here is whether each combination *resolves*.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+PACKAGES=(toolu-orm-facade-consumer toolu-orm-macros)
 
 # The empty entry is the no-driver build, where the trait has no methods.
 COMBOS=(
@@ -34,26 +47,31 @@ COMBOS=(
 )
 
 failed=()
-for combo in "${COMBOS[@]}"; do
-  label="${combo:-(no driver)}"
-  # --no-default-features so orm-core gets exactly this set; its default is
-  # libsql, which would otherwise contaminate every combination.
-  args=(check -q -p toolu-orm-macros --no-default-features --all-targets)
-  [[ -n $combo ]] && args+=(--features "$combo")
+for pkg in "${PACKAGES[@]}"; do
+  echo "$pkg"
+  for combo in "${COMBOS[@]}"; do
+    label="${combo:-(no driver)}"
+    # --no-default-features so orm-core gets exactly this set; its default is
+    # libsql, which would otherwise contaminate every combination.
+    args=(check -q -p "$pkg" --no-default-features --all-targets)
+    [[ -n $combo ]] && args+=(--features "$combo")
 
-  printf '%-26s ' "$label"
-  if log=$(cargo "${args[@]}" 2>&1); then
-    echo "ok"
-  else
-    echo "FAILED"
-    printf '%s\n' "$log" | sed 's/^/    /'
-    failed+=("$label")
-  fi
+    printf '  %-26s ' "$label"
+    if log=$(cargo "${args[@]}" 2>&1); then
+      echo "ok"
+    else
+      echo "FAILED"
+      printf '%s\n' "$log" | sed 's/^/      /'
+      failed+=("$pkg $label")
+    fi
+  done
 done
 
 if ((${#failed[@]})); then
-  echo "derive-matrix: ${#failed[@]} combination(s) failed: ${failed[*]}" >&2
+  printf 'derive-matrix: %d combination(s) failed:\n' "${#failed[@]}" >&2
+  printf '  %s\n' "${failed[@]}" >&2
   exit 1
 fi
 
-echo "derive-matrix: all ${#COMBOS[@]} driver combinations expand the FromRow derive"
+echo "derive-matrix: the FromRow derive expands on all ${#COMBOS[@]} driver" \
+  "combinations, in ${#PACKAGES[@]} packages"
