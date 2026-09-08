@@ -76,9 +76,11 @@ fn test_varchar_column_sql() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       }],
       indexes: vec![],
       strict: true,
+      kind: toolu_orm_core::table::TableKind::Ordinary,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);

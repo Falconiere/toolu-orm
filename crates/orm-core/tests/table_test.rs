@@ -14,6 +14,7 @@ fn col(name: &str, ct: ColumnType, pk: bool, nn: bool) -> ColumnDef {
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   }
 }
 
@@ -33,6 +34,7 @@ fn test_table_def_creation() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
       ColumnDef {
         name: "title".to_owned(),
@@ -45,10 +47,12 @@ fn test_table_def_creation() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
     ],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   assert_eq!(table.name, "conversations");
   assert_eq!(table.columns.len(), 2);
@@ -69,9 +73,11 @@ fn test_table_def_find_column() {
       on_delete: None,
       on_update: None,
       check: None,
+      unindexed: false,
     }],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   assert!(table.find_column("id").is_some());
   assert!(table.find_column("nonexistent").is_none());
@@ -88,6 +94,7 @@ fn test_table_def_with_indexes_and_strict() -> Result<(), Box<dyn std::error::Er
       unique: false,
     }],
     strict: true,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   assert!(t.strict);
   assert_eq!(t.indexes.len(), 1);
@@ -103,6 +110,7 @@ fn test_table_def_defaults_no_strict_no_indexes() {
     columns: vec![],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   assert!(!t.strict);
   assert!(t.indexes.is_empty());

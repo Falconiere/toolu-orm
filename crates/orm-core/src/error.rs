@@ -17,6 +17,12 @@ pub enum DbCoreError {
   #[error("connection initialization error: {0}")]
   Connection(String),
 
+  #[error(
+    "cannot migrate virtual table \"{table}\" in place: {reason}; SQLite has no ALTER TABLE for \
+     virtual tables — drop, recreate and repopulate it in a hand-written migration"
+  )]
+  VirtualTableChange { table: String, reason: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

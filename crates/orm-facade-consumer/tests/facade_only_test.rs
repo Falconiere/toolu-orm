@@ -3,7 +3,7 @@
 //! # Public API
 //!
 //! Tests: `#[table]` schema and companion column module, the generated
-//! builders, a `#[view]` struct, `#[derive(ColumnEnum)]`, and
+//! builders, `#[fts5_table]`, a `#[view]` struct, `#[derive(ColumnEnum)]`, and
 //! `#[derive(Relational)]` decoding a real JSON row.
 //!
 //! This file deliberately does **not** glob `toolu_orm::prelude`. This package
@@ -19,7 +19,7 @@ use toolu_orm::core::query_column::CommonOps;
 use toolu_orm::core::relational_row::FromRelationalRow;
 use toolu_orm::core::serde_json::{self, Value};
 use toolu_orm::core::table::TableSchema;
-use toolu_orm::{table, ColumnEnum, Relational};
+use toolu_orm::{fts5_table, table, ColumnEnum, Relational};
 
 #[table(name = "facade_only_users")]
 #[view(FacadeOnlyUserPreview, pick(id, email))]
@@ -29,6 +29,13 @@ pub struct FacadeOnlyUser {
   #[column(not_null)]
   pub email: Text,
   pub age: Integer,
+}
+
+#[fts5_table(name = "facade_only_user_fts", tokenize = "porter")]
+pub struct FacadeOnlyUserFts {
+  #[column(unindexed)]
+  pub user_id: Text,
+  pub email: Text,
 }
 
 #[derive(
@@ -127,6 +134,22 @@ fn generated_builders_reach_the_query_crate() {
 
   assert_eq!(sql, r#"SELECT "id", "email" FROM "facade_only_users""#);
   assert!(params.is_empty());
+}
+
+#[test]
+fn fts5_table_macro_expands_without_the_prelude() {
+  let def = FacadeOnlyUserFts::table_def();
+
+  assert!(def.is_virtual());
+  assert_eq!(def.kind.module(), Some("fts5"));
+  assert_eq!(
+    def.kind.args(),
+    ["\"user_id\" UNINDEXED", "\"email\"", "tokenize = 'porter'"]
+  );
+  assert_eq!(
+    facade_only_user_fts::email.qualified(),
+    r#""facade_only_user_fts"."email""#
+  );
 }
 
 #[test]

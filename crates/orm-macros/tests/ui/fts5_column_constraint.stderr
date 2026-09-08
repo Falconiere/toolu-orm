@@ -1,0 +1,5 @@
+error: `primary_key` on `memory_id`: an fts5 column carries no constraints, only #[column(unindexed)]
+  --> tests/ui/fts5_column_constraint.rs:10:18
+   |
+10 |   pub memory_id: String,
+   |                  ^^^^^^

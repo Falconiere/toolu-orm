@@ -34,6 +34,7 @@ fn full_ordering_13_tiers() {
         on_delete: None,
         on_update: None,
         check: None,
+        unindexed: false,
       },
     },
     Operation::AlterColumn {
@@ -48,6 +49,7 @@ fn full_ordering_13_tiers() {
         columns: vec![],
         indexes: vec![],
         strict: false,
+        kind: toolu_orm_core::table::TableKind::Ordinary,
       },
     },
     Operation::DropCheckConstraint {
@@ -69,6 +71,7 @@ fn full_ordering_13_tiers() {
         columns: vec![],
         indexes: vec![],
         strict: false,
+        kind: toolu_orm_core::table::TableKind::Ordinary,
       },
     },
     Operation::AlterEnum {

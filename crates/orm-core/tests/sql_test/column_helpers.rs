@@ -13,6 +13,7 @@ pub(super) fn col(name: &str, ct: ColumnType, pk: bool, nn: bool) -> ColumnDef {
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   }
 }
 
@@ -28,5 +29,6 @@ pub(super) fn col_with_default(name: &str, ct: ColumnType, nn: bool, default: &s
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   }
 }

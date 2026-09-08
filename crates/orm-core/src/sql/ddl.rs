@@ -3,9 +3,10 @@
 use crate::column::ColumnDef;
 use crate::dialect::Dialect;
 use crate::index::IndexDef;
-use crate::table::TableDef;
+use crate::table::{TableDef, TableKind};
 
 use super::translate::translate_default;
+use super::virtual_table::{create_virtual_table_sql, unsupported_dialect_comment};
 
 pub(crate) fn format_references(refs: &str) -> String {
   let Some((table, col_with_paren)) = refs.split_once('(') else {
@@ -54,6 +55,12 @@ pub(crate) fn column_def_sql(col: &ColumnDef, strict: bool, dialect: Dialect) ->
 }
 
 pub(crate) fn create_table_sql(table: &TableDef, dialect: Dialect) -> String {
+  if let TableKind::Virtual { module, args } = &table.kind {
+    return match dialect {
+      Dialect::Sqlite => create_virtual_table_sql(&table.name, module, args),
+      Dialect::Postgres => unsupported_dialect_comment(&table.name, module, dialect),
+    };
+  }
   let col_defs: Vec<String> = table
     .columns
     .iter()

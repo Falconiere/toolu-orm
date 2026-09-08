@@ -15,7 +15,7 @@ fn test_diff_create_table_from_empty() -> TestResult {
     "conversations",
     vec![col("id", ColumnType::Text, true, false)],
   )]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   assert_eq!(ops.len(), 1);
   let op = ops.first().ok_or("expected one operation")?;
   assert!(
@@ -33,7 +33,7 @@ fn test_diff_drop_table() -> TestResult {
   )]);
   let old = Snapshot::from_registry(&old_reg);
   let new_reg = SchemaRegistry::from_tables(vec![]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   assert_eq!(ops.len(), 1);
   let op = ops.first().ok_or("expected one operation")?;
   assert!(
@@ -57,7 +57,7 @@ fn test_diff_add_column() -> TestResult {
       col("title", ColumnType::Text, false, false),
     ],
   )]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   assert_eq!(ops.len(), 1);
   let op = ops.first().ok_or("expected one operation")?;
   assert!(
@@ -82,7 +82,7 @@ fn test_diff_drop_column() -> TestResult {
     "conversations",
     vec![col("id", ColumnType::Text, true, false)],
   )]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   assert_eq!(ops.len(), 1);
   let op = ops.first().ok_or("expected one operation")?;
   assert!(
@@ -104,7 +104,7 @@ fn test_diff_alter_column() -> TestResult {
     "conversations",
     vec![col("title", ColumnType::Text, false, true)],
   )]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   assert_eq!(ops.len(), 1);
   let op = ops.first().ok_or("expected one operation")?;
   assert!(
@@ -126,7 +126,7 @@ fn test_diff_alter_column_type_change() {
     "users",
     vec![col("age", ColumnType::BigInt, false, false)],
   )]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   match ops.as_slice() {
     [Operation::AlterColumn {
       table,
@@ -162,7 +162,7 @@ fn test_diff_alter_column_multiple_changes_batched() {
   let old_reg = SchemaRegistry::from_tables(vec![table("users", vec![old_col])]);
   let old = Snapshot::from_registry(&old_reg);
   let new_reg = SchemaRegistry::from_tables(vec![table("users", vec![new_col])]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   match ops.as_slice() {
     [Operation::AlterColumn {
       changes, table_def, ..
@@ -191,7 +191,7 @@ fn test_diff_no_changes() {
     vec![col("id", ColumnType::Text, true, false)],
   )]);
   let snap = Snapshot::from_registry(&reg);
-  let ops = diff_with_resolver(&snap, &reg, &NoRenames);
+  let ops = diff_with_resolver(&snap, &reg, &NoRenames).expect("diff should succeed");
   assert!(ops.is_empty());
 }
 
@@ -218,6 +218,6 @@ fn test_diff_multiple_operations() {
       vec![col("id", ColumnType::Integer, true, false)],
     ),
   ]);
-  let ops = diff_with_resolver(&old, &new_reg, &NoRenames);
+  let ops = diff_with_resolver(&old, &new_reg, &NoRenames).expect("diff should succeed");
   assert_eq!(ops.len(), 3);
 }

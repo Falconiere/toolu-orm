@@ -1,0 +1,5 @@
+error: unknown attribute, expected `name`, `tokenize`, `prefix`, `content`, `content_rowid`, `columnsize` or `detail`
+ --> tests/ui/fts5_unknown_attr.rs:5:35
+  |
+5 | #[fts5_table(name = "memory_fts", strict = "yes")]
+  |                                   ^^^^^^

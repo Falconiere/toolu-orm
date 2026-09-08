@@ -13,6 +13,7 @@ fn test_column_def_with_all_constraints() {
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   };
   assert_eq!(col.name, "id");
   assert_eq!(col.column_type, ColumnType::Text);
@@ -40,6 +41,7 @@ fn test_column_def_with_default_and_references() {
     on_delete: None,
     on_update: None,
     check: None,
+    unindexed: false,
   };
   assert!(col.not_null);
   assert_eq!(col.default.as_deref(), Some("unixepoch()"));
@@ -82,6 +84,7 @@ fn test_column_def_with_cascade() {
     on_delete: Some(ForeignKeyAction::Cascade),
     on_update: None,
     check: None,
+    unindexed: false,
   };
   assert_eq!(col.on_delete, Some(ForeignKeyAction::Cascade));
 }
@@ -99,6 +102,7 @@ fn test_column_def_with_check() {
     on_delete: None,
     on_update: None,
     check: Some(r#"CHECK("status" IN ('draft', 'active', 'archived'))"#.to_owned()),
+    unindexed: false,
   };
   assert!(col.check.is_some());
 }

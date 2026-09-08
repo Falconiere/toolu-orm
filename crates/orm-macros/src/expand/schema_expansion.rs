@@ -39,6 +39,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
                       #(#index_defs),*
                   ],
                   strict: #strict,
+                  kind: #core::table::TableKind::Ordinary,
               }
           }
       }
@@ -75,6 +76,7 @@ fn column_def_tokens(core: &TokenStream, col: &ColumnInput) -> TokenStream {
   let pk = col.flags.primary_key();
   let nn = col.flags.not_null();
   let unique = col.flags.unique();
+  let unindexed = col.flags.unindexed();
   let default_expr = option_string_tokens(&col.default);
   let refs_expr = option_string_tokens(&col.references);
   let on_delete_expr = fk_action_tokens(core, &col.on_delete);
@@ -92,6 +94,7 @@ fn column_def_tokens(core: &TokenStream, col: &ColumnInput) -> TokenStream {
           on_delete: #on_delete_expr,
           on_update: #on_update_expr,
           check: #check_expr,
+          unindexed: #unindexed,
       }
   }
 }

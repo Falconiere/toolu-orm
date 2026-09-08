@@ -27,7 +27,7 @@ fn test_diff_create_index() {
     unique: false,
   }];
   let new_reg = SchemaRegistry::from_tables(vec![new_t]);
-  let ops = diff(&old, &new_reg);
+  let ops = diff(&old, &new_reg).expect("diff should succeed");
   assert!(ops
     .iter()
     .any(|op| matches!(op, Operation::CreateIndex { .. })));
@@ -46,7 +46,7 @@ fn test_diff_drop_index() {
     "t",
     vec![col("id", ColumnType::Text, true, false)],
   )]);
-  let ops = diff(&old, &new_reg);
+  let ops = diff(&old, &new_reg).expect("diff should succeed");
   assert!(ops
     .iter()
     .any(|op| matches!(op, Operation::DropIndex { .. })));
@@ -68,7 +68,7 @@ fn test_diff_alter_index() {
     unique: true,
   }];
   let new_reg = SchemaRegistry::from_tables(vec![new_t]);
-  let ops = diff(&old, &new_reg);
+  let ops = diff(&old, &new_reg).expect("diff should succeed");
   assert!(ops
     .iter()
     .any(|op| matches!(op, Operation::DropIndex { name } if name == "idx_t_id")));
@@ -87,7 +87,7 @@ fn test_diff_create_table_emits_indexes() {
     unique: false,
   }];
   let new_reg = SchemaRegistry::from_tables(vec![new_t]);
-  let ops = diff(&old, &new_reg);
+  let ops = diff(&old, &new_reg).expect("diff should succeed");
   assert!(ops
     .iter()
     .any(|op| matches!(op, Operation::CreateTable { .. })));

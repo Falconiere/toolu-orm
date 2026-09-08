@@ -13,6 +13,7 @@ fn alter_column_postgres_uses_alter_table() {
     columns: vec![],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   let ops = vec![Operation::AlterColumn {
     table: "users".to_owned(),
@@ -52,6 +53,7 @@ fn alter_column_sqlite_uses_table_recreation_path() {
     ],
     indexes: vec![],
     strict: false,
+    kind: toolu_orm_core::table::TableKind::Ordinary,
   };
   let ops = vec![Operation::AlterColumn {
     table: "users".to_owned(),

@@ -1,0 +1,7 @@
+error: missing `name` in #[fts5_table(name = "...")]
+ --> tests/ui/fts5_missing_name.rs:5:1
+  |
+5 | #[fts5_table(tokenize = "porter")]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `fts5_table` (in Nightly builds, run with -Z macro-backtrace for more info)

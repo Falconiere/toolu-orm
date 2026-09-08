@@ -169,6 +169,10 @@ pub struct ColumnDef {
   pub on_update: Option<ForeignKeyAction>,
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub check: Option<String>,
+  /// FTS5 `UNINDEXED`: the column is stored but not searchable. Ignored on
+  /// ordinary tables, and defaulted so older snapshots still deserialize.
+  #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+  pub unindexed: bool,
 }
 
 // Marker types for schema definition — used by the #[table] proc macro.

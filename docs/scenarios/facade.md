@@ -56,6 +56,7 @@ would not match the trait shape.
 | default | facade_only_test | table_macro_expands_without_the_prelude |
 | default | facade_only_test | companion_column_module_holds_typed_columns |
 | default | facade_only_test | generated_builders_reach_the_query_crate |
+| default | facade_only_test | fts5_table_macro_expands_without_the_prelude |
 | default | facade_only_test | view_struct_serializes_through_the_re_exported_serde |
 | default | facade_only_test | column_enum_derive_reports_renamed_variants |
 | default | facade_only_test | relational_derive_decodes_a_json_row |
