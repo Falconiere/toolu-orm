@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## `toolu-orm-cli` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/v0.1.2...v0.2.0) - 2026-09-08
+
+### Added
+- *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
+- *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
+- *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
+- *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
+
+### Fixed
+- *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
+- *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
+
+## `toolu-orm` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.1.2...toolu-orm-v0.2.0) - 2026-09-08
+
+### Added
+- *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
+- *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
+- *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
+- *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
+
+### Fixed
+- *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
+- *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
+
+## `toolu-orm-query` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-query-v0.1.2...toolu-orm-query-v0.2.0) - 2026-09-08
+
+### Added
+- *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
+- *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
+- *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
+- *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
+
+### Fixed
+- *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
+- *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
+
+## `toolu-orm-macros` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-macros-v0.1.2...toolu-orm-macros-v0.2.0) - 2026-09-08
+
+### Added
+- *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
+- *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
+- *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
+- *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
+
+### Fixed
+- *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
+- *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
+
+## `toolu-orm-connection` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.1.2...toolu-orm-connection-v0.2.0) - 2026-09-08
+
+### Added
+- *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
+- *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
+- *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
+- *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
+- *(connection)* adopt a pre-configured rusqlite connection ([#24](https://github.com/Falconiere/toolu-orm/pull/24))
+
+### Fixed
+- *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
+- *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
+
+## `toolu-orm-core` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-core-v0.1.2...toolu-orm-core-v0.2.0) - 2026-09-08
+
+### Added
+- *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
+- *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
+- *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
+- *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
+
+### Fixed
+- *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
+- *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
+
 ### Added
 - *(orm-cli)* `migrate::run_migrate_embedded` applies migrations from a
   compile-time `&[EmbeddedMigration]` — SQL baked in with `include_str!` —
