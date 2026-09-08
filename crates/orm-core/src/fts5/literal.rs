@@ -68,8 +68,19 @@ pub(super) fn quoted_string(text: &str) -> String {
 ///
 /// `Debug` rather than `Display`: Display renders `0.0` as `0`, an integer
 /// literal, while Debug keeps `0.0`, `1.5` and `1e-10` — all of which SQLite
-/// reads as floats. Callers validate the value first, so `inf` and `NaN`
-/// never reach this.
-pub(super) fn float_literal(value: f64) -> String {
-  format!("{value:?}")
+/// reads as floats. Non-finite values are refused here too, so a future
+/// `pub(super)` caller that skips the BM25 weight check still cannot emit
+/// `inf` / `NaN` into SQL.
+///
+/// # Errors
+///
+/// [`DbCoreError::Fts5InvalidArgument`] when `value` is NaN or infinite.
+pub(super) fn float_literal(function: &str, value: f64) -> Result<String, DbCoreError> {
+  if !value.is_finite() {
+    return Err(DbCoreError::Fts5InvalidArgument {
+      function: function.to_owned(),
+      reason: format!("{value} is not a finite float; refusing to emit it as SQL"),
+    });
+  }
+  Ok(format!("{value:?}"))
 }

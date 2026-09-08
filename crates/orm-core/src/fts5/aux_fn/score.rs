@@ -38,8 +38,10 @@ pub fn bm25_for(dialect: Dialect, table: &str, weights: &[f64]) -> Result<Fts5Fn
   let mut sql = format!("{BM25}({table}");
   for (index, weight) in weights.iter().enumerate() {
     validate_weight(index, *weight)?;
+    // Comma after the table name (and between weights) is required FTS5
+    // syntax: `bm25("t", 0.0)`, not `bm25("t"0.0)`.
     sql.push_str(", ");
-    sql.push_str(&float_literal(*weight));
+    sql.push_str(&float_literal(BM25, *weight)?);
   }
   sql.push(')');
   Ok(Fts5Fn::new(sql))

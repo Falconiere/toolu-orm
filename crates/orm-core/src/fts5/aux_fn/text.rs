@@ -148,7 +148,8 @@ pub fn column_index(columns: &[&str], name: &str) -> Result<i32, DbCoreError> {
   i32::try_from(position).map_err(|source| DbCoreError::Fts5InvalidArgument {
     function: COLUMN_INDEX.to_owned(),
     reason: format!(
-      "column {name:?} is at position {position}, past what FTS5 can address: {source}"
+      "column {name:?} is at position {position}, which does not fit in an i32 \
+       column index ({source})"
     ),
   })
 }
