@@ -163,6 +163,21 @@ fn postgres_reports_the_skipped_table_instead_of_emitting_ddl() {
   assert!(!sql.contains("CREATE"), "emitted DDL for Postgres: {sql}");
 }
 
+/// A `--` comment ends at the newline, so a name carrying one would put the
+/// rest of itself back into the migration as SQL.
+#[test]
+fn a_newline_in_a_name_stays_inside_the_skipped_table_comment() {
+  let table = TableDef {
+    name: "hostile\nDROP TABLE users;".to_owned(),
+    columns: vec![],
+    indexes: vec![],
+    strict: false,
+    kind: TableKind::virtual_table("fts5\nDROP TABLE users;", vec![]),
+  };
+  let sql = create_sql(&table, Dialect::Postgres);
+  assert_eq!(sql.lines().count(), 1, "comment broke across lines: {sql}");
+}
+
 #[test]
 fn snapshot_round_trip_keeps_the_module_arguments() -> TestResult {
   let registry = SchemaRegistry::from_tables(vec![memory_fts()]);

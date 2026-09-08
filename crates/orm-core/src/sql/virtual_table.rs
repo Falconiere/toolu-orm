@@ -32,11 +32,20 @@ fn quote_ident(ident: &str) -> String {
 /// Postgres has no virtual tables. The migration chunk says so instead of
 /// silently dropping the table, mirroring how enums and SQLite-only
 /// constraints are reported on the other dialect.
+///
+/// A `--` comment ends at the newline, so a name carrying one would put the
+/// rest of itself back into the migration as SQL; both names are folded onto
+/// this single line.
 pub(crate) fn unsupported_dialect_comment(name: &str, module: &str, dialect: Dialect) -> String {
   format!(
     "-- virtual table {} USING {} is SQLite-only; skipped for {}",
-    quote_ident(name),
-    quote_ident(module),
+    single_line(&quote_ident(name)),
+    single_line(&quote_ident(module)),
     dialect.as_str()
   )
+}
+
+/// The text with its line breaks turned into spaces.
+fn single_line(text: &str) -> String {
+  text.replace(['\n', '\r'], " ")
 }

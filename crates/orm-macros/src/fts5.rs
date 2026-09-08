@@ -57,7 +57,9 @@ pub fn parse_attrs(metas: &[Meta]) -> syn::Result<Fts5Attrs> {
 }
 
 /// FTS5 stores every column as unconstrained text, so a constraint on one is
-/// a mistake the DDL would silently swallow.
+/// a mistake the DDL would silently swallow. `unindexed` is the one flag that
+/// does reach the module arguments; a constraint added to `ColumnFlags` after
+/// this belongs in the chain below.
 pub fn check_columns(columns: &[ColumnInput]) -> syn::Result<()> {
   for column in columns {
     let offender = if column.flags.primary_key() {
@@ -116,7 +118,9 @@ fn columnsize_value(expr: &Expr) -> syn::Result<u8> {
   let Lit::Int(int_lit) = &expr_lit.lit else {
     return Err(syn::Error::new_spanned(&expr_lit.lit, "expected 0 or 1"));
   };
-  let value: u8 = int_lit.base10_parse()?;
+  let value: u8 = int_lit
+    .base10_parse()
+    .map_err(|error| syn::Error::new_spanned(int_lit, format!("expected 0 or 1: {error}")))?;
   if value > 1 {
     return Err(syn::Error::new_spanned(int_lit, "expected 0 or 1"));
   }

@@ -32,7 +32,7 @@ Column types, `STRICT`, `PRIMARY KEY`, `NOT NULL`, defaults and CHECKs never rea
 
 ### Refusing to evolve one in place
 
-SQLite has no `ALTER TABLE` for virtual tables, so `diff` returns `DbCoreError::VirtualTableChange { table, reason }` instead of emitting an operation nobody can apply. `run_generate` propagates it and writes no migration file. The reasons are ordered from the coarsest difference to the finest (`crates/orm-core/tests/diff_test/virtual_table_diffs.rs`):
+SQLite has no `ALTER TABLE` for virtual tables, so `diff` returns `DbCoreError::VirtualTableChange { table, reason }` instead of emitting an operation nobody can apply. `run_generate` propagates it and writes no migration file. The reasons are ordered from the coarsest difference to the finest (`crates/orm-core/tests/diff_test/virtual_table_diffs.rs`, renames in `virtual_table_renames.rs`):
 
 | Change | Reason |
 |---|---|
@@ -45,7 +45,7 @@ SQLite has no `ALTER TABLE` for virtual tables, so `diff` returns `DbCoreError::
 
 Create, drop and rename stay ordinary operations: `RenameTable` still works, and the fix for a refused change is to drop and recreate the table. A rename is not a way around the checks — a table renamed *and* changed in the same diff is refused with the same reason, and so is an ordinary table renamed onto a virtual definition.
 
-The table and module names are quoted like any other identifier and their embedded quotes are doubled, so neither can end the statement.
+The table and module names are quoted like any other identifier and their embedded quotes are doubled, so neither can end the statement; in the Postgres comment their line breaks are folded away, so neither can end the comment either.
 
 ### Old snapshots
 
@@ -81,6 +81,7 @@ cargo nextest run -p toolu-orm-connection --features rusqlite -E 'binary(fts5_ru
 | default | virtual_table_test | a_module_without_arguments_omits_the_parentheses |
 | default | virtual_table_test | neither_name_can_end_the_statement |
 | default | virtual_table_test | postgres_reports_the_skipped_table_instead_of_emitting_ddl |
+| default | virtual_table_test | a_newline_in_a_name_stays_inside_the_skipped_table_comment |
 | default | virtual_table_test | snapshot_round_trip_keeps_the_module_arguments |
 | default | virtual_table_test | ordinary_tables_write_no_kind_key |
 | default | fts5_macro_test | table_def_is_a_virtual_fts5_table |
