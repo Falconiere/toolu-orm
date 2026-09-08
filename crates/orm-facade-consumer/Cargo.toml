@@ -26,13 +26,11 @@ postgres = ["toolu-orm/postgres"]
 name = "facade_only_test"
 path = "tests/facade_only_test.rs"
 
-# `#[derive(FromRow)]` emits the postgres+libsql shape, so it only compiles on
-# the full postgres lane, where selecting toolu-orm-core unifies its default
-# libsql in alongside postgres (see crates/orm-macros/src/from_row_expand.rs).
+# No driver gate: `#[derive(FromRow)]` follows whichever shape orm-core
+# compiled, so the facade-only consumer derives it on the default lane too.
 [[test]]
 name = "facade_only_from_row_test"
 path = "tests/facade_only_from_row_test.rs"
-required-features = ["postgres"]
 
 [lints]
 workspace = true

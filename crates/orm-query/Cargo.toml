@@ -114,6 +114,17 @@ name = "libsql_relational_test"
 path = "tests/libsql_relational_test.rs"
 required-features = ["libsql"]
 
+# The FromRow derive on each single-driver shape, decoded from real rows.
+[[test]]
+name = "libsql_derived_from_row_test"
+path = "tests/libsql_derived_from_row_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "rusqlite_derived_from_row_test"
+path = "tests/rusqlite_derived_from_row_test.rs"
+required-features = ["rusqlite"]
+
 [[test]]
 name = "rusqlite_mutations_test"
 path = "tests/rusqlite_mutations_test.rs"

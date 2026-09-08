@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consumer depending on it.
 
 ### Fixed
+- *(macros)* `#[derive(FromRow)]` expands to the trait shape `toolu-orm-core`
+  actually compiled, so it works on every driver combination — including all
+  three single-driver builds, which previously failed to compile and forced a
+  hand-written `FromRow` for every row struct
+  ([#17](https://github.com/Falconiere/toolu-orm/issues/17)). The derive emits
+  one decoder per driver and hands them to the new
+  `toolu_orm_core::impl_derived_from_row!`, whose eight definitions are
+  `#[cfg]`-gated on `toolu-orm-core`'s own features; a `macro_rules!`
+  definition is compiled with its defining crate's features, so this needs no
+  build script and no feature flags on the consumer. libsql and rusqlite now
+  get real decoders, retiring the `from_libsql_row` stub that returned
+  `"<Type> is only decoded from Postgres rows"`, and `#[from_row(with = "…")]`
+  applies on every driver rather than Postgres alone.
 - *(macros)* the proc macros emit absolute paths resolved from the consuming
   crate's `Cargo.toml` (`proc-macro-crate`): `::toolu_orm::core::…` when
   `toolu-orm` is the dependency, `::toolu_orm_core::…` when the crates are

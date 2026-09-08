@@ -1,15 +1,14 @@
 //! FromRow derive macro parsing and code generation.
 
 use proc_macro2::TokenStream;
-use quote::quote;
 use syn::{Data, DeriveInput, Fields, LitStr};
 
-struct FieldInfo {
-  name: syn::Ident,
-  name_str: String,
-  idx_usize: usize,
-  with_fn: Option<String>,
-  field_ty: syn::Type,
+pub struct FieldInfo {
+  pub name: syn::Ident,
+  pub name_str: String,
+  pub idx_usize: usize,
+  pub with_fn: Option<String>,
+  pub field_ty: syn::Type,
 }
 
 fn parse_fields(input: &DeriveInput) -> syn::Result<Vec<FieldInfo>> {
@@ -68,39 +67,6 @@ fn extract_with_attr(field: &syn::Field) -> syn::Result<Option<String>> {
   Ok(None)
 }
 
-/// Builds field extraction for `tokio_postgres::Row::try_get`.
-fn build_field_extraction_postgres(
-  core: &TokenStream,
-  info: &FieldInfo,
-) -> syn::Result<TokenStream> {
-  let name = &info.name;
-  let name_str = &info.name_str;
-  let idx = info.idx_usize;
-  let field_ty = &info.field_ty;
-  if let Some(func) = &info.with_fn {
-    let func_ident: syn::Ident = syn::parse_str(func)
-      .map_err(|e| syn::Error::new_spanned(&info.name, format!("invalid function name: {e}")))?;
-    Ok(quote! {
-      #name: {
-        let raw = row.try_get::<usize, #field_ty>(#idx)
-          .map_err(|e| #core::error::DbCoreError::RowMapping(
-            format!("column {} ({}): {}", #idx, #name_str, e)
-          ))?;
-        #func_ident(raw).map_err(|e| #core::error::DbCoreError::RowMapping(
-          format!("column {} ({}): {}", #idx, #name_str, e)
-        ))?
-      }
-    })
-  } else {
-    Ok(quote! {
-      #name: row.try_get::<usize, #field_ty>(#idx)
-        .map_err(|e| #core::error::DbCoreError::RowMapping(
-          format!("column {} ({}): {}", #idx, #name_str, e)
-        ))?
-    })
-  }
-}
-
 pub fn expand_from_row(input: &DeriveInput) -> syn::Result<TokenStream> {
   let core = crate::paths::core();
   let name = &input.ident;
@@ -108,14 +74,5 @@ pub fn expand_from_row(input: &DeriveInput) -> syn::Result<TokenStream> {
 
   let column_names: Vec<&str> = field_infos.iter().map(|f| f.name_str.as_str()).collect();
 
-  let postgres_extractions: Vec<TokenStream> = field_infos
-    .iter()
-    .map(|info| build_field_extraction_postgres(&core, info))
-    .collect::<syn::Result<_>>()?;
-
-  Ok(crate::from_row_expand::emit_from_row_impl(
-    name,
-    &column_names,
-    &postgres_extractions,
-  ))
+  crate::from_row_expand::emit_from_row_impl(&core, name, &column_names, &field_infos)
 }

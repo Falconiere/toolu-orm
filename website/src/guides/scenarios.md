@@ -20,7 +20,7 @@ pages cannot quietly go stale.
 | [Filters](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/filters.md) | Every operator against real rows, parameter numbering, nested AND/OR, empty `in_list`. |
 | [Transactions](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/transactions.md) | Commit persists; rollback and drop discard; reads see own writes. |
 | [Postgres connection](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/postgres-connection.md) | Pool, connection, SQLSTATE error mapping, unreachable server. |
-| [FromRow derive](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/from-row-derive.md) | The derive on real Postgres rows, `NULL` to `None`, missing columns, the libsql stub. |
+| [FromRow derive](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/from-row-derive.md) | The derive on each driver shape against real rows, `NULL` to `None`, missing columns, `with` conversions. |
 | [Migration loop](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/migration-loop.md) | generate → migrate → evolve → generate → migrate, asserted through `PRAGMA` / `information_schema`. |
 | [Migration failures](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/migration-failures.md) | Rollback after a failing statement, malformed journal, absent directory. |
 | [Expression fragments](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/expr-fragments.md) | `Expr` fragments with parameter offsets per dialect, nesting, empty-list constant. |

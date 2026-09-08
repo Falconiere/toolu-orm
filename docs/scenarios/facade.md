@@ -1,7 +1,7 @@
 # Facade crate
 
 **Feature:** `toolu-orm` is a facade over the four library crates. One version and one feature list (`libsql` / `rusqlite` / `postgres`) drive the whole stack, and every proc macro expands correctly for a consumer whose only dependency is `toolu-orm`.
-**Drivers:** driver-agnostic — schema construction and SQL generation, no database. The `FromRow` derive case is postgres-lane only.
+**Drivers:** driver-agnostic — schema construction and SQL generation, no database. The `FromRow` derive case runs on every lane, including the default one where `toolu-orm-core` has libsql alone.
 **Spec:** single-crate install.
 
 ## What is proven
@@ -13,7 +13,7 @@
 | Companion column module | `#[table]`'s nested `mod` holds `Column<T>` constants that resolve without a prelude — the case a `use` in the parent module could never reach. |
 | Generated schema | `table_def()` carries the table name and column order; the companion module exposes `TABLE` and `ALL_COLUMNS`. |
 | Generated builders | `select()` renders through `toolu-orm-query`, with a typed column driving `ORDER BY`, proving the facade's feature forwarding reaches it. |
-| Views and derives | `#[view]`, `#[derive(ColumnEnum)]`, `#[derive(Relational)]` and (postgres lane) `#[derive(FromRow)]` all expand under the single-dependency constraint, reaching `serde` / `serde_json` / the driver row types through `toolu-orm-core`'s re-exports. |
+| Views and derives | `#[view]`, `#[derive(ColumnEnum)]`, `#[derive(Relational)]` and `#[derive(FromRow)]` all expand under the single-dependency constraint, reaching `serde` / `serde_json` / the driver row types through `toolu-orm-core`'s re-exports. `FromRow` additionally resolves `impl_derived_from_row!` — a `macro_rules!` at `toolu-orm-core`'s root — through the facade re-export. |
 | Prelude | `toolu_orm::prelude` still exports the macros and the crate names, for code that writes `toolu_orm_core::…` itself. |
 
 The single-dependency constraint lives in `crates/orm-facade-consumer/Cargo.toml`,
@@ -33,18 +33,14 @@ the prelude instead.
 cargo nextest run -p toolu-orm -p toolu-orm-facade-consumer
 ```
 
-`facade_only_from_row_test` is postgres-lane only: the `FromRow` derive emits
-the postgres+libsql shape, so it needs `toolu-orm-core` selected too, which
-unifies its default `libsql` in alongside `postgres`. This command builds and
-runs that binary:
+That includes `facade_only_from_row_test`: the `FromRow` derive follows
+whichever shape `toolu-orm-core` compiled, so it needs no particular driver and
+the default lane exercises the single-driver shape. It runs on the postgres lane
+too, where the two-driver shape applies:
 
 ```sh
-cargo nextest run -p toolu-orm-core -p toolu-orm-facade-consumer --features postgres
+cargo nextest run -p toolu-orm-facade-consumer --features postgres
 ```
-
-Selecting `toolu-orm-facade-consumer` alone with `--features postgres` does not
-work — `toolu-orm-core` would get `postgres` without `libsql`, and the derive
-would not match the trait shape.
 
 ## Tests
 
@@ -61,4 +57,4 @@ would not match the trait shape.
 | default | facade_only_test | column_enum_derive_reports_renamed_variants |
 | default | facade_only_test | relational_derive_decodes_a_json_row |
 | default | facade_only_test | relational_derive_decodes_a_null_relation_as_empty |
-| postgres | facade_only_from_row_test | from_row_derive_reports_required_columns |
+| default | facade_only_from_row_test | from_row_derive_reports_required_columns |
