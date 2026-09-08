@@ -39,6 +39,7 @@ pub struct SelectBuilder {
   pub(super) offset_val: Option<i64>,
   pub(super) column_exprs: Vec<(String, String)>,
   pub(super) is_raw: bool,
+  pub(super) knn_applied: bool,
 }
 
 impl_filter!(SelectBuilder);
@@ -55,6 +56,7 @@ impl SelectBuilder {
       offset_val: None,
       column_exprs: Vec::new(),
       is_raw: false,
+      knn_applied: false,
     }
   }
 
@@ -69,6 +71,7 @@ impl SelectBuilder {
       offset_val: None,
       column_exprs: Vec::new(),
       is_raw: true,
+      knn_applied: false,
     }
   }
 
@@ -100,8 +103,8 @@ impl SelectBuilder {
     self
   }
 
-  pub fn order_by(mut self, ob: OrderBy) -> Self {
-    self.order_bys.push(ob);
+  pub fn order_by(mut self, ob: impl Into<OrderBy>) -> Self {
+    self.order_bys.push(ob.into());
     self
   }
 

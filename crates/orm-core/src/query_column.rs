@@ -2,12 +2,15 @@
 
 use std::marker::PhantomData;
 
-use crate::column::{BigInt, Date, Integer, Real, SmallInt, Text, Time, Timestamp, Uuid, Varchar};
+use crate::column::{
+  BigInt, Date, Integer, Real, SmallInt, Text, Time, Timestamp, Uuid, Varchar, Vector,
+};
 use crate::dialect::Dialect;
 use crate::error::DbCoreError;
 use crate::expr::{Expr, JoinCondition, OrderBy};
 use crate::fts5::literal::require_sqlite;
 use crate::value::Value;
+use crate::vec0::require::require_sqlite as require_sqlite_vec;
 
 // ── ColumnRef trait ───────────────────────────────────────────────────────────
 
@@ -112,6 +115,37 @@ impl Fts5Ops for Column<Text> {
   fn matches_for<V: Into<Value>>(&self, dialect: Dialect, pattern: V) -> Result<Expr, DbCoreError> {
     require_sqlite("MATCH", dialect)?;
     Ok(Expr::match_target(self.qualified(), pattern.into()))
+  }
+}
+
+/// Vector `MATCH` for a `vec0` KNN query — the left half of
+/// `embedding MATCH ? AND k = ?`.
+///
+/// Pair it with [`crate::vec0::k_eq`] (or, preferably, `SelectBuilder::knn`,
+/// which pushes both as top-level conjuncts). Only [`Column<Vector>`] can
+/// name the left-hand side: a non-vector column does not compile.
+pub trait Vec0Ops {
+  /// `"<table>"."<column>" MATCH ?` for an explicit dialect.
+  ///
+  /// # Errors
+  ///
+  /// [`DbCoreError::Vec0UnsupportedDialect`] for [`Dialect::Postgres`].
+  fn matches_for<V: Into<Value>>(&self, dialect: Dialect, query: V) -> Result<Expr, DbCoreError>;
+
+  /// [`Vec0Ops::matches_for`] against [`Dialect::CURRENT`].
+  ///
+  /// # Errors
+  ///
+  /// See [`Vec0Ops::matches_for`].
+  fn matches<V: Into<Value>>(&self, query: V) -> Result<Expr, DbCoreError> {
+    self.matches_for(Dialect::CURRENT, query)
+  }
+}
+
+impl Vec0Ops for Column<Vector> {
+  fn matches_for<V: Into<Value>>(&self, dialect: Dialect, query: V) -> Result<Expr, DbCoreError> {
+    require_sqlite_vec("MATCH", dialect)?;
+    Ok(Expr::match_target(self.qualified(), query.into()))
   }
 }
 

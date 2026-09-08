@@ -10,6 +10,8 @@ path is proven against real in-memory libsql (which has no `sqlite-vec`);
 `Value::vector` round-trips through a real rusqlite BLOB column. Executing
 `vec0` DDL itself needs the extension registered on the connection before
 `run_migrate` (issue #12) — this workspace does not link it.
+**Reading one:** this page declares the index; [vec0 KNN](vec0-knn.md)
+searches it with `MATCH`, the hidden `k` column, and synthesised `distance`.
 **Spec:** [vec0 virtual tables](../toolu/specs/2026-09-07-vec0-virtual-tables-design.md),
 AC-1 … AC-11.
 
