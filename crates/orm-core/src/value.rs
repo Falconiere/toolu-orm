@@ -26,7 +26,7 @@ impl Value {
   /// ```
   #[must_use]
   pub fn vector(embedding: &[f32]) -> Self {
-    let mut bytes = Vec::with_capacity(embedding.len() * size_of::<f32>());
+    let mut bytes = Vec::with_capacity(size_of_val(embedding));
     for element in embedding {
       bytes.extend_from_slice(&element.to_le_bytes());
     }
