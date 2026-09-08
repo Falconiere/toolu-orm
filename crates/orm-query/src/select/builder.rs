@@ -179,22 +179,19 @@ impl SelectBuilder {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
+  /// Plain columns first, then the aliased expressions.
+  ///
+  /// Only the non-empty halves are joined, so a builder carrying just one of
+  /// the two gains no stray comma. The expressions used to be dropped unless
+  /// the builder came from [`SelectBuilder::raw`], which silently discarded an
+  /// FTS5 `bm25(...)` projection on an ordinary table.
   fn build_select_list(&self) -> String {
-    if self.is_raw && !self.column_exprs.is_empty() {
-      self
-        .column_exprs
-        .iter()
-        .map(|(expr, alias)| format!(r#"{expr} AS "{alias}""#))
-        .collect::<Vec<_>>()
-        .join(", ")
-    } else {
-      self
-        .columns
-        .iter()
-        .map(|c| format!(r#""{c}""#))
-        .collect::<Vec<_>>()
-        .join(", ")
-    }
+    let columns = self.columns.iter().map(|c| format!(r#""{c}""#));
+    let exprs = self
+      .column_exprs
+      .iter()
+      .map(|(expr, alias)| format!(r#"{expr} AS "{alias}""#));
+    columns.chain(exprs).collect::<Vec<_>>().join(", ")
   }
 
   fn append_joins(&self, sql: &mut String) {

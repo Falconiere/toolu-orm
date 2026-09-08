@@ -40,6 +40,11 @@ pub(super) fn render_expr(
         dialect.param(high_idx)
       )
     },
+    ExprKind::Match { target, pattern } => {
+      let idx = start + params.len();
+      params.push(pattern.clone());
+      format!("{target} MATCH {}", dialect.param(idx))
+    },
     ExprKind::And(left, right) => {
       let left_sql = render_expr(&left.kind, start, params, dialect);
       let right_sql = render_expr(&right.kind, start, params, dialect);

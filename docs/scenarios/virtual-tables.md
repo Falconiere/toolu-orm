@@ -3,6 +3,7 @@
 **Feature:** `TableKind::Virtual { module, args }` on `TableDef` models any SQLite virtual table; `Fts5Table` and `#[fts5_table]` build the FTS5 case; `create_table_sql` emits `CREATE VIRTUAL TABLE … USING <module>(…)`; the diff refuses every in-place change to a virtual table.
 **Drivers:** libsql and rusqlite (SQLite only). On Postgres the table is skipped with a comment.
 **Spec:** [FTS5 virtual tables](../toolu/specs/2026-09-07-fts5-virtual-tables-design.md), AC-1 … AC-9.
+**Reading one:** this page declares and creates the index; [FTS5 queries](fts5-queries.md) searches it with `MATCH` and ranks it with `bm25`.
 
 ## What is proven
 

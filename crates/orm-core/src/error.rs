@@ -23,6 +23,18 @@ pub enum DbCoreError {
   )]
   VirtualTableChange { table: String, reason: String },
 
+  #[error(
+    "{function} is a SQLite FTS5 feature with no {dialect} equivalent; build this query for \
+     SQLite, or write the Postgres full-text form (@@ / to_tsquery / ts_rank) yourself"
+  )]
+  Fts5UnsupportedDialect {
+    function: String,
+    dialect: &'static str,
+  },
+
+  #[error("invalid FTS5 argument for {function}: {reason}")]
+  Fts5InvalidArgument { function: String, reason: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 
