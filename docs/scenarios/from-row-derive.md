@@ -14,8 +14,19 @@
 - **`#[from_row(with = "f")]`:** normalizes an accepted value and surfaces `f`'s rejection as `RowMapping` naming that column, on both single-driver lanes.
 - **Every existing single-driver suite** now decodes through the derive: the libsql and rusqlite `users` fixtures dropped their hand-written impls, so the mutations, reads and relational binaries on both lanes exercise it end to end.
 - **A facade-only consumer** derives it with `toolu-orm` as its single dependency, on the default (libsql-only) lane — the derive's macro call and row type both resolve through `::toolu_orm::core::…`.
+- **All eight driver combinations compile**, checked through `toolu-orm-facade-consumer` because it derives `FromRow` with `toolu-orm` as its only dependency, which is the expansion site that matters. This is what pins the claim that an inactive driver's decoder costs nothing: in the rusqlite-only build `tokio-postgres` is absent from the dependency graph entirely (`cargo tree` finds no occurrence), yet the derive still compiles — the `postgres` decoder's tokens are bound to a `$…:block` the surviving macro arm never interpolates, so they are dropped before name resolution rather than resolved and discarded.
 
 ## How to run
+
+Each of the eight combinations, including the no-driver arm:
+
+```sh
+for combo in "" libsql rusqlite postgres postgres,libsql postgres,rusqlite libsql,rusqlite postgres,libsql,rusqlite; do
+  cargo check -p toolu-orm-facade-consumer --no-default-features ${combo:+--features "$combo"} --all-targets || break
+done
+```
+
+The suites themselves:
 
 ```sh
 # single-driver lanes

@@ -27,9 +27,12 @@
 /// driver, in this build's shape — `postgres` only.
 ///
 /// Each decoder is `|row| { … }` evaluating to
-/// `Result<$ty, DbCoreError>`. Decoders for inactive drivers are matched and
-/// dropped without ever being expanded, so naming `tokio_postgres::Row` in a
-/// rusqlite-only build costs nothing.
+/// `Result<$ty, DbCoreError>`. An inactive driver's decoder is bound to a
+/// `$…:block` that the surviving arm never interpolates, so its tokens are
+/// dropped *before* name resolution ever looks at them — not resolved and then
+/// discarded. That is why naming `tokio_postgres::Row` in a rusqlite-only build
+/// costs nothing even though `tokio-postgres` is absent from the dependency
+/// graph there.
 ///
 /// This is `#[derive(FromRow)]`'s expansion target, not a hand-writing API:
 /// implement the trait directly, or use
