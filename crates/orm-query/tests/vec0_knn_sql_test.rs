@@ -163,5 +163,8 @@ fn the_short_knn_agrees_with_the_current_dialect() {
     Value::vector(&[1.0f32]),
     10,
   );
-  assert_eq!(short.is_ok(), explicit.is_ok());
+  assert_eq!(
+    short.as_ref().map(|_| ()).map_err(ToString::to_string),
+    explicit.as_ref().map(|_| ()).map_err(ToString::to_string)
+  );
 }

@@ -63,18 +63,36 @@ fn distance_converts_to_ascending_order_by_default() -> TestResult {
 /// only assertion that holds on both.
 #[test]
 fn the_short_forms_agree_with_the_current_dialect() {
+  let short_match = EMBEDDING.matches(Value::vector(&[1.0f32]));
+  let explicit_match = EMBEDDING.matches_for(Dialect::CURRENT, Value::vector(&[1.0f32]));
   assert_eq!(
-    EMBEDDING.matches(Value::vector(&[1.0f32])).is_ok(),
-    EMBEDDING
-      .matches_for(Dialect::CURRENT, Value::vector(&[1.0f32]))
-      .is_ok()
+    short_match
+      .as_ref()
+      .map(|_| ())
+      .map_err(ToString::to_string),
+    explicit_match
+      .as_ref()
+      .map(|_| ())
+      .map_err(ToString::to_string)
   );
+
+  let short_k = vec0::k_eq(10);
+  let explicit_k = vec0::k_eq_for(Dialect::CURRENT, 10);
   assert_eq!(
-    vec0::k_eq(10).is_ok(),
-    vec0::k_eq_for(Dialect::CURRENT, 10).is_ok()
+    short_k.as_ref().map(|_| ()).map_err(ToString::to_string),
+    explicit_k.as_ref().map(|_| ()).map_err(ToString::to_string)
   );
+
+  let short_distance = vec0::distance();
+  let explicit_distance = vec0::distance_for(Dialect::CURRENT);
   assert_eq!(
-    vec0::distance().is_ok(),
-    vec0::distance_for(Dialect::CURRENT).is_ok()
+    short_distance
+      .as_ref()
+      .map(|_| ())
+      .map_err(ToString::to_string),
+    explicit_distance
+      .as_ref()
+      .map(|_| ())
+      .map_err(ToString::to_string)
   );
 }

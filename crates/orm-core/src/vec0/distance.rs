@@ -16,27 +16,25 @@ const SQL: &str = "\"distance\"";
 /// and [`Self::asc`] (or `Into<OrderBy>`) for `ORDER BY` — ascending is
 /// nearest first.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Vec0Distance {
-  sql: &'static str,
-}
+pub struct Vec0Distance;
 
 impl Vec0Distance {
   /// The identifier as SQL text — what `column_expr` takes for a named output.
   #[must_use]
-  pub fn sql(&self) -> &str {
-    self.sql
+  pub fn sql(&self) -> &'static str {
+    SQL
   }
 
   /// `ORDER BY "distance" ASC` — nearest first.
   #[must_use]
   pub fn asc(&self) -> OrderBy {
-    OrderBy::raw_asc(self.sql)
+    OrderBy::raw_asc(SQL)
   }
 
   /// `ORDER BY "distance" DESC` — farthest first.
   #[must_use]
   pub fn desc(&self) -> OrderBy {
-    OrderBy::raw_desc(self.sql)
+    OrderBy::raw_desc(SQL)
   }
 }
 
@@ -48,12 +46,17 @@ impl From<Vec0Distance> for OrderBy {
 
 /// [`distance`] for an explicit dialect.
 ///
+/// Fallible for the same reason as [`crate::fts5::bm25_for`]: a Postgres-bound
+/// value must not exist, so no statement can carry a `vec0` `distance` on that
+/// dialect. On a SQLite build the short form [`distance`] still returns
+/// `Result` so both lanes share one signature.
+///
 /// # Errors
 ///
 /// [`DbCoreError::Vec0UnsupportedDialect`] for [`Dialect::Postgres`].
 pub fn distance_for(dialect: Dialect) -> Result<Vec0Distance, DbCoreError> {
   require_sqlite(FEATURE, dialect)?;
-  Ok(Vec0Distance { sql: SQL })
+  Ok(Vec0Distance)
 }
 
 /// [`distance_for`] against [`Dialect::CURRENT`].
