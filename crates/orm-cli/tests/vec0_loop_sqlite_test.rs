@@ -246,6 +246,11 @@ fn a_driver_message_without_a_module_name_stays_database() {
     ),
     "expected Database, got {bare}"
   );
+  let no_marker = MigrateError::from_statement("0001_init.sql", "syntax error near vec0");
+  assert!(
+    matches!(&no_marker, MigrateError::Database(_)),
+    "expected Database, got {no_marker}"
+  );
   let wrapped =
     MigrateError::from_statement("0001_init.sql", "SQLite failure: `no such module: vec0`");
   assert!(
@@ -254,5 +259,13 @@ fn a_driver_message_without_a_module_name_stays_database() {
       MigrateError::MissingExtension { module, .. } if module == "vec0"
     ),
     "expected MissingExtension, got {wrapped}"
+  );
+  let bare_rusqlite = MigrateError::from_statement("0001_init.sql", "no such module: vec0");
+  assert!(
+    matches!(
+      &bare_rusqlite,
+      MigrateError::MissingExtension { module, .. } if module == "vec0"
+    ),
+    "expected MissingExtension, got {bare_rusqlite}"
   );
 }

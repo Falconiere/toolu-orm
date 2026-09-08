@@ -17,6 +17,8 @@ pub fn expand(input: &TableInput) -> syn::Result<TokenStream> {
   // `build_prevalidated`, not `build`: the table name, every column name and
   // the bit/distance_metric pair were checked above, where the diagnostic can
   // point at the offending field — and `table_def` cannot return a `Result`.
+  // Zero or many vector columns are both legal `vec0` shapes, so they are not
+  // refused here.
   Ok(quote! {
     impl #core::table::TableSchema for #struct_name {
       fn table_def() -> #core::table::TableDef {

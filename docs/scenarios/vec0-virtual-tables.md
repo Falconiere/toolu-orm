@@ -81,6 +81,7 @@ cargo nextest run -p toolu-orm-connection --features rusqlite -E 'binary(vec0_va
 | default | vec0_value_test | a_mismatched_length_is_refused_with_both_numbers |
 | default | vec0_macro_test | table_def_matches_the_hand_built_vec0_table |
 | default | vec0_macro_test | table_def_is_a_virtual_vec0_table |
+| default | vec0_macro_test | multiple_vector_columns_are_allowed |
 | default | vec0_macro_test | the_vector_column_carries_its_element_type_and_dimension |
 | default | vec0_macro_test | the_column_module_is_generated |
 | default | vec0_macro_test | the_builder_factories_are_generated |

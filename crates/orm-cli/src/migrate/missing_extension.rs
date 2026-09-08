@@ -22,7 +22,9 @@ impl MigrateError {
   /// Classify a statement failure from the driver's display text.
   ///
   /// Used by the migration runner and by the suite that pins the empty-name
-  /// boundary a real database cannot produce.
+  /// boundary a real database cannot produce. Edge cases (bare marker, no
+  /// marker, libsql backticks, hostile trailing punctuation) are covered by
+  /// `a_driver_message_without_a_module_name_stays_database`.
   #[must_use]
   pub fn from_statement(file: &str, message: &str) -> Self {
     match module_name(message) {
@@ -40,10 +42,11 @@ impl MigrateError {
 /// the reported module name is the bare identifier the operator loads.
 fn module_name(message: &str) -> Option<&str> {
   let after = message.split_once(MARKER)?.1.trim();
-  let end = after
-    .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
-    .unwrap_or(after.len());
-  let name = after.get(..end)?.trim();
+  // First run of `[A-Za-z0-9_]*` — anything else (backtick, space, end) stops it.
+  let name = after
+    .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+    .next()?
+    .trim();
   if name.is_empty() {
     None
   } else {

@@ -26,6 +26,18 @@ pub struct MemoryVec {
   pub contents: Text,
 }
 
+/// Two vector columns is a legal `vec0` shape; the macro must not invent a
+/// single-vector restriction.
+#[vec0_table(name = "dual_vec")]
+pub struct DualVec {
+  #[column(primary_key)]
+  pub id: Text,
+  #[column(dim = 8)]
+  pub a: Vector,
+  #[column(dim = 16, element = "int8")]
+  pub b: Vector,
+}
+
 fn hand_built() -> Result<toolu_orm_core::table::TableDef, Box<dyn std::error::Error>> {
   Ok(
     Vec0Table::new("memory_vec")
@@ -67,6 +79,20 @@ fn table_def_is_a_virtual_vec0_table() {
   );
   assert!(def.indexes.is_empty());
   assert!(!def.strict);
+}
+
+#[test]
+fn multiple_vector_columns_are_allowed() {
+  let def = DualVec::table_def();
+  assert_eq!(def.kind.module(), Some("vec0"));
+  assert_eq!(
+    def.kind.args(),
+    [
+      "id text primary key",
+      "a float[8]",
+      "b int8[16]",
+    ]
+  );
 }
 
 #[test]
