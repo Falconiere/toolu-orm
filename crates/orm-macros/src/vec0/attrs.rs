@@ -3,7 +3,7 @@
 use proc_macro2::Span;
 use syn::{Expr, Lit, Meta};
 
-use toolu_orm_core::vec0::is_vec0_ident;
+use super::ident::is_vec0_ident;
 
 #[derive(Default)]
 pub struct Vec0Attrs {

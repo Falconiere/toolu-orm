@@ -13,6 +13,7 @@ mod attrs;
 mod columns;
 mod entry;
 mod expand;
+mod ident;
 mod types;
 
 pub use entry::expand_vec0_table;

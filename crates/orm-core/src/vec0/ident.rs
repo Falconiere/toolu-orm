@@ -1,4 +1,9 @@
 //! The identifier rule `vec0` enforces inside its own constructor.
+//!
+//! The `#[vec0_table]` proc macro keeps an identical copy under
+//! `orm-macros::vec0::ident` so the macro dylib never links `orm-core` (which
+//! would pull two SQLite C archives under `libsql`+`rusqlite`). Keep them in
+//! lockstep.
 
 /// True when `vec0`'s scanner reads `name` as exactly one identifier.
 ///

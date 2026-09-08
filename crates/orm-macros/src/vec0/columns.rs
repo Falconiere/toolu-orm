@@ -8,10 +8,9 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::Error;
 
-use toolu_orm_core::vec0::is_vec0_ident;
-
 use crate::parse::{ColumnInput, TypeSpec};
 
+use super::ident::is_vec0_ident;
 use super::types::{auxiliary_type, key_type, metadata_type};
 
 /// One `Vec0Table` method call per declared field, in declaration order.
