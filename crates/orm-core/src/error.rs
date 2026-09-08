@@ -53,6 +53,18 @@ pub enum DbCoreError {
   #[error("expected a {expected}-element embedding, got {actual}")]
   VectorDimension { expected: u32, actual: usize },
 
+  #[error(
+    "{feature} is a SQLite sqlite-vec feature with no {dialect} equivalent; build this query for \
+     SQLite, or write the pgvector form (<-> / <=> / <#>) yourself"
+  )]
+  Vec0UnsupportedDialect {
+    feature: String,
+    dialect: &'static str,
+  },
+
+  #[error("invalid vec0 argument for {feature}: {reason}")]
+  Vec0InvalidArgument { feature: String, reason: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

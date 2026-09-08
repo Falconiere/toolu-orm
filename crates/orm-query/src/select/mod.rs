@@ -14,6 +14,7 @@
 //! ```
 
 mod builder;
+mod knn;
 pub mod relational;
 
 use crate::where_clause::cfg_single_backend;
