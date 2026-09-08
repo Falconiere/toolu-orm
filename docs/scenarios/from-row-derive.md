@@ -18,12 +18,13 @@
 
 ## How to run
 
-Each of the eight combinations, including the no-driver arm:
+Each of the eight combinations, including the no-driver arm. The four CI lanes
+give `toolu-orm-core` only four of them, so this guard is what keeps the other
+four definitions of `impl_derived_from_row!` honest — it runs in CI and in the
+quality gate, and it fails naming the combination that broke:
 
 ```sh
-for combo in "" libsql rusqlite postgres postgres,libsql postgres,rusqlite libsql,rusqlite postgres,libsql,rusqlite; do
-  cargo check -p toolu-orm-facade-consumer --no-default-features ${combo:+--features "$combo"} --all-targets || break
-done
+bash scripts/check-derive-matrix.sh
 ```
 
 The suites themselves:

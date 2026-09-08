@@ -38,7 +38,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Use `cargo nextest run`, never `cargo test`.
 
 ## Quality gate
-Four lanes plus the docs check, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`.
+Four lanes plus two checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight.
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -51,5 +51,6 @@ cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features rusqlite
 cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-connection --features rusqlite
+bash scripts/check-derive-matrix.sh
 bash scripts/check-scenario-docs.sh
 ```

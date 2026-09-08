@@ -600,6 +600,7 @@ cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features rusqlite
 cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-connection --features rusqlite
+bash scripts/check-derive-matrix.sh
 bash scripts/check-scenario-docs.sh
 ```
 

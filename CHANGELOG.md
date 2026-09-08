@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(core)* `toolu_orm_core::serde` and `toolu_orm_core::serde_json` re-exports,
   so generated view structs and `Relational` impls reach serde without the
   consumer depending on it.
+- *(ci)* `scripts/check-derive-matrix.sh` compiles `#[derive(FromRow)]` against
+  all eight driver combinations. The four CI lanes give `toolu-orm-core` only
+  four of them, so half of `impl_derived_from_row!`'s definitions were
+  unreachable from the gate; a typo in one would have shipped silently
+  ([#17](https://github.com/Falconiere/toolu-orm/issues/17)).
 
 ### Fixed
 - *(macros)* `#[derive(FromRow)]` expands to the trait shape `toolu-orm-core`

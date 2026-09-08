@@ -75,6 +75,10 @@ cargo nextest run -p toolu-orm-query --features libsql
 cargo nextest run -p toolu-orm-query --features rusqlite
 cargo nextest run -p toolu-orm-connection --features rusqlite
 
+# the four lanes above give orm-core only four of the eight driver
+# combinations; this compiles the FromRow derive against all eight
+bash scripts/check-derive-matrix.sh
+
 bash scripts/check-scenario-docs.sh
 ```
 
