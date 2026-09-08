@@ -26,7 +26,7 @@ impl Value {
   /// ```
   #[must_use]
   pub fn vector(embedding: &[f32]) -> Self {
-    let mut bytes = Vec::with_capacity(size_of_val(embedding));
+    let mut bytes = Vec::with_capacity(embedding.len() * size_of::<f32>());
     for element in embedding {
       bytes.extend_from_slice(&element.to_le_bytes());
     }
@@ -42,7 +42,7 @@ impl Value {
   ///
   /// [`DbCoreError::VectorDimension`] when the slice length is not `dim`.
   pub fn vector_with_dim(embedding: &[f32], dim: u32) -> Result<Self, DbCoreError> {
-    if u32::try_from(embedding.len()).ok() != Some(dim) {
+    if embedding.len() != dim as usize {
       return Err(DbCoreError::VectorDimension {
         expected: dim,
         actual: embedding.len(),

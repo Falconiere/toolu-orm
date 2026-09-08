@@ -103,7 +103,7 @@ async fn migrating_vec0_without_the_extension_is_a_named_missing_module() -> Tes
     matches!(
       &error,
       MigrateError::MissingExtension { module, file }
-        if module == "vec0" && file.contains("init")
+        if module == "vec0" && file == "0001_init.sql"
     ),
     "expected MissingExtension for vec0, got {error}"
   );

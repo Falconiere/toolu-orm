@@ -87,11 +87,7 @@ fn multiple_vector_columns_are_allowed() {
   assert_eq!(def.kind.module(), Some("vec0"));
   assert_eq!(
     def.kind.args(),
-    [
-      "id text primary key",
-      "a float[8]",
-      "b int8[16]",
-    ]
+    ["id text primary key", "a float[8]", "b int8[16]",]
   );
 }
 
