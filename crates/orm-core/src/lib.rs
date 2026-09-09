@@ -22,6 +22,7 @@ pub mod index;
 pub mod journal;
 pub mod ordering;
 pub mod pg_fts;
+pub mod pgvector;
 pub mod query_column;
 pub mod relation;
 pub mod relational_row;

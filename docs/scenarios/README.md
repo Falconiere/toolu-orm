@@ -32,6 +32,7 @@ test, update its page.
 | [Postgres FTS queries](postgres-fts-queries.md) | `@@` / `to_tsquery` / `ts_rank` as a Postgres-only builder surface, positive scores / `DESC`, and the SQLite refusal. |
 | [vec0 virtual tables](vec0-virtual-tables.md) | `ColumnType::Vector`, `#[vec0_table]`, `Value::vector`, and `MigrateError::MissingExtension` when `sqlite-vec` is not loaded. |
 | [vec0 KNN](vec0-knn.md) | `SelectBuilder::knn` (`MATCH` + hidden `k`), `vec0::distance`, Postgres refusal, and the filtered-KNN oversample note. |
+| [pgvector KNN](pgvector-knn.md) | `<->` / `<=>` / `<#>` distance `ORDER BY … LIMIT k` as a Postgres-only surface, embedded vector literals, and the SQLite refusal. |
 | [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |
 | [Renames](renames.md) | A `RenameResolver` turns drop+create into `RENAME TABLE` / `RENAME COLUMN`. |
 | [Macro compile errors](macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |
