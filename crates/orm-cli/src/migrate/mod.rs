@@ -1,7 +1,7 @@
 mod apply;
 mod baseline;
 mod ddl;
-mod embedded;
+pub(crate) mod embedded;
 mod error;
 mod missing_extension;
 mod pending;

@@ -5,9 +5,9 @@ use std::path::Path;
 use toolu_orm_connection::DbConnection;
 use toolu_orm_core::dialect::Dialect;
 
+use crate::migrate::embedded::reject_duplicate_names;
 use crate::migrate::{
-  ensure_migrations_table, get_applied_migrations, mark_applied_embedded, EmbeddedMigration,
-  MigrateError,
+  ensure_migrations_table, get_applied_migrations, EmbeddedMigration, MigrateError,
 };
 
 pub struct MigrationStatus {
@@ -52,9 +52,9 @@ pub async fn get_status_embedded(
   migrations: &[EmbeddedMigration<'_>],
   dialect: Dialect,
 ) -> Result<MigrationStatus, MigrateError> {
-  // Empty baseline shares the duplicate-name gate (and ensures `_migrations`)
-  // without exposing the helper outside `migrate`.
-  mark_applied_embedded(conn, migrations, &[], dialect).await?;
+  reject_duplicate_names(migrations)?;
+
+  ensure_migrations_table(conn, dialect).await?;
   let applied = get_applied_migrations(conn).await?;
 
   let pending: Vec<String> = migrations
