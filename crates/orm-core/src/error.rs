@@ -65,6 +65,18 @@ pub enum DbCoreError {
   #[error("invalid vec0 argument for {feature}: {reason}")]
   Vec0InvalidArgument { feature: String, reason: String },
 
+  #[error(
+    "{function} is a Postgres full-text feature with no {dialect} equivalent; build this query for \
+     Postgres, or use the SQLite FTS5 surface (MATCH / bm25) instead"
+  )]
+  PgFtsUnsupportedDialect {
+    function: String,
+    dialect: &'static str,
+  },
+
+  #[error("invalid Postgres FTS argument for {function}: {reason}")]
+  PgFtsInvalidArgument { function: String, reason: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

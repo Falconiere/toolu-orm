@@ -39,6 +39,13 @@ pub(crate) enum ExprKind {
     target: String,
     pattern: Value,
   },
+  /// Postgres `document @@ query_fn(config, $N)`.
+  TsMatch {
+    document: String,
+    query_fn: &'static str,
+    config: String,
+    pattern: Value,
+  },
   And(Box<Expr>, Box<Expr>),
   Or(Box<Expr>, Box<Expr>),
   Raw {

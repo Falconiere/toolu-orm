@@ -95,6 +95,10 @@ name = "fts5_select_sql_test"
 path = "tests/fts5_select_sql_test.rs"
 
 [[test]]
+name = "pg_fts_select_sql_test"
+path = "tests/pg_fts_select_sql_test.rs"
+
+[[test]]
 name = "vec0_knn_sql_test"
 path = "tests/vec0_knn_sql_test.rs"
 
@@ -192,6 +196,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_transaction_test"
 path = "tests/postgres_transaction_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "pg_fts_postgres_test"
+path = "tests/pg_fts_postgres_test.rs"
 required-features = ["postgres"]
 
 [lints]
