@@ -59,9 +59,9 @@ fn map_db(err: DbError) -> QueryError {
       field: "unknown".to_owned(),
       source: toolu_orm_core::error::DbCoreError::RowMapping(message),
     },
-    other @ (DbError::Connection(_)
-    | DbError::Query(_)
-    | DbError::Transaction(_)
-    | DbError::Pool(_)) => QueryError::Connection(other.to_string()),
+    DbError::Connection(message) => QueryError::Connection(format!("connection: {message}")),
+    DbError::Query(message) => QueryError::Connection(format!("query: {message}")),
+    DbError::Transaction(message) => QueryError::Connection(format!("transaction: {message}")),
+    DbError::Pool(message) => QueryError::Connection(format!("pool: {message}")),
   }
 }

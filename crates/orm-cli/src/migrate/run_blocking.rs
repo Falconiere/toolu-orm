@@ -8,6 +8,7 @@ use toolu_orm_core::journal::{Journal, JournalEntry};
 
 use super::apply_blocking::apply_migration;
 use super::error::MigrateError;
+use super::missing_extension::map_statement_error;
 use super::pending::get_pending_migrations;
 use super::store::{
   ensure_migrations_table_blocking, get_applied_migrations_blocking, record_migration_blocking,
@@ -28,7 +29,9 @@ pub fn run_migrate_blocking(
   let applied = get_applied_migrations_blocking(conn)?;
 
   let journal_path = Path::new(migrations_dir).join("_journal.json");
-  let journal_path_str = journal_path.to_str().unwrap_or("");
+  let journal_path_str = journal_path.to_str().ok_or_else(|| {
+    MigrateError::ReadFile(format!("{} is not valid UTF-8", journal_path.display()))
+  })?;
 
   let journal = Journal::read_from_path(journal_path_str)
     .map_err(|e| MigrateError::ReadFile(format!("{e}")))?;
@@ -83,7 +86,7 @@ fn apply_migration_legacy(
   let result = (|| {
     conn
       .execute_batch(&sql)
-      .map_err(|e| MigrateError::Database(format!("migration {migration_file}: {e}")))?;
+      .map_err(|e| map_statement_error(migration_file, &e))?;
     record_migration_blocking(conn, migration_file, "", dialect)
   })();
 

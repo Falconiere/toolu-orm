@@ -20,8 +20,11 @@ fn connect() -> Result<RusqliteConnection, Box<dyn std::error::Error>> {
 }
 
 fn has_table(conn: &RusqliteConnection, name: &str) -> Result<i64, Box<dyn std::error::Error>> {
-  let sql = format!("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '{name}'");
-  let rows: Vec<CountRow> = DbConnectionBlocking::query_map(conn, &sql, vec![])?;
+  let rows: Vec<CountRow> = DbConnectionBlocking::query_map(
+    conn,
+    "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+    vec![toolu_orm_core::value::Value::Text(name.to_owned())],
+  )?;
   Ok(rows.first().map(|r| r.n).ok_or("no row")?)
 }
 
