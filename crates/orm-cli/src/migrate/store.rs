@@ -1,12 +1,13 @@
 //! Migration record storage, lookup, and table initialization.
 
-use toolu_orm_connection::DbConnection;
+use toolu_orm_connection::{DbConnection, DbConnectionBlocking};
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::error::DbCoreError;
 use toolu_orm_core::value::Value;
 
 use super::ddl::migrations_table_ddl;
 use super::error::{map_db, MigrateError};
+use super::sql::{insert_migration_sql, SELECT_APPLIED_MIGRATIONS};
 
 struct AppliedMigration {
   name: String,
@@ -48,6 +49,10 @@ toolu_orm_core::impl_from_row_for!(single
   cfg(all(orm_core_has_postgres, not(orm_core_has_libsql), not(orm_core_has_rusqlite))),
   AppliedMigration, &["name"], from_row, toolu_orm_core::tokio_postgres::Row, map_pg);
 
+toolu_orm_core::impl_from_row_for!(single
+  cfg(all(orm_core_has_rusqlite, not(orm_core_has_libsql), not(orm_core_has_postgres))),
+  AppliedMigration, &["name"], from_row, toolu_orm_core::rusqlite::Row<'_>, map_rusqlite);
+
 toolu_orm_core::impl_from_row_for!(dual
   cfg(all(orm_core_has_postgres, orm_core_has_libsql, not(orm_core_has_rusqlite))),
   AppliedMigration, &["name"],
@@ -82,16 +87,32 @@ pub async fn record_migration(
   hash: &str,
   dialect: Dialect,
 ) -> Result<(), MigrateError> {
-  let sql = match dialect {
-    Dialect::Sqlite => "INSERT INTO _migrations (name, hash) VALUES (?1, ?2)",
-    Dialect::Postgres => "INSERT INTO _migrations (name, hash) VALUES ($1, $2)",
-  };
   conn
     .execute_sql(
-      sql,
+      insert_migration_sql(dialect),
       vec![Value::Text(name.to_owned()), Value::Text(hash.to_owned())],
     )
     .await
+    .map_err(|e| map_db(&e))?;
+  Ok(())
+}
+
+/// Blocking twin of [`record_migration`].
+///
+/// # Errors
+///
+/// Returns [`MigrateError::Database`] if the insert fails.
+pub fn record_migration_blocking(
+  conn: &impl DbConnectionBlocking,
+  name: &str,
+  hash: &str,
+  dialect: Dialect,
+) -> Result<(), MigrateError> {
+  conn
+    .execute_sql(
+      insert_migration_sql(dialect),
+      vec![Value::Text(name.to_owned()), Value::Text(hash.to_owned())],
+    )
     .map_err(|e| map_db(&e))?;
   Ok(())
 }
@@ -101,8 +122,22 @@ pub async fn record_migration(
 /// Returns [`MigrateError::Database`] if the query fails.
 pub async fn get_applied_migrations(conn: &impl DbConnection) -> Result<Vec<String>, MigrateError> {
   let rows = conn
-    .query_map::<AppliedMigration>("SELECT name FROM _migrations ORDER BY id", vec![])
+    .query_map::<AppliedMigration>(SELECT_APPLIED_MIGRATIONS, vec![])
     .await
+    .map_err(|e| map_db(&e))?;
+  Ok(rows.into_iter().map(|r| r.name).collect())
+}
+
+/// Blocking twin of [`get_applied_migrations`].
+///
+/// # Errors
+///
+/// Returns [`MigrateError::Database`] if the query fails.
+pub fn get_applied_migrations_blocking(
+  conn: &impl DbConnectionBlocking,
+) -> Result<Vec<String>, MigrateError> {
+  let rows = conn
+    .query_map::<AppliedMigration>(SELECT_APPLIED_MIGRATIONS, vec![])
     .map_err(|e| map_db(&e))?;
   Ok(rows.into_iter().map(|r| r.name).collect())
 }
@@ -116,5 +151,19 @@ pub async fn ensure_migrations_table(
 ) -> Result<(), MigrateError> {
   let ddl = migrations_table_ddl(dialect);
   conn.execute_batch(&ddl).await.map_err(|e| map_db(&e))?;
+  Ok(())
+}
+
+/// Blocking twin of [`ensure_migrations_table`].
+///
+/// # Errors
+///
+/// Returns [`MigrateError::Database`] if DDL execution fails.
+pub fn ensure_migrations_table_blocking(
+  conn: &impl DbConnectionBlocking,
+  dialect: Dialect,
+) -> Result<(), MigrateError> {
+  let ddl = migrations_table_ddl(dialect);
+  conn.execute_batch(&ddl).map_err(|e| map_db(&e))?;
   Ok(())
 }

@@ -12,6 +12,7 @@ autotests = false
 toolu-orm-core = { path = "../orm-core", version = "0.2.0", default-features = false }
 toolu-orm-connection = { path = "../orm-connection", version = "0.2.0", default-features = false }
 libsql = { version = "0.9", default-features = false, features = ["core"], optional = true }
+rusqlite = { workspace = true, optional = true }
 tokio-postgres = { workspace = true, optional = true }
 tokio = { version = "1", features = ["full"] }
 thiserror = "2"
@@ -19,6 +20,11 @@ thiserror = "2"
 [features]
 default = ["libsql"]
 libsql = ["dep:libsql", "toolu-orm-core/libsql", "toolu-orm-connection/libsql"]
+rusqlite = [
+  "dep:rusqlite",
+  "toolu-orm-core/rusqlite",
+  "toolu-orm-connection/rusqlite",
+]
 postgres = [
   "dep:tokio-postgres",
   "toolu-orm-core/postgres",
@@ -101,6 +107,26 @@ required-features = ["libsql"]
 name = "migrate_embedded_baseline_postgres_test"
 path = "tests/migrate_embedded_baseline_postgres_test.rs"
 required-features = ["libsql", "postgres"]
+
+[[test]]
+name = "migrate_blocking_test"
+path = "tests/migrate_blocking_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "migrate_embedded_blocking_test"
+path = "tests/migrate_embedded_blocking_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "migrate_baseline_blocking_test"
+path = "tests/migrate_baseline_blocking_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "status_blocking_test"
+path = "tests/status_blocking_test.rs"
+required-features = ["rusqlite"]
 
 [dev-dependencies]
 tempfile = "3"

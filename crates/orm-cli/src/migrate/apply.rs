@@ -72,7 +72,7 @@ async fn execute_statements(
 /// such chunks for operations a dialect cannot express, and never emits block
 /// comments) must not reach the driver: libsql reports "not an error" when
 /// asked to execute an empty statement.
-fn has_statement(chunk: &str) -> bool {
+pub(super) fn has_statement(chunk: &str) -> bool {
   chunk
     .lines()
     .map(str::trim)

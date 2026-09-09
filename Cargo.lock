@@ -2387,6 +2387,7 @@ name = "toolu-orm-cli"
 version = "0.2.0"
 dependencies = [
  "libsql",
+ "rusqlite",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",

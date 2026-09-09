@@ -1,6 +1,6 @@
 # Fetch semantics
 
-**Feature:** `SelectBuilder` adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, and `exists` on top of `.execute()`. They are async on libsql and Postgres, sync on rusqlite, with the same results.
+**Feature:** `SelectBuilder` adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, and `exists` on top of `.execute()`. They are async on libsql and Postgres, sync on rusqlite (raw `Connection` or `RusqliteConnection`), with the same results.
 **Drivers:** libsql, rusqlite, Postgres.
 **Spec:** AC-12.
 

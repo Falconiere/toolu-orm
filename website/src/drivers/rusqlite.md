@@ -125,12 +125,11 @@ let rows: Vec<User> = UsersTable::select_for::<User>()
   .fetch_all(&sqlite_conn)?;              // no .await
 ```
 
-This is the one driver where the two surfaces do not connect:
-`RusqliteConnection` holds its `rusqlite::Connection` behind an
-`Arc<Mutex<…>>` with no accessor, so it serves `DbConnection` (migrations,
-`query_map`, `execute_batch`) while the builders run on a `rusqlite::Connection`
-you open directly. `from_connection` does not bridge them — it is the way in,
-not a way back out. Point both at the same database file, or use one of them.
+This is the one driver where migrations, status, and builders share one wrapper:
+`Executor for RusqliteConnection` delegates to `DbConnectionBlocking`, so the same
+`from_connection` value that runs `run_migrate_blocking` / `get_status_blocking`
+also runs `InsertBuilder::execute` and `SelectBuilder::fetch_all`. A bare
+`rusqlite::Connection` remains a valid `Executor` for callers that never wrap.
 
 Everything else — the builders, the expressions, the generated columns — is
 identical to the other drivers.

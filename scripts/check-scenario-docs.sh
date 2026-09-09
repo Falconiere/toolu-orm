@@ -13,6 +13,7 @@
 #   libsql-only   cargo nextest list -p toolu-orm-query --features libsql
 #   rusqlite-only cargo nextest list -p toolu-orm-query --features rusqlite,sqlite-vec
 #                 cargo nextest list -p toolu-orm-connection --features rusqlite,sqlite-vec
+#                 cargo nextest list -p toolu-orm-cli --no-default-features --features rusqlite
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -43,6 +44,7 @@ list_lane postgres $PKGS --features postgres
 list_lane libsql-only -p toolu-orm-query --features libsql
 list_lane rusqlite-only -p toolu-orm-query --features rusqlite,sqlite-vec
 list_lane rusqlite-only -p toolu-orm-connection --features rusqlite,sqlite-vec
+list_lane rusqlite-only -p toolu-orm-cli --no-default-features --features rusqlite
 
 # Documented rows: "<lane> <binary> <test>" from table rows under each page's
 # `## Tests` heading (other tables on the page are ignored).

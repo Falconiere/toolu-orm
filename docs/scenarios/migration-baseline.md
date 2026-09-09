@@ -1,7 +1,7 @@
 # Migration baseline
 
 **Feature:** `mark_applied` / `mark_applied_through` record journal entries as applied **without executing their SQL**, so a database whose schema was built by a previous migration system can adopt toolu-orm instead of re-running every migration. Hashes come from `_journal.json`, so the tamper check keeps working from the baseline onward.
-**Drivers:** libsql (SQLite) and Postgres. rusqlite shares the SQLite path.
+**Drivers:** libsql (SQLite) and Postgres for the async path; rusqlite via `mark_applied*_blocking` (see [Blocking connection](blocking-connection.md)).
 **Issue:** [#14](https://github.com/Falconiere/toolu-orm/issues/14).
 
 ## What is proven
