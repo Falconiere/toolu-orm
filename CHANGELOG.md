@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- *(core)* Postgres pgvector distance operators (`<->` / `<=>` / `<#>`) with `ORDER BY … LIMIT k`
 - *(core)* model sqlite-vec `vec0` virtual tables, `ColumnType::Vector`, `#[vec0_table]`, and `Value::vector`
 - *(cli)* map a driver's `no such module: …` into `MigrateError::MissingExtension`
 

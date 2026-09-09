@@ -33,7 +33,7 @@ The Postgres suites need a server; they fail rather than skip when it is absent,
 so a green run means the assertions actually executed.
 
 ```sh
-docker compose -f docker-compose.test.yaml up -d --wait   # postgres:16 on localhost:5434
+docker compose -f docker-compose.test.yaml up -d --wait   # pgvector/pgvector:pg16 on localhost:5434
 export TEST_DB_PORT=5434
 ```
 

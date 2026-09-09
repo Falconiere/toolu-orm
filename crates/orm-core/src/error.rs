@@ -77,6 +77,18 @@ pub enum DbCoreError {
   #[error("invalid Postgres FTS argument for {function}: {reason}")]
   PgFtsInvalidArgument { function: String, reason: String },
 
+  #[error(
+    "{feature} is a Postgres pgvector feature with no {dialect} equivalent; build this query for \
+     Postgres, or use the sqlite-vec KNN surface (MATCH / k / distance) instead"
+  )]
+  PgVectorUnsupportedDialect {
+    feature: String,
+    dialect: &'static str,
+  },
+
+  #[error("invalid pgvector argument for {feature}: {reason}")]
+  PgVectorInvalidArgument { feature: String, reason: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

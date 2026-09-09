@@ -60,11 +60,14 @@ the builder does not invent the larger `k` for you.
 
 ### Postgres is refused, not translated
 
-pgvector's `<->` / `<=>` / `<#>` and "ORDER BY distance LIMIT k" are a
-different model. Every constructor (`matches_for`, `k_eq_for`,
+pgvector’s `<->` / `<=>` / `<#>` and "ORDER BY distance LIMIT k" are a
+different model. Every vec0 constructor (`matches_for`, `k_eq_for`,
 `distance_for`, `knn_for`) returns
 `DbCoreError::Vec0UnsupportedDialect` for `Dialect::Postgres` and
 produces no SQL. Short forms follow `Dialect::CURRENT`.
+
+The Postgres surface lives in [pgvector KNN](pgvector-knn.md) — a separate
+module (`toolu_orm_core::pgvector`), not a translation of this one.
 
 ### Extension required to execute
 
