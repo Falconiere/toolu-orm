@@ -5,7 +5,10 @@ use std::path::Path;
 use toolu_orm_connection::DbConnection;
 use toolu_orm_core::dialect::Dialect;
 
-use crate::migrate::{ensure_migrations_table, get_applied_migrations, MigrateError};
+use crate::migrate::embedded::reject_duplicate_names;
+use crate::migrate::{
+  ensure_migrations_table, get_applied_migrations, EmbeddedMigration, MigrateError,
+};
 
 pub struct MigrationStatus {
   pub applied: Vec<String>,
@@ -29,6 +32,35 @@ pub async fn get_status(
   let pending: Vec<String> = all_files
     .into_iter()
     .filter(|f| !applied.contains(f))
+    .collect();
+
+  Ok(MigrationStatus { applied, pending })
+}
+
+/// Returns applied vs pending status against an embedded migration list.
+///
+/// `applied` comes from `_migrations`. `pending` is every name in the list that
+/// is not yet recorded, in **list order** — the same order
+/// [`crate::migrate::run_migrate_embedded`] would apply them.
+///
+/// # Errors
+///
+/// Returns [`MigrateError::DuplicateMigration`] when the list repeats a name,
+/// or [`MigrateError::Database`] on a database failure.
+pub async fn get_status_embedded(
+  conn: &impl DbConnection,
+  migrations: &[EmbeddedMigration<'_>],
+  dialect: Dialect,
+) -> Result<MigrationStatus, MigrateError> {
+  reject_duplicate_names(migrations)?;
+
+  ensure_migrations_table(conn, dialect).await?;
+  let applied = get_applied_migrations(conn).await?;
+
+  let pending: Vec<String> = migrations
+    .iter()
+    .map(|entry| entry.name.to_owned())
+    .filter(|name| !applied.contains(name))
     .collect();
 
   Ok(MigrationStatus { applied, pending })

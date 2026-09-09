@@ -91,6 +91,17 @@ name = "migrate_baseline_postgres_test"
 path = "tests/migrate_baseline_postgres_test.rs"
 required-features = ["libsql", "postgres"]
 
+[[test]]
+name = "migrate_embedded_baseline_test"
+path = "tests/migrate_embedded_baseline_test.rs"
+required-features = ["libsql"]
+
+# Needs a live Postgres on TEST_DB_PORT (5434 in CI). Does not start Docker.
+[[test]]
+name = "migrate_embedded_baseline_postgres_test"
+path = "tests/migrate_embedded_baseline_postgres_test.rs"
+required-features = ["libsql", "postgres"]
+
 [dev-dependencies]
 tempfile = "3"
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
