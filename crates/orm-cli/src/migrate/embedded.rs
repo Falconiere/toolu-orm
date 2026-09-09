@@ -168,7 +168,7 @@ pub async fn mark_applied_through_embedded(
 /// the repeat has no single SQL body. Caught before the first statement runs,
 /// so the mistake does not surface as a `UNIQUE` violation with earlier
 /// migrations already committed.
-pub(crate) fn reject_duplicate_names(
+pub(super) fn reject_duplicate_names(
   migrations: &[EmbeddedMigration<'_>],
 ) -> Result<(), MigrateError> {
   let mut seen: Vec<&str> = Vec::with_capacity(migrations.len());

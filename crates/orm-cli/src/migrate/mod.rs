@@ -11,7 +11,6 @@ mod transaction;
 
 pub use baseline::{mark_applied, mark_applied_through};
 pub use ddl::migrations_table_ddl;
-pub(crate) use embedded::reject_duplicate_names;
 pub use embedded::{
   mark_applied_embedded, mark_applied_through_embedded, run_migrate_embedded, EmbeddedMigration,
 };

@@ -111,7 +111,7 @@ fn read_journal(migrations_dir: &str) -> Result<Journal, MigrateError> {
 ///
 /// Shared by directory [`mark_applied`] and the embedded twins in
 /// [`super::embedded`].
-pub(crate) async fn record_all(
+pub(super) async fn record_all(
   conn: &impl DbConnection,
   entries: &[(&str, &str)],
   dialect: Dialect,
@@ -123,7 +123,7 @@ pub(crate) async fn record_all(
   let mut count: u32 = 0;
   let result = async {
     let applied = get_applied_migrations(conn).await?;
-    for (name, hash) in entries {
+    for &(name, hash) in entries {
       if applied.iter().any(|recorded| recorded == name) {
         continue;
       }
