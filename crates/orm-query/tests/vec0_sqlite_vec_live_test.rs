@@ -81,7 +81,7 @@ fn memory_vec_ddl() -> String {
 }
 
 fn seeded_conn() -> Result<RusqliteConnection, Box<dyn std::error::Error>> {
-  sqlite_vec_register::register();
+  sqlite_vec_register::register()?;
   let raw = rusqlite::Connection::open_in_memory()?;
   let conn = RusqliteConnection::from_connection(raw);
 
@@ -133,11 +133,13 @@ fn knn_returns_the_nearest_seeded_row_first() -> TestResult {
     .to_sql_for(Dialect::Sqlite);
 
   let hits: Vec<Hit> = DbConnectionBlocking::query_map(&conn, &sql, params)?;
-  let ids: Vec<&str> = hits.iter().map(|hit| hit.memory_id.as_str()).collect();
-  assert_eq!(ids, vec!["near", "mid"]);
-
-  let near = hits.first().ok_or("missing near")?;
-  let mid = hits.get(1).ok_or("missing mid")?;
+  assert_eq!(hits.len(), 2);
+  let near = hits.first().ok_or("missing near after len check")?;
+  let mid = hits.get(1).ok_or("missing mid after len check")?;
+  assert_eq!(
+    (near.memory_id.as_str(), mid.memory_id.as_str()),
+    ("near", "mid")
+  );
   // vec0 L2 distance is Euclidean: |0.12-0.1| = 0.02, |0.12-0.5| = 0.38
   assert!(
     (near.distance - 0.02).abs() < 1e-5,
@@ -155,7 +157,7 @@ fn knn_returns_the_nearest_seeded_row_first() -> TestResult {
 
 #[test]
 fn knn_on_an_empty_vec0_table_returns_no_rows() -> TestResult {
-  sqlite_vec_register::register();
+  sqlite_vec_register::register()?;
   let conn = RusqliteConnection::from_connection(rusqlite::Connection::open_in_memory()?);
   DbConnectionBlocking::execute_batch(&conn, &memory_vec_ddl())?;
 
@@ -170,6 +172,6 @@ fn knn_on_an_empty_vec0_table_returns_no_rows() -> TestResult {
     .to_sql_for(Dialect::Sqlite);
 
   let hits: Vec<IdRow> = DbConnectionBlocking::query_map(&conn, &sql, params)?;
-  assert!(hits.is_empty());
+  assert_eq!(hits.len(), 0);
   Ok(())
 }
