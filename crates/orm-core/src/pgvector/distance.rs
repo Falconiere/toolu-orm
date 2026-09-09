@@ -165,6 +165,8 @@ pub(super) fn distance_for(
   let feature = op.feature();
   require_postgres(feature, dialect)?;
   let lit = vector_literal(feature, query)?;
+  // `Column::qualified` already emits `"table"."column"`; identifiers come from
+  // `&'static str` macros / constructors, same as `pg_fts` document SQL.
   Ok(PgVectorDistance::new(format!(
     "{} {} {lit}",
     column.qualified(),

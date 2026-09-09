@@ -33,7 +33,7 @@ async fn seeded_client(
   let conn_str = format!(
     "host={} port={} user={} password={} dbname={}",
     std::env::var("TEST_DB_HOST").unwrap_or_else(|_| "localhost".to_owned()),
-    std::env::var("TEST_DB_PORT").unwrap_or_else(|_| "5433".to_owned()),
+    std::env::var("TEST_DB_PORT").unwrap_or_else(|_| "5434".to_owned()),
     std::env::var("TEST_DB_USER").unwrap_or_else(|_| "toolu".to_owned()),
     std::env::var("TEST_DB_PASSWORD").unwrap_or_else(|_| "toolu".to_owned()),
     std::env::var("TEST_DB_NAME").unwrap_or_else(|_| "toolu".to_owned()),

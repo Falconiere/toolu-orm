@@ -55,3 +55,18 @@ fn the_short_forms_agree_with_the_current_dialect() {
     assert_eq!(a.sql(), b.sql());
   }
 }
+
+#[test]
+fn extreme_finite_floats_never_use_scientific_notation() -> TestResult {
+  let dist = EMBEDDING.l2_distance_for(Dialect::Postgres, &[1e-7, 1e20, f32::MIN_POSITIVE])?;
+  let sql = dist.sql();
+  let start = sql.find('\'').ok_or("missing opening quote")?;
+  let end = sql.rfind('\'').ok_or("missing closing quote")?;
+  let literal = sql.get(start..=end).ok_or("literal slice out of range")?;
+  assert!(
+    !literal.contains(['e', 'E']),
+    "pgvector literal must stay decimal-only, got {literal}"
+  );
+  assert!(sql.ends_with("::vector") || sql.contains("'::vector"));
+  Ok(())
+}

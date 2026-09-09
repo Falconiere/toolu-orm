@@ -69,6 +69,7 @@ sqlite-vec `.knn` still refuses Postgres (`Vec0UnsupportedDialect`).
 | default / postgres | `pgvector_query_test` | `cosine_and_neg_inner_product_emit_their_ops` |
 | default / postgres | `pgvector_query_test` | `free_functions_agree_with_the_ops_trait` |
 | default / postgres | `pgvector_query_test` | `the_short_forms_agree_with_the_current_dialect` |
+| default / postgres | `pgvector_query_test` | `extreme_finite_floats_never_use_scientific_notation` |
 | default / postgres | `pgvector_query_test` | `sqlite_is_refused_by_every_constructor` |
 | default / postgres | `pgvector_query_test` | `a_non_finite_embedding_element_is_refused` |
 | default / postgres | `pgvector_query_test` | `vec0_still_refuses_postgres_and_pgvector_refuses_sqlite` |

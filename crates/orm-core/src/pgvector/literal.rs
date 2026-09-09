@@ -16,6 +16,9 @@ pub(crate) fn invalid(feature: &str, reason: impl Into<String>) -> DbCoreError {
 
 /// `'[1,0,0.5]'::vector` with every element proven finite.
 ///
+/// Elements are rendered as decimal literals only — never scientific notation —
+/// so pgvector's text parser always sees a plain numeric list.
+///
 /// # Errors
 ///
 /// [`DbCoreError::PgVectorInvalidArgument`] when any element is NaN or infinite.
@@ -31,9 +34,28 @@ pub(crate) fn vector_literal(feature: &str, embedding: &[f32]) -> Result<String,
     if i > 0 {
       body.push(',');
     }
-    // Display of finite f32 never emits quotes or spaces that break the literal.
-    body.push_str(&value.to_string());
+    body.push_str(&decimal_f32(*value));
   }
   body.push(']');
   Ok(format!("'{body}'::vector"))
+}
+
+/// Decimal form of a finite `f32` with no `e` / `E` exponent.
+fn decimal_f32(value: f32) -> String {
+  let plain = value.to_string();
+  if !plain.contains(['e', 'E']) {
+    return plain;
+  }
+  // Display fell back to scientific notation; rewrite with fixed decimals and
+  // trim trailing zeros so the literal stays compact and parseable.
+  let mut fixed = format!("{value:.9}");
+  if let Some(dot) = fixed.find('.') {
+    while fixed.len() > dot + 1 && fixed.ends_with('0') {
+      fixed.pop();
+    }
+    if fixed.ends_with('.') {
+      fixed.pop();
+    }
+  }
+  fixed
 }
