@@ -45,6 +45,16 @@ pub(super) fn render_expr(
       params.push(pattern.clone());
       format!("{target} MATCH {}", dialect.param(idx))
     },
+    ExprKind::TsMatch {
+      document,
+      query_fn,
+      config,
+      pattern,
+    } => {
+      let idx = start + params.len();
+      params.push(pattern.clone());
+      format!("{document} @@ {query_fn}({config}, {})", dialect.param(idx))
+    },
     ExprKind::And(left, right) => {
       let left_sql = render_expr(&left.kind, start, params, dialect);
       let right_sql = render_expr(&right.kind, start, params, dialect);

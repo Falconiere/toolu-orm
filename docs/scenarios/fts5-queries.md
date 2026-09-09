@@ -72,7 +72,7 @@ Declared through `Fts5Table` and created by the real DDL generator, so the table
 
 ### Postgres
 
-`MATCH` and the FTS5 auxiliary functions are SQLite's. Postgres full-text is `@@` / `to_tsquery` / `ts_rank`, a different enough model that mapping between them silently would be wrong, so every constructor refuses instead:
+`MATCH` and the FTS5 auxiliary functions are SQLite's. Postgres full-text is `@@` / `to_tsquery` / `ts_rank` — use the typed [Postgres FTS queries](postgres-fts-queries.md) surface instead of translating silently. Every FTS5 constructor still refuses on Postgres:
 
 ```
 bm25 is a SQLite FTS5 feature with no postgres equivalent; build this query for SQLite,
