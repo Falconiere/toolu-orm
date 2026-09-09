@@ -2,11 +2,11 @@
 //! `from_connection`, apply ORM `vec0` DDL, insert embeddings, and run
 //! `SelectBuilder::knn` against the real module.
 //!
-//! Compiles only with `--features rusqlite,sqlite-vec` (CI rusqlite-connection
+//! Compiles only with `--features rusqlite,sqlite-vec` (CI rusqlite-query
 //! lane). Without the extension feature this binary is not built.
 
-use toolu_orm_connection::DbConnectionBlocking;
 use toolu_orm_connection::rusqlite_impl::RusqliteConnection;
+use toolu_orm_connection::DbConnectionBlocking;
 use toolu_orm_core::column::{Vector, VectorElement};
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::diff::Operation;
@@ -56,6 +56,19 @@ impl FromRow for NameRow {
         .get(0)
         .map_err(|e| DbCoreError::RowMapping(e.to_string()))?,
     })
+  }
+}
+
+struct IdRow;
+
+impl FromRow for IdRow {
+  const REQUIRED_COLUMNS: &'static [&'static str] = &[];
+
+  fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, DbCoreError> {
+    let _: String = row
+      .get(0)
+      .map_err(|e| DbCoreError::RowMapping(e.to_string()))?;
+    Ok(Self)
   }
 }
 
@@ -120,16 +133,23 @@ fn knn_returns_the_nearest_seeded_row_first() -> TestResult {
     .to_sql_for(Dialect::Sqlite);
 
   let hits: Vec<Hit> = DbConnectionBlocking::query_map(&conn, &sql, params)?;
-  assert_eq!(hits.len(), 2);
-  assert_eq!(hits.first().map(|hit| hit.memory_id.as_str()), Some("near"));
-  let first = hits.first().ok_or("missing first hit")?;
-  let second = hits.get(1).ok_or("missing second hit")?;
+  let ids: Vec<&str> = hits.iter().map(|hit| hit.memory_id.as_str()).collect();
+  assert_eq!(ids, vec!["near", "mid"]);
+
+  let near = hits.first().ok_or("missing near")?;
+  let mid = hits.get(1).ok_or("missing mid")?;
+  // vec0 L2 distance is Euclidean: |0.12-0.1| = 0.02, |0.12-0.5| = 0.38
   assert!(
-    first.distance <= second.distance,
-    "distances must be ascending: {} then {}",
-    first.distance,
-    second.distance
+    (near.distance - 0.02).abs() < 1e-5,
+    "near distance: {}",
+    near.distance
   );
+  assert!(
+    (mid.distance - 0.38).abs() < 1e-5,
+    "mid distance: {}",
+    mid.distance
+  );
+  assert!(near.distance < mid.distance);
   Ok(())
 }
 
@@ -149,7 +169,7 @@ fn knn_on_an_empty_vec0_table_returns_no_rows() -> TestResult {
     )?
     .to_sql_for(Dialect::Sqlite);
 
-  let hits: Vec<Hit> = DbConnectionBlocking::query_map(&conn, &sql, params)?;
+  let hits: Vec<IdRow> = DbConnectionBlocking::query_map(&conn, &sql, params)?;
   assert!(hits.is_empty());
   Ok(())
 }

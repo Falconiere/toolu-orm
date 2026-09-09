@@ -5,14 +5,8 @@
 
 use std::sync::Once;
 
-use rusqlite::ffi::{sqlite3, sqlite3_api_routines, sqlite3_auto_extension};
+use rusqlite::auto_extension::{RawAutoExtension, register_auto_extension};
 use sqlite_vec::sqlite3_vec_init;
-
-type SqliteEntryPoint = unsafe extern "C" fn(
-  db: *mut sqlite3,
-  pz_err_msg: *mut *mut std::os::raw::c_char,
-  p_api: *const sqlite3_api_routines,
-) -> std::os::raw::c_int;
 
 static REGISTER: Once = Once::new();
 
@@ -20,14 +14,26 @@ static REGISTER: Once = Once::new();
 ///
 /// Connections opened after this call have `vec0` available without a
 /// per-connection `load_extension`. Idempotent.
+///
+/// # Panics
+///
+/// Panics if SQLite rejects the registration (non-zero return from
+/// `sqlite3_auto_extension`). A failed registration leaves every later
+/// `vec0` statement as a confusing missing-module error, so failing loud
+/// here is preferable.
 pub fn register() {
   REGISTER.call_once(|| {
-    // SAFETY: `sqlite3_vec_init` is the official entrypoint from the
-    // statically linked `sqlite-vec` crate; registering it once is the
-    // documented integration with rusqlite's bundled libsqlite3.
-    unsafe {
-      let init = std::mem::transmute::<*const (), SqliteEntryPoint>(sqlite3_vec_init as *const ());
-      sqlite3_auto_extension(Some(init));
+    // SAFETY: The `sqlite-vec` crate declares `sqlite3_vec_init` as
+    // `unsafe extern "C" fn()` but the C symbol is a SQLite auto-extension
+    // entrypoint (`RawAutoExtension`). The cast matches the upstream
+    // sqlite-vec + rusqlite integration; `register_auto_extension` checks
+    // the SQLite return code.
+    let result = unsafe {
+      let init = std::mem::transmute::<unsafe extern "C" fn(), RawAutoExtension>(sqlite3_vec_init);
+      register_auto_extension(init)
+    };
+    if let Err(error) = result {
+      panic!("sqlite-vec auto-extension registration failed: {error}");
     }
   });
 }

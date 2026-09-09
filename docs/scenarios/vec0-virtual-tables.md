@@ -8,9 +8,9 @@ little-endian f32 embeddings; the migration runner maps a driver's
 **Drivers:** schema / DDL / diff / macro on every lane; the missing-extension
 path is proven against real in-memory libsql (which has no `sqlite-vec`);
 `Value::vector` round-trips through a real rusqlite BLOB column. Live `vec0`
-DDL (and KNN) runs on the rusqlite-connection lane with
-`--features rusqlite,sqlite-vec` via `from_connection` — see
-[vec0 KNN](vec0-knn.md).
+DDL (and KNN) runs on the rusqlite lane with
+`--features rusqlite,sqlite-vec` on `toolu-orm-query` via `from_connection` —
+see [vec0 KNN](vec0-knn.md).
 **Reading one:** this page declares the index; [vec0 KNN](vec0-knn.md)
 searches it with `MATCH`, the hidden `k` column, and synthesised `distance`.
 **Spec:** [vec0 virtual tables](../toolu/specs/2026-09-07-vec0-virtual-tables-design.md),
@@ -59,7 +59,7 @@ cargo nextest run -p toolu-orm-core -E 'binary(vec0_table_test) + binary(vec0_va
 cargo nextest run -p toolu-orm-macros -E 'binary(vec0_macro_test)'
 cargo nextest run -p toolu-orm-cli -E 'binary(vec0_loop_sqlite_test)'
 cargo nextest run -p toolu-orm-connection --features rusqlite -E 'binary(vec0_value_rusqlite_test)'
-cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec -E 'binary(vec0_sqlite_vec_live_test)'
+cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec -E 'binary(vec0_sqlite_vec_live_test)'
 ```
 
 ## Tests

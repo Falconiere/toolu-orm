@@ -23,7 +23,6 @@ tokio-postgres-rustls = { workspace = true, optional = true }
 rustls = { workspace = true, optional = true }
 rustls-native-certs = { workspace = true, optional = true }
 toolu-orm-sqlite-vec-register = { path = "sqlite-vec-register", optional = true }
-toolu-orm-query = { path = "../orm-query", version = "0.2.0", optional = true, default-features = false }
 
 [features]
 default = []
@@ -38,23 +37,14 @@ postgres = [
   "dep:rustls-native-certs",
   "toolu-orm-core/postgres",
 ]
-# Statically linked sqlite-vec for live vec0 DDL + KNN suites. Pulls the
-# register helper and orm-query's rusqlite executor surface for SelectBuilder.
-sqlite-vec = [
-  "dep:toolu-orm-sqlite-vec-register",
-  "dep:toolu-orm-query",
-  "toolu-orm-query/rusqlite",
-]
+# Statically linked sqlite-vec for live vec0 suites (register helper only;
+# SelectBuilder live KNN lives in orm-query's `sqlite-vec` feature).
+sqlite-vec = ["dep:toolu-orm-sqlite-vec-register"]
 
 [dev-dependencies]
 tokio-postgres = { workspace = true }
 libsql = { workspace = true, default-features = false, features = ["core"] }
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
-
-[[test]]
-name = "vec0_sqlite_vec_live_test"
-path = "tests/vec0_sqlite_vec_live_test.rs"
-required-features = ["rusqlite", "sqlite-vec"]
 
 [lints]
 workspace = true

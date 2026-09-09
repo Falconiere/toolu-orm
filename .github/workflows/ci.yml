@@ -91,10 +91,10 @@ jobs:
       # Lane 4, rusqlite-only: the sync executor in orm-query and the rusqlite
       # connection in orm-connection.
       - name: Clippy (orm-query, rusqlite only)
-        run: cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
+        run: cargo clippy -p toolu-orm-query --features rusqlite,sqlite-vec --all-targets -- -D warnings
 
       - name: Test (orm-query, rusqlite only)
-        run: cargo nextest run -p toolu-orm-query --features rusqlite
+        run: cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec
 
       - name: Clippy (orm-connection, rusqlite only)
         run: cargo clippy -p toolu-orm-connection --features rusqlite,sqlite-vec --all-targets -- -D warnings

@@ -48,9 +48,9 @@ written to, say — reports it at the first statement as `DbError::Query`.
 
 For `sqlite-vec` / `vec0`, register the extension on the raw connection (or
 via process-wide `sqlite3_auto_extension`) **before** `from_connection`, then
-run migrate / KNN on the wrapper. The CI connection lane enables the optional
-`sqlite-vec` feature to statically link the extension and prove that path
-(`vec0_sqlite_vec_live_test`).
+run migrate / KNN on the wrapper. The CI rusqlite lane enables the optional
+`sqlite-vec` feature on `toolu-orm-query` to statically link the extension and
+prove that path (`vec0_sqlite_vec_live_test`).
 
 ## Without a runtime
 

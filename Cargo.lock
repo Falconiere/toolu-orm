@@ -2414,7 +2414,6 @@ dependencies = [
  "tokio-postgres-rustls",
  "toolu-orm-core",
  "toolu-orm-macros",
- "toolu-orm-query",
  "toolu-orm-sqlite-vec-register",
  "tracing",
 ]
@@ -2473,8 +2472,10 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-postgres",
+ "toolu-orm-connection",
  "toolu-orm-core",
  "toolu-orm-macros",
+ "toolu-orm-sqlite-vec-register",
 ]
 
 [[package]]

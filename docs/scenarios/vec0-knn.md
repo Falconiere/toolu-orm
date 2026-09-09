@@ -6,10 +6,10 @@ half; `vec0::k_eq` builds the hidden scan-size parameter; `vec0::distance`
 is the synthesised output column, selectable and orderable. Every entry
 point refuses `Dialect::Postgres`.
 **Drivers:** pure-SQL generation on the default and postgres compile
-lanes. Live execution is the rusqlite-connection lane with the optional
-`sqlite-vec` feature: CI statically links the official `sqlite-vec` crate,
-registers it, adopts the connection via `from_connection`, and runs ORM
-`vec0` DDL plus `SelectBuilder::knn` end-to-end (see
+lanes. Live execution is the rusqlite lane with the optional `sqlite-vec`
+feature on `toolu-orm-query`: CI statically links the official `sqlite-vec`
+crate, registers it, adopts the connection via `from_connection`, and runs
+ORM `vec0` DDL plus `SelectBuilder::knn` end-to-end (see
 [vec0 virtual tables](vec0-virtual-tables.md)).
 **Spec:** [vec0 KNN](../toolu/specs/2026-09-08-vec0-knn-design.md), AC-1 … AC-8;
 live lane [2026-09-09](../toolu/specs/2026-09-09-live-sqlite-vec-tests-design.md).
@@ -73,9 +73,10 @@ the extension on the connection before preparing the statement (and before
 `run_migrate` for the DDL that creates the table). Without it the driver
 fails with a missing-module error.
 
-The rusqlite-connection CI lane enables `--features rusqlite,sqlite-vec`,
-which statically links the extension and runs
-`vec0_sqlite_vec_live_test` through `RusqliteConnection::from_connection`.
+The rusqlite CI lane enables `--features rusqlite,sqlite-vec` on
+`toolu-orm-query` (and the register feature on connection), which statically
+links the extension and runs `vec0_sqlite_vec_live_test` through
+`RusqliteConnection::from_connection` plus `SelectBuilder::knn`.
 
 ## Tests
 
