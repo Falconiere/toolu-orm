@@ -55,7 +55,7 @@ Cargo feature; the application code does not change.
 | | |
 |---|---|
 | 🧱 **Schema as code** | `#[table]` turns a struct into a `TableDef` with primary keys, defaults, foreign keys with `on_delete` / `on_update`, `strict` tables, and `#[index]` / `#[unique_index]`. |
-| 🔁 **Diff-driven migrations** | `run_generate` diffs your registry against the last `*.snapshot.json` and writes numbered SQL with a `--> statement-breakpoint` separator. `run_migrate` applies pending files in one transaction each; `get_status` lists applied and pending. |
+| 🔁 **Diff-driven migrations** | `run_generate` diffs your registry against the last `*.snapshot.json` and writes numbered SQL with a `--> statement-breakpoint` separator. `run_migrate` / `run_migrate_blocking` apply pending files in one transaction each; `get_status` / `get_status_blocking` list applied and pending. |
 | 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration. A file that changed after it was recorded stops the run with `MigrateError::HashMismatch`. |
 | 🧮 **Typed columns, typed expressions** | Generated `Column<T>` constants (`users::email`) build `Expr` trees: `eq` / `ne` / `in_list` / `not_in` / `is_null` on every column, `like` on text, `gt` / `lt` / `gte` / `lte` / `between` on numbers, combined with `.and()` / `.or()`. Table-qualified, always quoted. |
 | 🏗️ **Four builders, one executor** | `SelectBuilder`, `InsertBuilder` (with `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |

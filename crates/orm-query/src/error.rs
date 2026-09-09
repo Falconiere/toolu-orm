@@ -36,6 +36,16 @@ pub enum QueryError {
 
   #[error("transaction failed: {0}")]
   Transaction(Box<QueryError>),
+
+  /// Errors from [`toolu_orm_connection::DbConnectionBlocking`] when executing
+  /// through [`RusqliteConnection`](toolu_orm_connection::RusqliteConnection).
+  #[cfg(all(
+    feature = "rusqlite",
+    not(feature = "libsql"),
+    not(feature = "postgres")
+  ))]
+  #[error("database error: {0}")]
+  Connection(String),
 }
 
 impl From<DbCoreError> for QueryError {

@@ -9,7 +9,7 @@ rollback are the same on both paths. After [#37](https://github.com/Falconiere/t
 `mark_applied_embedded` / `mark_applied_through_embedded` and
 `get_status_embedded` are the same twins for baselining and status — the list is
 the journal, so a single-binary adopter never needs a migrations directory.
-**Drivers:** libsql (SQLite) and Postgres. rusqlite shares the SQLite path.
+**Drivers:** libsql (SQLite) and Postgres for the async path; rusqlite via `*_blocking` twins (see [Blocking connection](blocking-connection.md)).
 **Issue:** [#16](https://github.com/Falconiere/toolu-orm/issues/16), [#37](https://github.com/Falconiere/toolu-orm/issues/37).
 
 ## What is proven

@@ -102,6 +102,12 @@ jobs:
       - name: Test (orm-connection, rusqlite only)
         run: cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec
 
+      - name: Clippy (orm-cli, rusqlite only)
+        run: cargo clippy -p toolu-orm-cli --no-default-features --features rusqlite --all-targets -- -D warnings
+
+      - name: Test (orm-cli, rusqlite only)
+        run: cargo nextest run -p toolu-orm-cli --no-default-features --features rusqlite
+
       # The four lanes above only give orm-core four of the eight driver
       # combinations, so half of `impl_derived_from_row!`'s definitions are
       # never expanded by one. This compiles the FromRow derive against all

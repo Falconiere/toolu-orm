@@ -2,12 +2,13 @@
 
 use std::path::Path;
 
-use toolu_orm_connection::DbConnection;
+use toolu_orm_connection::{DbConnection, DbConnectionBlocking};
 use toolu_orm_core::dialect::Dialect;
 
 use crate::migrate::embedded::reject_duplicate_names;
 use crate::migrate::{
-  ensure_migrations_table, get_applied_migrations, EmbeddedMigration, MigrateError,
+  ensure_migrations_table, ensure_migrations_table_blocking, get_applied_migrations,
+  get_applied_migrations_blocking, EmbeddedMigration, MigrateError,
 };
 
 pub struct MigrationStatus {
@@ -37,6 +38,28 @@ pub async fn get_status(
   Ok(MigrationStatus { applied, pending })
 }
 
+/// Blocking twin of [`get_status`].
+///
+/// # Errors
+///
+/// Returns `MigrateError` on database or file I/O failures.
+pub fn get_status_blocking(
+  conn: &impl DbConnectionBlocking,
+  migrations_dir: &str,
+  dialect: Dialect,
+) -> Result<MigrationStatus, MigrateError> {
+  ensure_migrations_table_blocking(conn, dialect)?;
+  let applied = get_applied_migrations_blocking(conn)?;
+  let all_files = collect_all_sql_files(migrations_dir)?;
+
+  let pending: Vec<String> = all_files
+    .into_iter()
+    .filter(|f| !applied.contains(f))
+    .collect();
+
+  Ok(MigrationStatus { applied, pending })
+}
+
 /// Returns applied vs pending status against an embedded migration list.
 ///
 /// `applied` comes from `_migrations`. `pending` is every name in the list that
@@ -56,6 +79,30 @@ pub async fn get_status_embedded(
 
   ensure_migrations_table(conn, dialect).await?;
   let applied = get_applied_migrations(conn).await?;
+
+  let pending: Vec<String> = migrations
+    .iter()
+    .map(|entry| entry.name.to_owned())
+    .filter(|name| !applied.contains(name))
+    .collect();
+
+  Ok(MigrationStatus { applied, pending })
+}
+
+/// Blocking twin of [`get_status_embedded`].
+///
+/// # Errors
+///
+/// Same as [`get_status_embedded`].
+pub fn get_status_embedded_blocking(
+  conn: &impl DbConnectionBlocking,
+  migrations: &[EmbeddedMigration<'_>],
+  dialect: Dialect,
+) -> Result<MigrationStatus, MigrateError> {
+  reject_duplicate_names(migrations)?;
+
+  ensure_migrations_table_blocking(conn, dialect)?;
+  let applied = get_applied_migrations_blocking(conn)?;
 
   let pending: Vec<String> = migrations
     .iter()

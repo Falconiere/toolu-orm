@@ -1,7 +1,7 @@
 # Migration loop
 
-**Feature:** `run_generate` diffs a `SchemaRegistry` against the last snapshot and writes `NNNN_name.sql` + snapshot + journal; `run_migrate` applies pending files in one transaction each; `get_status` lists applied and pending.
-**Drivers:** libsql (SQLite) and Postgres. rusqlite shares the SQLite DDL path.
+**Feature:** `run_generate` diffs a `SchemaRegistry` against the last snapshot and writes `NNNN_name.sql` + snapshot + journal; `run_migrate` / `run_migrate_blocking` apply pending files in one transaction each; `get_status` / `get_status_blocking` list applied and pending.
+**Drivers:** libsql (SQLite) and Postgres for the async path; rusqlite via `*_blocking` twins with no runtime.
 **Spec:** AC-6, AC-7.
 
 ## What is proven

@@ -18,6 +18,8 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 - **Contention.** `concurrent_threads_serialize_on_the_connection` shares `&RusqliteConnection` across two OS threads writing 50 rows each; all 100 land.
 - **Exported at the crate root.** Both suites import `toolu_orm_connection::DbConnectionBlocking` and call every method on it, so the trait being unreachable from a consumer is a compile failure in the lane, with no separate importability test to assert nothing at runtime.
 - **Poisoning.** `a_poisoned_connection_reports_it` unwinds a panicking `FromRow` out of `query_map` while the lock is held, then asserts that both the blocking and the async path refuse the connection with `DbError::Connection` rather than handing out a connection that may be stuck mid-transaction.
+- **Blocking migrate / status / baseline.** Plain `#[test]` suites call `run_migrate_blocking`, `run_migrate_embedded_blocking`, `get_status*_blocking`, and `mark_applied*_blocking` on `RusqliteConnection` with no tokio runtime. SQL, hash, and journal helpers are shared with the async path.
+- **Query Executor bridge.** `Executor for RusqliteConnection` lets builders `execute` / `fetch_all` on the same wrapper migrations use.
 
 ## Tests
 
@@ -32,3 +34,14 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 | rusqlite-only | rusqlite_blocking_concurrency_test | concurrent_threads_serialize_on_the_connection |
 | rusqlite-only | rusqlite_blocking_concurrency_test | async_reports_a_panicking_task_as_a_connection_error |
 | rusqlite-only | rusqlite_blocking_concurrency_test | a_poisoned_connection_reports_it |
+| rusqlite-only | migrate_blocking_test | run_migrate_blocking_applies_journaled_migrations |
+| rusqlite-only | migrate_embedded_blocking_test | run_migrate_embedded_blocking_applies_list |
+| rusqlite-only | migrate_embedded_blocking_test | tampered_hash_fails_without_runtime |
+| rusqlite-only | migrate_baseline_blocking_test | mark_applied_blocking_records_without_running_sql |
+| rusqlite-only | migrate_baseline_blocking_test | mark_applied_through_blocking_records_prefix |
+| rusqlite-only | migrate_baseline_blocking_test | unknown_name_is_not_in_journal |
+| rusqlite-only | migrate_baseline_blocking_test | embedded_baseline_blocking_twins |
+| rusqlite-only | status_blocking_test | get_status_blocking_lists_pending |
+| rusqlite-only | status_blocking_test | get_status_embedded_blocking_uses_list_order |
+| rusqlite-only | rusqlite_connection_executor_test | insert_and_fetch_via_rusqlite_connection |
+| rusqlite-only | rusqlite_connection_executor_test | bad_sql_maps_to_query_error |

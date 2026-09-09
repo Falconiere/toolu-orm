@@ -51,6 +51,8 @@ cargo clippy -p toolu-orm-query --features rusqlite,sqlite-vec --all-targets -- 
 cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec
 cargo clippy -p toolu-orm-connection --features rusqlite,sqlite-vec --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec
+cargo clippy -p toolu-orm-cli --no-default-features --features rusqlite --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-cli --no-default-features --features rusqlite
 bash scripts/check-derive-matrix.sh
 bash scripts/check-scenario-docs.sh
 ```
