@@ -1,0 +1,19 @@
+[package]
+name = "toolu-orm-sqlite-vec-register"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+description = "Process-wide sqlite-vec auto-extension registration for toolu-orm live tests"
+
+[dependencies]
+rusqlite = { workspace = true }
+sqlite-vec = "=0.1.9"
+
+# Not `lints.workspace = true`: that forbids overriding `unsafe_code`, and this
+# crate exists solely to own the sqlite3_auto_extension FFI call.
+[lints.rust]
+unsafe_code = "allow"
+unused_imports = "deny"
+unused_must_use = "deny"

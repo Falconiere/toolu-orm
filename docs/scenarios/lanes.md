@@ -7,7 +7,7 @@
 | default | `cargo nextest run --workspace` | orm-core and orm-cli with libsql, orm-query with no driver (SQL-generation tests only), the `toolu-orm` facade with no driver |
 | postgres | `cargo nextest run -p <six crates> --features postgres` | orm-core postgres+libsql (the two-driver derive shape), orm-query postgres alone, every live-Postgres suite |
 | libsql-only | `cargo nextest run -p toolu-orm-query --features libsql` | orm-query's libsql executor, `run_transaction`, fetch methods |
-| rusqlite-only | `cargo nextest run -p toolu-orm-query --features rusqlite` and `-p toolu-orm-connection --features rusqlite` | orm-query's sync rusqlite executor, and the rusqlite `DbConnection` plus its `DbConnectionBlocking` twin (see [Blocking connection](blocking-connection.md)) |
+| rusqlite-only | `cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec` and `-p toolu-orm-connection --features rusqlite,sqlite-vec` | orm-query's sync rusqlite executor, live sqlite-vec vec0 DDL + KNN, and the rusqlite `DbConnection` / `DbConnectionBlocking` twin (see [Blocking connection](blocking-connection.md)) |
 
 Between them these four lanes give orm-core only four of the eight driver
 combinations — libsql, postgres+libsql, rusqlite and postgres — so the other

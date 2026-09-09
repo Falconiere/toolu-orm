@@ -22,6 +22,7 @@ postgres-types = { workspace = true, optional = true }
 tokio-postgres-rustls = { workspace = true, optional = true }
 rustls = { workspace = true, optional = true }
 rustls-native-certs = { workspace = true, optional = true }
+toolu-orm-sqlite-vec-register = { path = "sqlite-vec-register", optional = true }
 
 [features]
 default = []
@@ -36,6 +37,9 @@ postgres = [
   "dep:rustls-native-certs",
   "toolu-orm-core/postgres",
 ]
+# Statically linked sqlite-vec for live vec0 suites (register helper only;
+# SelectBuilder live KNN lives in orm-query's `sqlite-vec` feature).
+sqlite-vec = ["dep:toolu-orm-sqlite-vec-register"]
 
 [dev-dependencies]
 tokio-postgres = { workspace = true }

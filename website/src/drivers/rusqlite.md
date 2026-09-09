@@ -46,6 +46,12 @@ the wrapper, so everything set on it beforehand stays in effect and nothing is
 reset. A connection that turns out to be unusable — a read-only one being
 written to, say — reports it at the first statement as `DbError::Query`.
 
+For `sqlite-vec` / `vec0`, register the extension on the raw connection (or
+via process-wide `sqlite3_auto_extension`) **before** `from_connection`, then
+run migrate / KNN on the wrapper. The CI rusqlite lane enables the optional
+`sqlite-vec` feature on `toolu-orm-query` to statically link the extension and
+prove that path (`vec0_sqlite_vec_live_test`).
+
 ## Without a runtime
 
 rusqlite is synchronous, so the connection wrapper does not have to pretend

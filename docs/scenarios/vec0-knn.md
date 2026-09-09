@@ -6,10 +6,13 @@ half; `vec0::k_eq` builds the hidden scan-size parameter; `vec0::distance`
 is the synthesised output column, selectable and orderable. Every entry
 point refuses `Dialect::Postgres`.
 **Drivers:** pure-SQL generation on the default and postgres compile
-lanes. Executing the generated SQL needs the `sqlite-vec` extension on the
-connection — this workspace does not link it, so there is no live KNN
-suite here (same constraint as [vec0 virtual tables](vec0-virtual-tables.md)).
-**Spec:** [vec0 KNN](../toolu/specs/2026-09-08-vec0-knn-design.md), AC-1 … AC-8.
+lanes. Live execution is the rusqlite lane with the optional `sqlite-vec`
+feature on `toolu-orm-query`: CI statically links the official `sqlite-vec`
+crate, registers it, adopts the connection via `from_connection`, and runs
+ORM `vec0` DDL plus `SelectBuilder::knn` end-to-end (see
+[vec0 virtual tables](vec0-virtual-tables.md)).
+**Spec:** [vec0 KNN](../toolu/specs/2026-09-08-vec0-knn-design.md), AC-1 … AC-8;
+live lane [2026-09-09](../toolu/specs/2026-09-09-live-sqlite-vec-tests-design.md).
 
 **Reading one:** [vec0 virtual tables](vec0-virtual-tables.md) declares the
 index; this page searches it.
@@ -70,6 +73,11 @@ the extension on the connection before preparing the statement (and before
 `run_migrate` for the DDL that creates the table). Without it the driver
 fails with a missing-module error.
 
+The rusqlite CI lane enables `--features rusqlite,sqlite-vec` on
+`toolu-orm-query` (and the register feature on connection), which statically
+links the extension and runs `vec0_sqlite_vec_live_test` through
+`RusqliteConnection::from_connection` plus `SelectBuilder::knn`.
+
 ## Tests
 
 | Lane | Binary | Test |
@@ -90,3 +98,6 @@ fails with a missing-module error.
 | default | vec0_knn_sql_test | non_positive_k_is_refused_by_knn |
 | default | vec0_knn_sql_test | a_second_knn_on_the_same_builder_is_refused |
 | default | vec0_knn_sql_test | the_short_knn_agrees_with_the_current_dialect |
+| rusqlite-only | vec0_sqlite_vec_live_test | from_connection_keeps_sqlite_vec_so_vec0_ddl_applies |
+| rusqlite-only | vec0_sqlite_vec_live_test | knn_returns_the_nearest_seeded_row_first |
+| rusqlite-only | vec0_sqlite_vec_live_test | knn_on_an_empty_vec0_table_returns_no_rows |

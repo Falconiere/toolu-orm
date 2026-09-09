@@ -47,10 +47,10 @@ cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-que
 cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer --features postgres
 cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features libsql
-cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
-cargo nextest run -p toolu-orm-query --features rusqlite
-cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
-cargo nextest run -p toolu-orm-connection --features rusqlite
+cargo clippy -p toolu-orm-query --features rusqlite,sqlite-vec --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec
+cargo clippy -p toolu-orm-connection --features rusqlite,sqlite-vec --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec
 bash scripts/check-derive-matrix.sh
 bash scripts/check-scenario-docs.sh
 ```

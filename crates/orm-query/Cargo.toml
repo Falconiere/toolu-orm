@@ -19,6 +19,8 @@ tokio = { version = "1", features = ["sync"], optional = true }
 libsql = { version = "0.9", optional = true, default-features = false, features = ["core"] }
 rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
 tokio-postgres = { version = "0.7", optional = true }
+toolu-orm-sqlite-vec-register = { path = "../orm-connection/sqlite-vec-register", optional = true }
+toolu-orm-connection = { path = "../orm-connection", optional = true, default-features = false }
 
 [features]
 default = []
@@ -28,6 +30,13 @@ postgres = [
   "dep:tokio-postgres",
   "dep:tokio",
   "toolu-orm-core/postgres",
+]
+# Live sqlite-vec lane: implies rusqlite + register helper + from_connection.
+sqlite-vec = [
+  "rusqlite",
+  "dep:toolu-orm-sqlite-vec-register",
+  "dep:toolu-orm-connection",
+  "toolu-orm-connection/rusqlite",
 ]
 
 [dev-dependencies]
@@ -157,6 +166,11 @@ required-features = ["rusqlite"]
 name = "fts5_rusqlite_test"
 path = "tests/fts5_rusqlite_test.rs"
 required-features = ["rusqlite"]
+
+[[test]]
+name = "vec0_sqlite_vec_live_test"
+path = "tests/vec0_sqlite_vec_live_test.rs"
+required-features = ["sqlite-vec"]
 
 # Need a live Postgres (docker-compose.test.yaml) and the five-crate postgres
 # lane, which gives orm-core the postgres+libsql FromRow shape.
