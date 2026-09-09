@@ -89,7 +89,10 @@ fn run_migrate_blocking_applies_journaled_migrations() -> TestResult {
 fn run_migrate_blocking_legacy_path_without_journal() -> TestResult {
   let (_tmp, dir) = migrations_dir()?;
   // No _journal.json: empty Journal::read_from_path falls through to legacy.
-  std::fs::write(format!("{dir}/0001_users.sql"), "CREATE TABLE users (id TEXT PRIMARY KEY);")?;
+  std::fs::write(
+    format!("{dir}/0001_users.sql"),
+    "CREATE TABLE users (id TEXT PRIMARY KEY);",
+  )?;
   let conn = connect()?;
 
   assert_eq!(run_migrate_blocking(&conn, &dir, Dialect::Sqlite)?, 1);
