@@ -62,14 +62,7 @@ pub fn ts_rank_tsquery_for(
   query: &str,
   weights: Option<&[f32; 4]>,
 ) -> Result<PgFtsFn, DbCoreError> {
-  rank_for(
-    dialect,
-    document,
-    TsQueryFn::To,
-    config,
-    query,
-    weights,
-  )
+  rank_for(dialect, document, TsQueryFn::To, config, query, weights)
 }
 
 /// [`ts_rank_tsquery_for`] against [`Dialect::CURRENT`].
@@ -98,14 +91,7 @@ pub fn ts_rank_plainto_tsquery_for(
   query: &str,
   weights: Option<&[f32; 4]>,
 ) -> Result<PgFtsFn, DbCoreError> {
-  rank_for(
-    dialect,
-    document,
-    TsQueryFn::Plain,
-    config,
-    query,
-    weights,
-  )
+  rank_for(dialect, document, TsQueryFn::Plain, config, query, weights)
 }
 
 /// [`ts_rank_plainto_tsquery_for`] against [`Dialect::CURRENT`].
