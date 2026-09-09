@@ -64,8 +64,9 @@ pub fn to_tsvector_for(
 ) -> Result<PgTsDocument, DbCoreError> {
   require_postgres(TO_TSVECTOR, dialect)?;
   let config = quoted_config(TO_TSVECTOR, config)?;
+  let col_sql = col.qualified();
   Ok(PgTsDocument {
-    sql: format!("{TO_TSVECTOR}({config}, {})", col.qualified()),
+    sql: format!("{TO_TSVECTOR}({config}, {col_sql})"),
   })
 }
 

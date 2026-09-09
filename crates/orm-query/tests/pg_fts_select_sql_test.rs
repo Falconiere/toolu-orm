@@ -32,7 +32,7 @@ fn the_full_text_query_from_the_issue_is_expressible() -> TestResult {
     sql,
     concat!(
       r#"SELECT "id", "#,
-      r#"ts_rank("docs"."search_vector", to_tsquery('english', 'runner')) AS "score""#,
+      r#"ts_rank("docs"."search_vector", to_tsquery('english', E'runner')) AS "score""#,
       r#" FROM "docs""#,
       r#" WHERE "docs"."search_vector" @@ to_tsquery('english', $1)"#,
       r#" AND "docs"."deleted_at" IS NULL"#,
@@ -64,7 +64,7 @@ fn a_query_can_order_by_ts_rank_without_selecting_it() -> TestResult {
     concat!(
       r#"SELECT "id" FROM "docs""#,
       r#" WHERE "docs"."search_vector" @@ to_tsquery('english', $1)"#,
-      r#" ORDER BY ts_rank("docs"."search_vector", to_tsquery('english', 'runner')) DESC"#,
+      r#" ORDER BY ts_rank("docs"."search_vector", to_tsquery('english', E'runner')) DESC"#,
     )
   );
   Ok(())

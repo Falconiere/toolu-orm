@@ -146,17 +146,32 @@ fn fts5_still_refuses_postgres_and_pg_fts_refuses_sqlite() -> TestResult {
     .ok_or("fts5 must still refuse Postgres")?;
   assert!(matches!(
     fts5_err,
-    DbCoreError::Fts5UnsupportedDialect { .. }
+    DbCoreError::Fts5UnsupportedDialect {
+      ref function,
+      dialect
+    } if function == "MATCH" && dialect == "postgres"
   ));
 
   let bm25 = fts5::bm25_for(Dialect::Postgres, "memory_fts", &[1.0])
     .err()
     .ok_or("bm25 must still refuse Postgres")?;
-  assert!(matches!(bm25, DbCoreError::Fts5UnsupportedDialect { .. }));
+  assert!(matches!(
+    bm25,
+    DbCoreError::Fts5UnsupportedDialect {
+      ref function,
+      dialect
+    } if function == "bm25" && dialect == "postgres"
+  ));
 
   let pg = pg_fts::column_for(Dialect::Sqlite, &SEARCH)
     .err()
     .ok_or("pg_fts must refuse Sqlite")?;
-  assert!(matches!(pg, DbCoreError::PgFtsUnsupportedDialect { .. }));
+  assert!(matches!(
+    pg,
+    DbCoreError::PgFtsUnsupportedDialect {
+      ref function,
+      dialect
+    } if function == "tsvector column" && dialect == "sqlite"
+  ));
   Ok(())
 }

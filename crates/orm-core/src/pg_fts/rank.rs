@@ -159,12 +159,13 @@ fn rank_for(
   let config = quoted_config(TS_RANK, config)?;
   let query_lit = quoted_string(query);
   let query_call = format!("{query_fn}({config}, {query_lit})");
+  let doc_sql = document.sql();
   let sql = match weights {
     Some(weights) => {
       let w = weights_literal(TS_RANK, weights)?;
-      format!("{TS_RANK}({w}, {}, {query_call})", document.sql())
+      format!("{TS_RANK}({w}, {doc_sql}, {query_call})")
     },
-    None => format!("{TS_RANK}({}, {query_call})", document.sql()),
+    None => format!("{TS_RANK}({doc_sql}, {query_call})"),
   };
   Ok(PgFtsFn::new(sql))
 }

@@ -15,11 +15,11 @@ fn ts_rank_without_weights_embeds_the_query() -> TestResult {
   let score = pg_fts::ts_rank_tsquery_for(Dialect::Postgres, &doc, "english", "runner", None)?;
   assert_eq!(
     score.sql(),
-    r#"ts_rank("docs"."search_vector", to_tsquery('english', 'runner'))"#
+    r#"ts_rank("docs"."search_vector", to_tsquery('english', E'runner'))"#
   );
   assert_eq!(
     score.desc().to_sql(),
-    r#"ts_rank("docs"."search_vector", to_tsquery('english', 'runner')) DESC"#
+    r#"ts_rank("docs"."search_vector", to_tsquery('english', E'runner')) DESC"#
   );
   Ok(())
 }
@@ -36,7 +36,7 @@ fn ts_rank_weights_render_first_as_real_array() -> TestResult {
   )?;
   assert_eq!(
     score.sql(),
-    r#"ts_rank('{0.0,0.0,0.0,1.0}'::real[], "docs"."search_vector", to_tsquery('english', 'runner'))"#
+    r#"ts_rank('{0.0,0.0,0.0,1.0}'::real[], "docs"."search_vector", to_tsquery('english', E'runner'))"#
   );
   Ok(())
 }
@@ -47,7 +47,18 @@ fn a_quote_inside_the_rank_query_is_doubled() -> TestResult {
   let score = pg_fts::ts_rank_tsquery_for(Dialect::Postgres, &doc, "english", "it's", None)?;
   assert_eq!(
     score.sql(),
-    r#"ts_rank("docs"."search_vector", to_tsquery('english', 'it''s'))"#
+    r#"ts_rank("docs"."search_vector", to_tsquery('english', E'it''s'))"#
+  );
+  Ok(())
+}
+
+#[test]
+fn a_backslash_inside_the_rank_query_is_doubled() -> TestResult {
+  let doc = pg_fts::column_for(Dialect::Postgres, &SEARCH)?;
+  let score = pg_fts::ts_rank_tsquery_for(Dialect::Postgres, &doc, "english", r"a\b", None)?;
+  assert_eq!(
+    score.sql(),
+    r#"ts_rank("docs"."search_vector", to_tsquery('english', E'a\\b'))"#
   );
   Ok(())
 }
@@ -57,10 +68,16 @@ fn plainto_and_websearch_rank_variants_render() -> TestResult {
   let doc = pg_fts::column_for(Dialect::Postgres, &SEARCH)?;
   let plain =
     pg_fts::ts_rank_plainto_tsquery_for(Dialect::Postgres, &doc, "english", "marathon", None)?;
-  assert!(plain.sql().contains("plainto_tsquery"));
+  assert_eq!(
+    plain.sql(),
+    r#"ts_rank("docs"."search_vector", plainto_tsquery('english', E'marathon'))"#
+  );
   let web =
     pg_fts::ts_rank_websearch_to_tsquery_for(Dialect::Postgres, &doc, "english", "runner", None)?;
-  assert!(web.sql().contains("websearch_to_tsquery"));
+  assert_eq!(
+    web.sql(),
+    r#"ts_rank("docs"."search_vector", websearch_to_tsquery('english', E'runner'))"#
+  );
   Ok(())
 }
 

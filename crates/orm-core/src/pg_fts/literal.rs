@@ -60,9 +60,12 @@ pub(crate) fn require_plain_ident(
   Ok(())
 }
 
-/// A single-quoted SQL string literal with embedded quotes doubled.
+/// An escaped Postgres string literal (`E'…'`).
+///
+/// Single quotes are doubled and backslashes are doubled so the literal is
+/// safe both with `standard_conforming_strings` on (default) and off.
 pub(crate) fn quoted_string(text: &str) -> String {
-  format!("'{}'", text.replace('\'', "''"))
+  format!("E'{}'", text.replace('\\', "\\\\").replace('\'', "''"))
 }
 
 /// Four `ts_rank` weights (D, C, B, A) as `'{d,c,b,a}'::real[]`.
