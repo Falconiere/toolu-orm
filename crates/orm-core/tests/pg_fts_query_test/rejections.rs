@@ -41,7 +41,10 @@ fn sqlite_is_refused_by_every_constructor() -> TestResult {
     .err()
     .ok_or("column must refuse Sqlite")?;
   let message = unsupported_dialect(col, "tsvector column")?;
-  assert!(message.contains("sqlite") && message.contains("MATCH"));
+  assert_eq!(
+    message,
+    "tsvector column is a Postgres full-text feature with no sqlite equivalent; build this query for Postgres, or use the SQLite FTS5 surface (MATCH / bm25) instead"
+  );
 
   let tsv = pg_fts::to_tsvector_for(Dialect::Sqlite, "english", &BODY)
     .err()

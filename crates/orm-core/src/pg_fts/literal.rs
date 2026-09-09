@@ -4,6 +4,24 @@
 use crate::dialect::Dialect;
 use crate::error::DbCoreError;
 
+/// The three Postgres tsquery constructors this surface exposes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum TsQueryFn {
+  ToTsQuery,
+  PlainToTsQuery,
+  WebsearchToTsQuery,
+}
+
+impl TsQueryFn {
+  pub(crate) const fn as_sql(self) -> &'static str {
+    match self {
+      Self::ToTsQuery => "to_tsquery",
+      Self::PlainToTsQuery => "plainto_tsquery",
+      Self::WebsearchToTsQuery => "websearch_to_tsquery",
+    }
+  }
+}
+
 /// Refuses anything but Postgres.
 ///
 /// Postgres full-text (`@@` / `to_tsquery` / `ts_rank`) is a different model
@@ -60,12 +78,24 @@ pub(crate) fn require_plain_ident(
   Ok(())
 }
 
-/// An escaped Postgres string literal (`E'…'`).
+/// Dollar-quote `text` so it embeds in SQL without escape-sequence hazards.
 ///
-/// Single quotes are doubled and backslashes are doubled so the literal is
-/// safe both with `standard_conforming_strings` on (default) and off.
-pub(crate) fn quoted_string(text: &str) -> String {
-  format!("E'{}'", text.replace('\\', "\\\\").replace('\'', "''"))
+/// Chooses a tag that does not appear in `text`, so `$tag$…$tag$` is opaque
+/// even when `standard_conforming_strings` is off.
+pub(crate) fn dollar_quote(text: &str) -> String {
+  let mut n = 0_u32;
+  loop {
+    let tag = if n == 0 {
+      "q".to_owned()
+    } else {
+      format!("q{n}")
+    };
+    let open = format!("${tag}$");
+    if !text.contains(&open) {
+      return format!("{open}{text}{open}");
+    }
+    n = n.saturating_add(1);
+  }
 }
 
 /// Four `ts_rank` weights (D, C, B, A) as `'{d,c,b,a}'::real[]`.

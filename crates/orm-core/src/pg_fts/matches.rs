@@ -6,11 +6,7 @@ use crate::expr::Expr;
 use crate::value::Value;
 
 use super::document::PgTsDocument;
-use super::literal::{quoted_config, require_postgres};
-
-const TO_TSQUERY: &str = "to_tsquery";
-const PLAINTO_TSQUERY: &str = "plainto_tsquery";
-const WEBSEARCH_TO_TSQUERY: &str = "websearch_to_tsquery";
+use super::literal::{quoted_config, require_postgres, TsQueryFn};
 
 impl PgTsDocument {
   /// `document @@ to_tsquery('<config>', $N)` for an explicit dialect.
@@ -29,7 +25,7 @@ impl PgTsDocument {
     config: &str,
     query: impl Into<Value>,
   ) -> Result<Expr, DbCoreError> {
-    self.matches_query_fn(dialect, TO_TSQUERY, config, query.into())
+    self.matches_query_fn(dialect, TsQueryFn::ToTsQuery, config, query.into())
   }
 
   /// [`Self::matches_tsquery_for`] against [`Dialect::CURRENT`].
@@ -56,7 +52,7 @@ impl PgTsDocument {
     config: &str,
     query: impl Into<Value>,
   ) -> Result<Expr, DbCoreError> {
-    self.matches_query_fn(dialect, PLAINTO_TSQUERY, config, query.into())
+    self.matches_query_fn(dialect, TsQueryFn::PlainToTsQuery, config, query.into())
   }
 
   /// [`Self::matches_plainto_tsquery_for`] against [`Dialect::CURRENT`].
@@ -83,7 +79,7 @@ impl PgTsDocument {
     config: &str,
     query: impl Into<Value>,
   ) -> Result<Expr, DbCoreError> {
-    self.matches_query_fn(dialect, WEBSEARCH_TO_TSQUERY, config, query.into())
+    self.matches_query_fn(dialect, TsQueryFn::WebsearchToTsQuery, config, query.into())
   }
 
   /// [`Self::matches_websearch_to_tsquery_for`] against [`Dialect::CURRENT`].
@@ -102,15 +98,16 @@ impl PgTsDocument {
   fn matches_query_fn(
     &self,
     dialect: Dialect,
-    query_fn: &'static str,
+    query_fn: TsQueryFn,
     config: &str,
     pattern: Value,
   ) -> Result<Expr, DbCoreError> {
-    require_postgres(query_fn, dialect)?;
-    let config = quoted_config(query_fn, config)?;
+    let name = query_fn.as_sql();
+    require_postgres(name, dialect)?;
+    let config = quoted_config(name, config)?;
     Ok(Expr::ts_match_target(
       self.sql.clone(),
-      query_fn,
+      name,
       config,
       pattern,
     ))

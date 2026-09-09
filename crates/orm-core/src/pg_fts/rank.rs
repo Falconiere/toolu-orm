@@ -1,6 +1,6 @@
 //! `ts_rank` as a selectable / orderable SQL call.
 //!
-//! The query text is embedded as an escaped string literal because
+//! The query text is dollar-quoted into the SQL because
 //! `SelectBuilder::column_expr` and [`OrderBy`] carry SQL text only — they
 //! cannot bind parameters. Prefer binding the same string through
 //! [`super::PgTsDocument::matches_tsquery_for`] in `WHERE`.
@@ -10,12 +10,9 @@ use crate::error::DbCoreError;
 use crate::expr::OrderBy;
 
 use super::document::PgTsDocument;
-use super::literal::{quoted_config, quoted_string, require_postgres, weights_literal};
+use super::literal::{dollar_quote, quoted_config, require_postgres, weights_literal, TsQueryFn};
 
 const TS_RANK: &str = "ts_rank";
-const TO_TSQUERY: &str = "to_tsquery";
-const PLAINTO_TSQUERY: &str = "plainto_tsquery";
-const WEBSEARCH_TO_TSQUERY: &str = "websearch_to_tsquery";
 
 /// A rendered `ts_rank(...)` call, ready for a select list or `ORDER BY`.
 ///
@@ -50,8 +47,8 @@ impl PgFtsFn {
   }
 }
 
-/// `ts_rank([weights,] document, to_tsquery(config, 'query'))` for an explicit
-/// dialect.
+/// `ts_rank([weights,] document, to_tsquery(config, $q$query$q$))` for an
+/// explicit dialect.
 ///
 /// # Errors
 ///
@@ -65,7 +62,14 @@ pub fn ts_rank_tsquery_for(
   query: &str,
   weights: Option<&[f32; 4]>,
 ) -> Result<PgFtsFn, DbCoreError> {
-  rank_for(dialect, document, TO_TSQUERY, config, query, weights)
+  rank_for(
+    dialect,
+    document,
+    TsQueryFn::ToTsQuery,
+    config,
+    query,
+    weights,
+  )
 }
 
 /// [`ts_rank_tsquery_for`] against [`Dialect::CURRENT`].
@@ -94,7 +98,14 @@ pub fn ts_rank_plainto_tsquery_for(
   query: &str,
   weights: Option<&[f32; 4]>,
 ) -> Result<PgFtsFn, DbCoreError> {
-  rank_for(dialect, document, PLAINTO_TSQUERY, config, query, weights)
+  rank_for(
+    dialect,
+    document,
+    TsQueryFn::PlainToTsQuery,
+    config,
+    query,
+    weights,
+  )
 }
 
 /// [`ts_rank_plainto_tsquery_for`] against [`Dialect::CURRENT`].
@@ -126,7 +137,7 @@ pub fn ts_rank_websearch_to_tsquery_for(
   rank_for(
     dialect,
     document,
-    WEBSEARCH_TO_TSQUERY,
+    TsQueryFn::WebsearchToTsQuery,
     config,
     query,
     weights,
@@ -150,15 +161,16 @@ pub fn ts_rank_websearch_to_tsquery(
 fn rank_for(
   dialect: Dialect,
   document: &PgTsDocument,
-  query_fn: &str,
+  query_fn: TsQueryFn,
   config: &str,
   query: &str,
   weights: Option<&[f32; 4]>,
 ) -> Result<PgFtsFn, DbCoreError> {
   require_postgres(TS_RANK, dialect)?;
   let config = quoted_config(TS_RANK, config)?;
-  let query_lit = quoted_string(query);
-  let query_call = format!("{query_fn}({config}, {query_lit})");
+  let query_fn_sql = query_fn.as_sql();
+  let query_lit = dollar_quote(query);
+  let query_call = format!("{query_fn_sql}({config}, {query_lit})");
   let doc_sql = document.sql();
   let sql = match weights {
     Some(weights) => {

@@ -33,7 +33,7 @@ SELECT "id", ts_rank("docs"."search_vector", to_tsquery('english', 'runner')) AS
  ORDER BY "score" DESC LIMIT $2
 ```
 
-`@@` binds the pattern; `ts_rank` embeds it as an `E'…'` literal with quotes and backslashes escaped (select-list / `ORDER BY` carry no params today). No `MATCH` / `bm25` appears.
+`@@` binds the pattern; `ts_rank` dollar-quotes the query (`$q$…$q$`) so embedding needs no escape games (select-list / `ORDER BY` carry no params today). No `MATCH` / `bm25` appears.
 
 ### `ts_rank` is positive, so `DESC` is best first
 
@@ -99,8 +99,9 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'b
 | default | pg_fts_query_test | match_expr::the_short_forms_agree_with_the_current_dialect |
 | default | pg_fts_query_test | rendering::ts_rank_without_weights_embeds_the_query |
 | default | pg_fts_query_test | rendering::ts_rank_weights_render_first_as_real_array |
-| default | pg_fts_query_test | rendering::a_quote_inside_the_rank_query_is_doubled |
-| default | pg_fts_query_test | rendering::a_backslash_inside_the_rank_query_is_doubled |
+| default | pg_fts_query_test | rendering::a_quote_inside_the_rank_query_is_kept_verbatim |
+| default | pg_fts_query_test | rendering::a_backslash_inside_the_rank_query_is_kept_verbatim |
+| default | pg_fts_query_test | rendering::a_colliding_dollar_tag_picks_the_next_tag |
 | default | pg_fts_query_test | rendering::plainto_and_websearch_rank_variants_render |
 | default | pg_fts_query_test | rendering::the_short_rank_forms_agree_with_the_current_dialect |
 | default | pg_fts_query_test | rejections::sqlite_is_refused_by_every_constructor |
