@@ -116,7 +116,7 @@ fn try_recreate_from_content(
     return Ok(None);
   }
 
-  let Some(content) = schema.tables().iter().find(|t| t.name == content_name) else {
+  let Some(content) = schema.find_table(&content_name) else {
     return Err(refuse(
       name,
       &format!("its content table \"{content_name}\" is not in the schema"),

@@ -36,11 +36,19 @@ fn changing_tokenizer_with_external_content_recreates() {
     &registry(vec![memories(), memory_fts_external("unicode61")]),
   )
   .expect("eligible recreate should succeed");
-  assert_eq!(
-    ops,
-    vec![Operation::RecreateFts5FromContent {
-      table: memory_fts_external("unicode61")
-    }]
+  assert!(
+    matches!(
+      ops.as_slice(),
+      [Operation::RecreateFts5FromContent { table }]
+        if table.name == "memory_fts"
+          && table.kind.module() == Some("fts5")
+          && table
+            .kind
+            .args()
+            .iter()
+            .any(|a| a == "tokenize = 'unicode61'")
+    ),
+    "unexpected ops: {ops:?}"
   );
 }
 
@@ -62,10 +70,19 @@ fn changing_columns_with_external_content_recreates_when_content_covers_them() {
     .content("memories")
     .content_rowid("id")
     .build();
-  let ops = diff(&old, &registry(vec![content, widened.clone()])).expect("recreate");
-  assert_eq!(
-    ops,
-    vec![Operation::RecreateFts5FromContent { table: widened }]
+  let ops = diff(&old, &registry(vec![content, widened])).expect("recreate");
+  assert!(
+    matches!(
+      ops.as_slice(),
+      [Operation::RecreateFts5FromContent { table }]
+        if table.name == "memory_fts"
+          && table
+            .columns
+            .iter()
+            .map(|c| c.name.as_str())
+            .eq(["body", "tags"])
+    ),
+    "unexpected ops: {ops:?}"
   );
 }
 

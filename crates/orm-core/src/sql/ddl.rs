@@ -119,3 +119,24 @@ pub(crate) fn recreation_sql(table_name: &str, new_def: &TableDef) -> String {
      PRAGMA foreign_keys = ON;"
   )
 }
+
+/// Drop + recreate an FTS5 table, then rebuild from its external content table.
+pub(crate) fn recreate_fts5_from_content_sql(table: &TableDef, dialect: Dialect) -> String {
+  match dialect {
+    Dialect::Sqlite => {
+      let create = create_table_sql(table, dialect);
+      let name = &table.name;
+      format!(
+        "DROP TABLE IF EXISTS \"{name}\";\n\
+         --> statement-breakpoint\n\
+         {create}\n\
+         --> statement-breakpoint\n\
+         INSERT INTO \"{name}\"(\"{name}\") VALUES('rebuild');"
+      )
+    },
+    Dialect::Postgres => match table.kind.module() {
+      Some(module) => unsupported_dialect_comment(&table.name, module, dialect),
+      None => unsupported_dialect_comment(&table.name, "fts5", dialect),
+    },
+  }
+}

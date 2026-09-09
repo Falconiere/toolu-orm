@@ -4,9 +4,11 @@ use crate::dialect::Dialect;
 use crate::diff::Operation;
 use crate::ordering::order_operations;
 
-use super::ddl::{add_column_sql, create_index_sql, create_table_sql, recreation_sql};
+use super::ddl::{
+  add_column_sql, create_index_sql, create_table_sql, recreate_fts5_from_content_sql,
+  recreation_sql,
+};
 use super::postgres::{alter_column_statements_postgres, needs_recreation_sqlite};
-use super::virtual_table::recreate_fts5_from_content_sql;
 
 pub fn generate_sql(operations: &[Operation]) -> String {
   generate_sql_for(operations, Dialect::CURRENT)

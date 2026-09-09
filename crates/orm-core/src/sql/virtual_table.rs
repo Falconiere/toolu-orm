@@ -5,7 +5,6 @@
 //! syntax, already rendered into [`crate::table::TableKind::Virtual`].
 
 use crate::dialect::Dialect;
-use crate::table::{TableDef, TableKind};
 
 /// `CREATE VIRTUAL TABLE IF NOT EXISTS "<name>" USING "<module>"(<args>);`
 ///
@@ -23,30 +22,6 @@ pub(crate) fn create_virtual_table_sql(name: &str, module: &str, args: &[String]
     "CREATE VIRTUAL TABLE IF NOT EXISTS {name} USING {module}({});",
     args.join(", ")
   )
-}
-
-/// Drop + recreate an FTS5 table, then rebuild from its external content table.
-pub(crate) fn recreate_fts5_from_content_sql(table: &TableDef, dialect: Dialect) -> String {
-  match dialect {
-    Dialect::Sqlite => {
-      let create = match &table.kind {
-        TableKind::Virtual { module, args } => create_virtual_table_sql(&table.name, module, args),
-        TableKind::Ordinary => create_virtual_table_sql(&table.name, "fts5", &[]),
-      };
-      let name = &table.name;
-      format!(
-        "DROP TABLE IF EXISTS \"{name}\";\n\
-         --> statement-breakpoint\n\
-         {create}\n\
-         --> statement-breakpoint\n\
-         INSERT INTO \"{name}\"(\"{name}\") VALUES('rebuild');"
-      )
-    },
-    Dialect::Postgres => match table.kind.module() {
-      Some(module) => unsupported_dialect_comment(&table.name, module, dialect),
-      None => unsupported_dialect_comment(&table.name, "fts5", dialect),
-    },
-  }
 }
 
 /// A double-quoted identifier; an embedded double quote doubles.
