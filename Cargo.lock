@@ -2365,7 +2365,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "toolu-orm-connection",
  "toolu-orm-core",
@@ -2375,7 +2375,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "libsql",
  "tempfile",
@@ -2390,7 +2390,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-connection"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "deadpool-postgres",
@@ -2410,7 +2410,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "libsql",
@@ -2427,14 +2427,14 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-facade-consumer"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "toolu-orm",
 ]
 
 [[package]]
 name = "toolu-orm-macros"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "libsql",
  "proc-macro-crate",
@@ -2452,7 +2452,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-query"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "libsql",
