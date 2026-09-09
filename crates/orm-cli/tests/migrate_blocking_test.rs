@@ -40,7 +40,7 @@ struct NameRow {
 }
 
 impl toolu_orm_core::row::FromRow for CountRow {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &[];
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["count(*)"];
 
   fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
     Ok(Self {
@@ -52,7 +52,7 @@ impl toolu_orm_core::row::FromRow for CountRow {
 }
 
 impl toolu_orm_core::row::FromRow for NameRow {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &[];
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["name"];
 
   fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
     Ok(Self {
@@ -82,5 +82,18 @@ fn run_migrate_blocking_applies_journaled_migrations() -> TestResult {
   );
 
   assert_eq!(run_migrate_blocking(&conn, &dir, Dialect::Sqlite)?, 0);
+  Ok(())
+}
+
+#[test]
+fn run_migrate_blocking_legacy_path_without_journal() -> TestResult {
+  let (_tmp, dir) = migrations_dir()?;
+  // No _journal.json: empty Journal::read_from_path falls through to legacy.
+  std::fs::write(format!("{dir}/0001_users.sql"), "CREATE TABLE users (id TEXT PRIMARY KEY);")?;
+  let conn = connect()?;
+
+  assert_eq!(run_migrate_blocking(&conn, &dir, Dialect::Sqlite)?, 1);
+  assert_eq!(has_table(&conn, "users")?, 1);
+  assert_eq!(recorded(&conn)?, vec!["0001_users.sql".to_owned()]);
   Ok(())
 }

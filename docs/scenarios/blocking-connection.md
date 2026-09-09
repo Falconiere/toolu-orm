@@ -35,6 +35,7 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 | rusqlite-only | rusqlite_blocking_concurrency_test | async_reports_a_panicking_task_as_a_connection_error |
 | rusqlite-only | rusqlite_blocking_concurrency_test | a_poisoned_connection_reports_it |
 | rusqlite-only | migrate_blocking_test | run_migrate_blocking_applies_journaled_migrations |
+| rusqlite-only | migrate_blocking_test | run_migrate_blocking_legacy_path_without_journal |
 | rusqlite-only | migrate_embedded_blocking_test | run_migrate_embedded_blocking_applies_list |
 | rusqlite-only | migrate_embedded_blocking_test | tampered_hash_fails_without_runtime |
 | rusqlite-only | migrate_baseline_blocking_test | mark_applied_blocking_records_without_running_sql |

@@ -33,7 +33,7 @@ struct CountRow {
 }
 
 impl toolu_orm_core::row::FromRow for CountRow {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &[];
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["count(*)"];
 
   fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, toolu_orm_core::error::DbCoreError> {
     Ok(Self {
