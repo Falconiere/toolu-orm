@@ -7,5 +7,6 @@ mod column_postgres_alter;
 mod constraint_operations;
 mod enum_operations;
 mod fk_operations;
+mod fts5_recreate;
 mod index_operations;
 mod table_operations;

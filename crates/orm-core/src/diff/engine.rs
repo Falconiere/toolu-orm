@@ -14,7 +14,7 @@ use super::column::compute_column_changes;
 use super::enums::diff_enums;
 use super::fk::{diff_check_constraints_inner, diff_foreign_keys_inner};
 use super::operation::Operation;
-use super::virtual_tables::{check_new_virtual_table, check_virtual_pair};
+use super::virtual_tables::{check_new_virtual_table, check_virtual_pair, VirtualPairCheck};
 
 /// # Errors
 ///
@@ -104,8 +104,21 @@ fn diff_tables(
     let Some(new_st) = new_snap.tables.get(&table.name) else {
       continue;
     };
-    if check_virtual_pair(&table.name, old_st, new_st)? {
-      continue;
+    let table_renamed = old_name != table.name;
+    match check_virtual_pair(
+      &table.name,
+      old_st,
+      new_st,
+      table,
+      new_schema,
+      table_renamed,
+    )? {
+      VirtualPairCheck::Unchanged => continue,
+      VirtualPairCheck::Recreate(op) => {
+        ops.push(op);
+        continue;
+      },
+      VirtualPairCheck::Ordinary => {},
     }
 
     diff_columns_for_table(
