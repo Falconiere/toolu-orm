@@ -23,21 +23,13 @@ fn recreate_fts5_from_content_sqlite_emits_drop_create_rebuild() {
     }],
     Dialect::Sqlite,
   );
-  assert!(
-    sql.contains("DROP TABLE IF EXISTS \"memory_fts\";"),
-    "missing drop: {sql}"
-  );
-  assert!(
-    sql.contains("CREATE VIRTUAL TABLE IF NOT EXISTS \"memory_fts\" USING \"fts5\""),
-    "missing create: {sql}"
-  );
-  assert!(
-    sql.contains("INSERT INTO \"memory_fts\"(\"memory_fts\") VALUES('rebuild');"),
-    "missing rebuild: {sql}"
-  );
-  assert!(
-    sql.contains("--> statement-breakpoint"),
-    "missing breakpoints: {sql}"
+  assert_eq!(
+    sql.trim(),
+    "DROP TABLE IF EXISTS \"memory_fts\";\n\
+     --> statement-breakpoint\n\
+     CREATE VIRTUAL TABLE IF NOT EXISTS \"memory_fts\" USING \"fts5\"(\"body\", tokenize = 'unicode61', content = 'memories', content_rowid = 'id');\n\
+     --> statement-breakpoint\n\
+     INSERT INTO \"memory_fts\"(\"memory_fts\") VALUES('rebuild');"
   );
 }
 
@@ -49,12 +41,9 @@ fn recreate_fts5_from_content_postgres_skips_without_rebuild() {
     }],
     Dialect::Postgres,
   );
-  assert!(
-    sql.contains("SQLite-only") && sql.contains("memory_fts"),
-    "expected skip comment, got: {sql}"
+  assert_eq!(
+    sql.trim(),
+    "-- virtual table \"memory_fts\" USING \"fts5\" is SQLite-only; skipped for postgres"
   );
-  assert!(
-    !sql.contains("VALUES('rebuild')"),
-    "postgres must not emit rebuild: {sql}"
-  );
+  assert!(!sql.contains("VALUES('rebuild')"));
 }

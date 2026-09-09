@@ -15,6 +15,8 @@ use crate::schema::SchemaRegistry;
 use crate::snapshot::SnapshotTable;
 use crate::table::TableDef;
 
+use std::collections::BTreeSet;
+
 use super::operation::Operation;
 
 /// Result of comparing a table present on both sides of the diff.
@@ -127,8 +129,9 @@ fn try_recreate_from_content(
     ));
   }
 
+  let content_cols: BTreeSet<&str> = content.columns.iter().map(|c| c.name.as_str()).collect();
   for column in &new_table.columns {
-    if !content.columns.iter().any(|c| c.name == column.name) {
+    if !content_cols.contains(column.name.as_str()) {
       return Err(refuse(
         name,
         &format!(
@@ -140,7 +143,7 @@ fn try_recreate_from_content(
   }
 
   if let Some(rowid) = option_value(new_table.kind.args(), "content_rowid") {
-    if !content.columns.iter().any(|c| c.name == rowid) {
+    if !content_cols.contains(rowid.as_str()) {
       return Err(refuse(
         name,
         &format!(
