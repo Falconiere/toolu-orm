@@ -5,7 +5,7 @@ use std::path::Path;
 
 use toolu_orm_connection::DbConnection;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::journal::{Journal, JournalEntry};
+use toolu_orm_core::journal::Journal;
 
 use super::error::MigrateError;
 use super::store::{ensure_migrations_table, get_applied_migrations, record_migration};
@@ -47,10 +47,11 @@ pub async fn mark_applied(
 
   // Iterating the journal rather than `names` records in journal order, so
   // `_migrations.id` order keeps matching it, and repeats collapse.
-  let selected: Vec<&JournalEntry> = journal
+  let selected: Vec<(&str, &str)> = journal
     .entries
     .iter()
     .filter(|entry| names.contains(&entry.name.as_str()))
+    .map(|entry| (entry.name.as_str(), entry.hash.as_str()))
     .collect();
 
   record_all(conn, &selected, dialect).await
@@ -81,7 +82,12 @@ pub async fn mark_applied_through(
     .position(|entry| entry.name == last_name)
     .ok_or_else(|| MigrateError::NotInJournal(last_name.to_owned()))?;
 
-  let selected: Vec<&JournalEntry> = journal.entries.iter().take(position + 1).collect();
+  let selected: Vec<(&str, &str)> = journal
+    .entries
+    .iter()
+    .take(position + 1)
+    .map(|entry| (entry.name.as_str(), entry.hash.as_str()))
+    .collect();
 
   record_all(conn, &selected, dialect).await
 }
@@ -94,16 +100,20 @@ fn read_journal(migrations_dir: &str) -> Result<Journal, MigrateError> {
   Journal::read_from_path(journal_path_str).map_err(|e| MigrateError::ReadFile(format!("{e}")))
 }
 
-/// Records `entries` in one transaction, skipping those `_migrations` already
-/// holds (its `name` column is UNIQUE, so re-inserting would fail).
+/// Records `(name, hash)` pairs in one transaction, skipping those
+/// `_migrations` already holds (its `name` column is UNIQUE, so re-inserting
+/// would fail).
 ///
 /// The already-applied set is read *inside* the transaction, so the skip
 /// decision and the inserts see one state of the table. A baseline racing
 /// another writer on the same names still loses on the `UNIQUE` constraint, and
 /// then rolls back whole: no partial baseline, and the retry records nothing.
-async fn record_all(
+///
+/// Shared by directory [`mark_applied`] and the embedded twins in
+/// [`super::embedded`].
+pub(crate) async fn record_all(
   conn: &impl DbConnection,
-  entries: &[&JournalEntry],
+  entries: &[(&str, &str)],
   dialect: Dialect,
 ) -> Result<u32, MigrateError> {
   ensure_migrations_table(conn, dialect).await?;
@@ -113,11 +123,11 @@ async fn record_all(
   let mut count: u32 = 0;
   let result = async {
     let applied = get_applied_migrations(conn).await?;
-    for entry in entries {
-      if applied.contains(&entry.name) {
+    for (name, hash) in entries {
+      if applied.iter().any(|recorded| recorded == name) {
         continue;
       }
-      record_migration(conn, &entry.name, &entry.hash, dialect).await?;
+      record_migration(conn, name, hash, dialect).await?;
       count += 1;
     }
     Ok(())

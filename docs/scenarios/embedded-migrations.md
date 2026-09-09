@@ -5,9 +5,12 @@
 migrations directory at runtime, so a single-binary distribution carries its
 migrations inside the executable. Everything below the byte-fetch is the shared
 `apply_migration` that `run_migrate` uses, so hashes, transaction boundaries and
-rollback are the same on both paths.
+rollback are the same on both paths. After [#37](https://github.com/Falconiere/toolu-orm/issues/37),
+`mark_applied_embedded` / `mark_applied_through_embedded` and
+`get_status_embedded` are the same twins for baselining and status — the list is
+the journal, so a single-binary adopter never needs a migrations directory.
 **Drivers:** libsql (SQLite) and Postgres. rusqlite shares the SQLite path.
-**Issue:** [#16](https://github.com/Falconiere/toolu-orm/issues/16).
+**Issue:** [#16](https://github.com/Falconiere/toolu-orm/issues/16), [#37](https://github.com/Falconiere/toolu-orm/issues/37).
 
 ## What is proven
 
@@ -18,6 +21,8 @@ separator ran; `half`, from the deliberately failing migration, is the witness
 that a rolled-back migration left nothing behind. Hashes are real
 `compute_hash` output, and a "tampered" entry declares the hash of one body
 while carrying another — the shipped `.sql` someone edited without re-hashing.
+For baseline, the adopted database already has `users`; `audit` must stay absent
+if baselining truly executes no SQL.
 
 | Input | Observable result |
 |---|---|
@@ -32,6 +37,13 @@ while carrying another — the shipped `.sql` someone edited without re-hashing.
 | a database migrated by `run_migrate` from a directory, then handed the equivalent list | `0`; `_migrations` unchanged |
 | a database migrated from the list, then handed the equivalent directory | `0` — the two sources are interchangeable, so a project can switch between releases |
 | `EmbeddedMigration::verify_hash` on a matching and a mismatched pair | `Ok(())` / `HashMismatch`, with no database — how a project asserts its whole list in one test |
+| `mark_applied_embedded` of `0001_init.sql` on an adopted DB | returns `1`; `_migrations` hash equals `compute_hash(CREATE_SQL)`; `audit` does not exist |
+| baseline then `run_migrate_embedded` on a three-entry list | applies only the suffix; `audit` still absent; `get_status_embedded` pending empty |
+| `mark_applied_through_embedded("0002_…")` | returns `2`; pending is `[0003]` in list order; `posts` was never created; next migrate creates `c` |
+| a name absent from the list (and a missing through target) | `MigrateError::NotInJournal`; no `_migrations` table |
+| a duplicate name in the list for baseline or status | `MigrateError::DuplicateMigration` before any write |
+| empty `names` | `0`; `_migrations` exists; `get_status_embedded` reports the list entry as pending |
+| the same names baselined twice | `1` then `0`; exactly one row |
 
 Already-applied entries are skipped without re-reading their hash, exactly as
 `run_migrate` skips entries already in `_migrations`.
@@ -39,9 +51,8 @@ Already-applied entries are skipped without re-reading their hash, exactly as
 ## How to run
 
 ```sh
-cargo nextest run -p toolu-orm-cli -E 'binary(migrate_embedded_test)'
-docker compose -f docker-compose.test.yaml up -d --wait
-TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres -E 'binary(migrate_embedded_postgres_test)'
+cargo nextest run -p toolu-orm-cli -E 'binary(migrate_embedded_test) or binary(migrate_embedded_baseline_test)'
+TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-cli --features postgres -E 'binary(migrate_embedded_postgres_test) or binary(migrate_embedded_baseline_postgres_test)'
 ```
 
 ## Tests
@@ -58,6 +69,16 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p too
 | default | migrate_embedded_test | verify_hash_checks_a_migration_without_a_database |
 | default | migrate_embedded_test | a_directory_migrated_database_accepts_the_equivalent_embedded_list |
 | default | migrate_embedded_test | an_embedded_migrated_database_accepts_the_equivalent_directory |
+| default | migrate_embedded_baseline_test | baseline_records_the_list_hash_without_running_sql |
+| default | migrate_embedded_baseline_test | migrate_after_an_embedded_baseline_applies_only_the_suffix |
+| default | migrate_embedded_baseline_test | a_name_absent_from_the_list_records_nothing |
+| default | migrate_embedded_baseline_test | a_repeated_name_in_the_list_is_rejected_before_anything_is_written |
+| default | migrate_embedded_baseline_test | repeating_an_embedded_baseline_records_nothing_new |
+| default | migrate_embedded_baseline_test | an_empty_embedded_baseline_still_creates_the_migrations_table |
+| default | migrate_embedded_baseline_test | mark_applied_through_embedded_baselines_the_prefix_and_leaves_the_rest_pending |
 | postgres | migrate_embedded_postgres_test | an_embedded_list_applies_and_records_every_migration_on_postgres |
 | postgres | migrate_embedded_postgres_test | an_edited_migration_fails_the_hash_check_on_postgres |
 | postgres | migrate_embedded_postgres_test | a_failing_statement_rolls_back_only_its_own_migration_on_postgres |
+| postgres | migrate_embedded_baseline_postgres_test | baseline_then_migrate_skips_the_baselined_entry_on_postgres |
+| postgres | migrate_embedded_baseline_postgres_test | a_name_absent_from_the_list_records_nothing_on_postgres |
+| postgres | migrate_embedded_baseline_postgres_test | mark_applied_through_embedded_baselines_the_prefix_on_postgres |

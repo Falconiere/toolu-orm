@@ -541,8 +541,10 @@ plus `to_sql_sqlite()` / `to_sql_postgres()` when you only want the SQL.
 ## Migrations
 
 ```rust
-use toolu_orm_cli::{generate::run_generate, status::get_status};
-use toolu_orm_cli::migrate::{run_migrate, run_migrate_embedded};
+use toolu_orm_cli::{generate::run_generate, status::{get_status, get_status_embedded}};
+use toolu_orm_cli::migrate::{
+  mark_applied_embedded, run_migrate, run_migrate_embedded,
+};
 
 let wrote = run_generate(&registry, "migrations", "add_posts", Dialect::Postgres)?;
 //  → Some("0002_add_posts.sql"), or None when the schema did not change
@@ -552,6 +554,8 @@ let applied = run_migrate(&conn, "migrations", Dialect::Postgres).await?;   // u
 let applied = run_migrate_embedded(&conn, MIGRATIONS, Dialect::Postgres).await?;
 
 let status = get_status(&conn, "migrations", Dialect::Postgres).await?;
+// …or, without a migrations directory on disk:
+let status = get_status_embedded(&conn, MIGRATIONS, Dialect::Postgres).await?;
 println!("applied: {:?}, pending: {:?}", status.applied, status.pending);
 ```
 
@@ -577,12 +581,16 @@ migrations/
   `run_migrate_embedded(&conn, MIGRATIONS, dialect)`, where `MIGRATIONS` is a
   `&[EmbeddedMigration]` of `name` / `sql` / `hash`. Same hashes, same
   one-transaction-per-migration, and a database is free to move between the two
-  sources.
+  sources. Baselining and status use the same list:
+  `mark_applied_embedded` / `mark_applied_through_embedded` and
+  `get_status_embedded` — no on-disk journal required.
 - Adopting toolu-orm on a database that already has the schema? Baseline it with
   `mark_applied(&conn, "migrations", &["0001_init.sql"], dialect)` — or
   `mark_applied_through(&conn, "migrations", "0016_add_tags.sql", dialect)` — to
   record those journal entries (with their journal hashes) without executing
   them, so the next `run_migrate` starts from the first one you did not baseline.
+  Embedded adopters call `mark_applied_embedded` / `mark_applied_through_embedded`
+  with the same `MIGRATIONS` slice instead.
 - Snapshots are plain JSON (`version`, `dialect`, `id`, `prev_id`, `tables`,
   `enums`, `meta`), so a schema diff is reviewable in the PR alongside the SQL.
 

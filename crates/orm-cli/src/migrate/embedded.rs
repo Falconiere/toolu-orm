@@ -93,11 +93,84 @@ pub async fn run_migrate_embedded(
   Ok(count)
 }
 
+/// Records `names` as already applied from an embedded list, without executing
+/// their SQL.
+///
+/// The list is the journal: hashes come from each [`EmbeddedMigration::hash`],
+/// selection follows list order, and names absent from the list fail with
+/// [`MigrateError::NotInJournal`] before anything is written — the same
+/// contract as [`super::mark_applied`] against `_journal.json`.
+///
+/// # Errors
+///
+/// Returns [`MigrateError::DuplicateMigration`] when the list repeats a name,
+/// [`MigrateError::NotInJournal`] when any requested name is missing, or
+/// [`MigrateError::Database`] on a database failure.
+pub async fn mark_applied_embedded(
+  conn: &impl DbConnection,
+  migrations: &[EmbeddedMigration<'_>],
+  names: &[&str],
+  dialect: Dialect,
+) -> Result<u32, MigrateError> {
+  reject_duplicate_names(migrations)?;
+
+  let unknown: Vec<&str> = names
+    .iter()
+    .copied()
+    .filter(|name| !migrations.iter().any(|entry| entry.name == *name))
+    .collect();
+  if !unknown.is_empty() {
+    return Err(MigrateError::NotInJournal(unknown.join(", ")));
+  }
+
+  let selected: Vec<(&str, &str)> = migrations
+    .iter()
+    .filter(|entry| names.contains(&entry.name))
+    .map(|entry| (entry.name, entry.hash))
+    .collect();
+
+  super::baseline::record_all(conn, &selected, dialect).await
+}
+
+/// Records every embedded entry up to and including `last_name` as applied,
+/// without executing their SQL.
+///
+/// List order is the journal order. Skipping, counting, and atomicity match
+/// [`mark_applied_embedded`].
+///
+/// # Errors
+///
+/// Same as [`mark_applied_embedded`]; [`MigrateError::NotInJournal`] when
+/// `last_name` itself is absent from the list.
+pub async fn mark_applied_through_embedded(
+  conn: &impl DbConnection,
+  migrations: &[EmbeddedMigration<'_>],
+  last_name: &str,
+  dialect: Dialect,
+) -> Result<u32, MigrateError> {
+  reject_duplicate_names(migrations)?;
+
+  let position = migrations
+    .iter()
+    .position(|entry| entry.name == last_name)
+    .ok_or_else(|| MigrateError::NotInJournal(last_name.to_owned()))?;
+
+  let selected: Vec<(&str, &str)> = migrations
+    .iter()
+    .take(position + 1)
+    .map(|entry| (entry.name, entry.hash))
+    .collect();
+
+  super::baseline::record_all(conn, &selected, dialect).await
+}
+
 /// A hand-written list can repeat a name where a generated journal cannot, and
 /// the repeat has no single SQL body. Caught before the first statement runs,
 /// so the mistake does not surface as a `UNIQUE` violation with earlier
 /// migrations already committed.
-fn reject_duplicate_names(migrations: &[EmbeddedMigration<'_>]) -> Result<(), MigrateError> {
+pub(crate) fn reject_duplicate_names(
+  migrations: &[EmbeddedMigration<'_>],
+) -> Result<(), MigrateError> {
   let mut seen: Vec<&str> = Vec::with_capacity(migrations.len());
   let mut duplicates: Vec<&str> = Vec::new();
 
