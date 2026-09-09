@@ -7,17 +7,17 @@ use crate::error::DbCoreError;
 /// The three Postgres tsquery constructors this surface exposes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum TsQueryFn {
-  ToTsQuery,
-  PlainToTsQuery,
-  WebsearchToTsQuery,
+  To,
+  Plain,
+  Websearch,
 }
 
 impl TsQueryFn {
   pub(crate) const fn as_sql(self) -> &'static str {
     match self {
-      Self::ToTsQuery => "to_tsquery",
-      Self::PlainToTsQuery => "plainto_tsquery",
-      Self::WebsearchToTsQuery => "websearch_to_tsquery",
+      Self::To => "to_tsquery",
+      Self::Plain => "plainto_tsquery",
+      Self::Websearch => "websearch_to_tsquery",
     }
   }
 }

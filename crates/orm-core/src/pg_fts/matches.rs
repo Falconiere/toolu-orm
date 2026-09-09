@@ -25,7 +25,7 @@ impl PgTsDocument {
     config: &str,
     query: impl Into<Value>,
   ) -> Result<Expr, DbCoreError> {
-    self.matches_query_fn(dialect, TsQueryFn::ToTsQuery, config, query.into())
+    self.matches_query_fn(dialect, TsQueryFn::To, config, query.into())
   }
 
   /// [`Self::matches_tsquery_for`] against [`Dialect::CURRENT`].
@@ -52,7 +52,7 @@ impl PgTsDocument {
     config: &str,
     query: impl Into<Value>,
   ) -> Result<Expr, DbCoreError> {
-    self.matches_query_fn(dialect, TsQueryFn::PlainToTsQuery, config, query.into())
+    self.matches_query_fn(dialect, TsQueryFn::Plain, config, query.into())
   }
 
   /// [`Self::matches_plainto_tsquery_for`] against [`Dialect::CURRENT`].
@@ -79,7 +79,7 @@ impl PgTsDocument {
     config: &str,
     query: impl Into<Value>,
   ) -> Result<Expr, DbCoreError> {
-    self.matches_query_fn(dialect, TsQueryFn::WebsearchToTsQuery, config, query.into())
+    self.matches_query_fn(dialect, TsQueryFn::Websearch, config, query.into())
   }
 
   /// [`Self::matches_websearch_to_tsquery_for`] against [`Dialect::CURRENT`].

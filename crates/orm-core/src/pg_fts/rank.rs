@@ -65,7 +65,7 @@ pub fn ts_rank_tsquery_for(
   rank_for(
     dialect,
     document,
-    TsQueryFn::ToTsQuery,
+    TsQueryFn::To,
     config,
     query,
     weights,
@@ -101,7 +101,7 @@ pub fn ts_rank_plainto_tsquery_for(
   rank_for(
     dialect,
     document,
-    TsQueryFn::PlainToTsQuery,
+    TsQueryFn::Plain,
     config,
     query,
     weights,
@@ -137,7 +137,7 @@ pub fn ts_rank_websearch_to_tsquery_for(
   rank_for(
     dialect,
     document,
-    TsQueryFn::WebsearchToTsQuery,
+    TsQueryFn::Websearch,
     config,
     query,
     weights,
