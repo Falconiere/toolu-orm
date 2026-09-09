@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - *(core)* Postgres pgvector distance operators (`<->` / `<=>` / `<#>`) with `ORDER BY … LIMIT k`
+- *(core)* rebuild FTS5 virtual tables from external `content=` on shape changes (drop + recreate + `rebuild`); refuse elsewhere with guidance
 - *(core)* model sqlite-vec `vec0` virtual tables, `ColumnType::Vector`, `#[vec0_table]`, and `Value::vector`
 - *(cli)* map a driver's `no such module: …` into `MigrateError::MissingExtension`
 

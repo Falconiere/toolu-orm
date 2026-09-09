@@ -1,4 +1,4 @@
-//! 16-variant Operation enum and ColumnChange for schema migrations.
+//! 17-variant Operation enum and ColumnChange for schema migrations.
 
 use crate::column::{ColumnDef, ColumnType};
 use crate::index::IndexDef;
@@ -94,5 +94,10 @@ pub enum Operation {
   DropCheckConstraint {
     table: String,
     name: String,
+  },
+  /// Drop + recreate an FTS5 virtual table and rebuild it from its external
+  /// content table (`INSERT INTO fts(fts) VALUES('rebuild')`).
+  RecreateFts5FromContent {
+    table: TableDef,
   },
 }

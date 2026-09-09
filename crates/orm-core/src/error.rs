@@ -19,7 +19,9 @@ pub enum DbCoreError {
 
   #[error(
     "cannot migrate virtual table \"{table}\" in place: {reason}; SQLite has no ALTER TABLE for \
-     virtual tables — drop, recreate and repopulate it in a hand-written migration"
+     virtual tables. When the FTS5 definition sets content = '…' to an ordinary table in the \
+     schema whose columns cover the index, generate emits drop + recreate + INSERT INTO … \
+     VALUES('rebuild'). Otherwise drop, recreate, and repopulate in a hand-written migration"
   )]
   VirtualTableChange { table: String, reason: String },
 

@@ -102,7 +102,7 @@ fn full_ordering_13_tiers() {
       Operation::DropForeignKey { .. }
       | Operation::DropIndex { .. }
       | Operation::DropCheckConstraint { .. } => 6,
-      Operation::AlterColumn { .. } => 7,
+      Operation::AlterColumn { .. } | Operation::RecreateFts5FromContent { .. } => 7,
       Operation::AddColumn { .. } => 8,
       Operation::AddForeignKey { .. }
       | Operation::CreateIndex { .. }

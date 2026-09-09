@@ -356,13 +356,16 @@ appends `UNINDEXED`: the value is stored and readable but not searchable.
 `Fts5Table` is the same thing without the macro, for a `TableDef` built at
 runtime.
 
-SQLite cannot `ALTER` a virtual table, so `run_generate` refuses any in-place
-change to one — a new column, a different tokenizer, a switched module — with
-`DbCoreError::VirtualTableChange` and writes no migration; drop and recreate it
-instead. Creating, dropping and renaming work as usual. On Postgres the table is
-skipped with a comment naming it. Other modules (`rtree`, …) can still use
-`TableKind::virtual_table(module, args)` directly; `vec0` has its own builder
-and macro below.
+SQLite cannot `ALTER` a virtual table. When the FTS5 definition sets
+`content = '…'` to an ordinary table in the schema whose columns cover the
+index, `run_generate` emits drop + recreate +
+`INSERT INTO … VALUES('rebuild')`. Otherwise it refuses in-place changes
+(new column, different tokenizer, switched module, …) with
+`DbCoreError::VirtualTableChange` and writes no migration — drop, recreate,
+and repopulate by hand. Creating, dropping and renaming work as usual. On
+Postgres the table is skipped with a comment naming it. Other modules
+(`rtree`, …) can still use `TableKind::virtual_table(module, args)` directly;
+`vec0` has its own builder and macro below.
 
 ### Virtual tables (sqlite-vec `vec0`)
 

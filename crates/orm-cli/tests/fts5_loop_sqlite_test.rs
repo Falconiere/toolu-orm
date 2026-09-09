@@ -188,7 +188,10 @@ async fn changing_the_tokenizer_is_refused_without_writing_a_migration() -> Test
     .expect_err("expected the virtual-table change to be refused");
   let message = error.to_string();
   assert!(
-    message.contains("memory_fts") && message.contains("module arguments"),
+    message.contains("memory_fts")
+      && message.contains("module arguments")
+      && message.contains("content =")
+      && message.contains("rebuild"),
     "unhelpful error: {message}"
   );
   assert!(
