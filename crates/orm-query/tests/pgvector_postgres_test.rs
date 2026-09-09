@@ -61,10 +61,11 @@ async fn seeded_client(
     .await?;
 
   for (id, embedding) in SEED {
+    let embedding = *embedding;
     client
       .execute(
-        &format!("INSERT INTO items (id, embedding) VALUES ($1, '{embedding}'::vector)"),
-        &[&id],
+        "INSERT INTO items (id, embedding) VALUES ($1, CAST($2 AS text)::vector)",
+        &[&id, &embedding],
       )
       .await?;
   }

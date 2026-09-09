@@ -16,8 +16,9 @@ pub(crate) fn invalid(feature: &str, reason: impl Into<String>) -> DbCoreError {
 
 /// `'[1,0,0.5]'::vector` with every element proven finite.
 ///
-/// Elements are rendered as decimal literals only — never scientific notation —
-/// so pgvector's text parser always sees a plain numeric list.
+/// Prefers Rust's shortest decimal `Display`. If that ever uses scientific
+/// notation, falls back to a trimmed fixed-decimal form so the pgvector text
+/// parser never sees an `e` / `E` exponent.
 ///
 /// # Errors
 ///
@@ -46,9 +47,7 @@ fn decimal_f32(value: f32) -> String {
   if !plain.contains(['e', 'E']) {
     return plain;
   }
-  // Display fell back to scientific notation; rewrite with fixed decimals and
-  // trim trailing zeros so the literal stays compact and parseable.
-  let mut fixed = format!("{value:.9}");
+  let mut fixed = format!("{value:.17}");
   if let Some(dot) = fixed.find('.') {
     while fixed.len() > dot + 1 && fixed.ends_with('0') {
       fixed.pop();
