@@ -7,9 +7,10 @@ little-endian f32 embeddings; the migration runner maps a driver's
 `no such module: vec0` into `MigrateError::MissingExtension`.
 **Drivers:** schema / DDL / diff / macro on every lane; the missing-extension
 path is proven against real in-memory libsql (which has no `sqlite-vec`);
-`Value::vector` round-trips through a real rusqlite BLOB column. Executing
-`vec0` DDL itself needs the extension registered on the connection before
-`run_migrate` (issue #12) — this workspace does not link it.
+`Value::vector` round-trips through a real rusqlite BLOB column. Live `vec0`
+DDL (and KNN) runs on the rusqlite-connection lane with
+`--features rusqlite,sqlite-vec` via `from_connection` — see
+[vec0 KNN](vec0-knn.md).
 **Reading one:** this page declares the index; [vec0 KNN](vec0-knn.md)
 searches it with `MATCH`, the hidden `k` column, and synthesised `distance`.
 **Spec:** [vec0 virtual tables](../toolu/specs/2026-09-07-vec0-virtual-tables-design.md),
@@ -58,6 +59,7 @@ cargo nextest run -p toolu-orm-core -E 'binary(vec0_table_test) + binary(vec0_va
 cargo nextest run -p toolu-orm-macros -E 'binary(vec0_macro_test)'
 cargo nextest run -p toolu-orm-cli -E 'binary(vec0_loop_sqlite_test)'
 cargo nextest run -p toolu-orm-connection --features rusqlite -E 'binary(vec0_value_rusqlite_test)'
+cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec -E 'binary(vec0_sqlite_vec_live_test)'
 ```
 
 ## Tests
@@ -95,3 +97,6 @@ cargo nextest run -p toolu-orm-connection --features rusqlite -E 'binary(vec0_va
 | default | vec0_loop_sqlite_test | a_driver_message_without_a_module_name_stays_database |
 | rusqlite-only | vec0_value_rusqlite_test | vector_bytes_round_trip_through_a_real_blob_column |
 | rusqlite-only | vec0_value_rusqlite_test | a_mismatched_length_is_refused_before_the_driver |
+| rusqlite-only | vec0_sqlite_vec_live_test | from_connection_keeps_sqlite_vec_so_vec0_ddl_applies |
+| rusqlite-only | vec0_sqlite_vec_live_test | knn_returns_the_nearest_seeded_row_first |
+| rusqlite-only | vec0_sqlite_vec_live_test | knn_on_an_empty_vec0_table_returns_no_rows |

@@ -73,7 +73,7 @@ cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-or
 # single-driver lanes: the executor and transaction code only compiles here
 cargo nextest run -p toolu-orm-query --features libsql
 cargo nextest run -p toolu-orm-query --features rusqlite
-cargo nextest run -p toolu-orm-connection --features rusqlite
+cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec
 
 # the four lanes above give orm-core only four of the eight driver
 # combinations; this compiles the FromRow derive against all eight

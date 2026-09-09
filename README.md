@@ -659,8 +659,8 @@ cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features libsql
 cargo clippy -p toolu-orm-query --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features rusqlite
-cargo clippy -p toolu-orm-connection --features rusqlite --all-targets -- -D warnings
-cargo nextest run -p toolu-orm-connection --features rusqlite
+cargo clippy -p toolu-orm-connection --features rusqlite,sqlite-vec --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec
 bash scripts/check-derive-matrix.sh
 bash scripts/check-scenario-docs.sh
 ```
