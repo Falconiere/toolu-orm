@@ -77,7 +77,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"
 
 # Database
 libsql = { version = "0.9", default-features = false, features = ["core", "remote", "tls"] }
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
 tokio-postgres = { version = "0.7", features = ["with-uuid-1", "with-serde_json-1"] }
 deadpool-postgres = "0.14"
 postgres-types = { version = "0.2", features = ["with-uuid-1", "with-serde_json-1"] }
