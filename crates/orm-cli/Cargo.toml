@@ -11,7 +11,7 @@ autotests = false
 [dependencies]
 toolu-orm-core = { path = "../orm-core", version = "0.4.0", default-features = false }
 toolu-orm-connection = { path = "../orm-connection", version = "0.4.0", default-features = false }
-libsql = { version = "0.9", default-features = false, features = ["core"], optional = true }
+libsql = { workspace = true, optional = true }
 rusqlite = { workspace = true, optional = true }
 tokio-postgres = { workspace = true, optional = true }
 tokio = { version = "1", features = ["full"] }
@@ -140,7 +140,7 @@ toolu-orm-macros = { path = "../orm-macros", default-features = false }
 toolu-orm-query = { path = "../orm-query", default-features = false }
 tokio = { version = "1", features = ["full"] }
 tokio-postgres = { workspace = true }
-libsql = { version = "0.9", default-features = false, features = ["core"] }
+libsql = { workspace = true }
 
 [lints]
 workspace = true

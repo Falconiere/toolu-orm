@@ -14,7 +14,7 @@ thiserror.workspace = true
 tracing.workspace = true
 tokio = { workspace = true, features = ["macros", "rt", "time"] }
 
-libsql = { version = "0.9", default-features = false, features = ["core", "remote", "replication", "sync", "tls"], optional = true }
+libsql = { workspace = true, optional = true, features = ["remote", "replication", "sync", "tls"] }
 rusqlite = { workspace = true, optional = true }
 tokio-postgres = { workspace = true, optional = true }
 deadpool-postgres = { workspace = true, optional = true }
@@ -43,7 +43,7 @@ sqlite-vec = ["dep:toolu-orm-sqlite-vec-register"]
 
 [dev-dependencies]
 tokio-postgres = { workspace = true }
-libsql = { workspace = true, default-features = false, features = ["core"] }
+libsql = { workspace = true }
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
 
 [lints]
