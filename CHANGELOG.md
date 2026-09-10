@@ -10,6 +10,109 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## `toolu-orm-cli` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
 
 ### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+
+### Fixed
+- *(core)* [**breaking**] mark public schema/error enums non_exhaustive ([#50](https://github.com/Falconiere/toolu-orm/pull/50))
+
+### Other
+- release v0.3.0 ([#51](https://github.com/Falconiere/toolu-orm/pull/51))
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.2.0...toolu-orm-v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+
+### Other
+- release v0.3.0 ([#51](https://github.com/Falconiere/toolu-orm/pull/51))
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm-query` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-query-v0.2.0...toolu-orm-query-v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(core)* add Postgres pgvector distance query surface ([#48](https://github.com/Falconiere/toolu-orm/pull/48))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(core)* add Postgres FTS @@ / ts_rank query surface ([#45](https://github.com/Falconiere/toolu-orm/pull/45))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(query)* add vec0 KNN form (MATCH + k + distance) ([#36](https://github.com/Falconiere/toolu-orm/pull/36))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+- *(core)* add FTS5 MATCH and bm25 query surface ([#34](https://github.com/Falconiere/toolu-orm/pull/34))
+
+### Fixed
+- *(release)* publish toolu-orm-sqlite-vec-register so orm-connection can publish ([#54](https://github.com/Falconiere/toolu-orm/pull/54))
+
+### Other
+- release v0.3.0 ([#51](https://github.com/Falconiere/toolu-orm/pull/51))
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm-macros` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-macros-v0.2.0...toolu-orm-macros-v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+
+### Other
+- release v0.3.0 ([#51](https://github.com/Falconiere/toolu-orm/pull/51))
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm-connection` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.2.0...toolu-orm-connection-v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+
+### Fixed
+- *(release)* publish toolu-orm-sqlite-vec-register so orm-connection can publish ([#54](https://github.com/Falconiere/toolu-orm/pull/54))
+
+### Other
+- release v0.3.0 ([#51](https://github.com/Falconiere/toolu-orm/pull/51))
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm-sqlite-vec-register` - [0.3.0](https://github.com/Falconiere/toolu-orm/releases/tag/toolu-orm-sqlite-vec-register-v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+- *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
+- *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
+- *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
+- *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
+- add the toolu-orm facade crate
+- extract toolu-orm from yamless-orm
+
+### Fixed
+- *(release)* publish toolu-orm-sqlite-vec-register so orm-connection can publish ([#54](https://github.com/Falconiere/toolu-orm/pull/54))
+- *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
+- *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
+- *(ci)* keep the Pages scopes out of the pull-request build
+
+### Other
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+- link the facade macro-path caveat to issue #15
+- put the README quickstart on the facade it now installs
+- correct the facade install section in the README
+- fix the README quickstart and the FromRow/Executor description
+- mdBook documentation site with GitHub Pages deploy
+- scenario pages and testing guide
+- rewrite README as a full project guide
+
+## `toolu-orm-cli` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
+
+### Added
 - *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
 - *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
 - *(cli)* map a driver's `no such module: …` into `MigrateError::MissingExtension` ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
