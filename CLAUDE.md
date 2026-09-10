@@ -24,6 +24,9 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Every `[[test]]` target with `required-features` must have a CI lane that satisfies it (see Quality gate). Verify with `cargo nextest list` per lane, not by counting `#[test]`.
 - Every test scenario has a page in `docs/scenarios/` with a `## Tests` table naming its tests. `scripts/check-scenario-docs.sh` fails when a listed test is missing or a test in a scenario binary is undocumented, so a new or renamed test means a doc update in the same change.
 
+## Releases
+- release-plz opens the release PR on push to main and publishes only when a release PR merges (`release_always = false`; the merged PR's head branch must start with `release-plz-`). A CI or publish fix that has to trigger the release itself must use a `release-plz-*` branch.
+
 ## Migrations
 - Multi-statement migration files use the `--> statement-breakpoint` separator.
 - Snapshots are JSON-serialized schema state used for diffing.

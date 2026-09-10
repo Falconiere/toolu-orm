@@ -8,6 +8,12 @@
 changelog_path = "./CHANGELOG.md"
 git_tag_enable = false
 git_release_enable = false
+# Publish and tag only when the merged PR is a release PR (head branch starts
+# with `release-plz-`), never on an arbitrary commit that happens to carry a
+# version bump. A CI/publish fix that must trigger the release itself (as #54
+# did after the 0.3.0 publish died mid-chain) needs a `release-plz-*` branch.
+# The release job needs `pull-requests: read` to look up the commit's PR.
+release_always = false
 
 # Tag/release hang off orm-cli: it sits at the end of a dependency chain
 # (core + connection), so the tag lands after those are on the registry.
