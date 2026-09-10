@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
-description = "Process-wide sqlite-vec auto-extension registration for toolu-orm live tests"
+readme.workspace = true
+description = "Process-wide sqlite-vec auto-extension registration for toolu-orm rusqlite connections"
 
 [dependencies]
 rusqlite = { workspace = true }
