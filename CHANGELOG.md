@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/Falconiere/toolu-orm/compare/v0.3.0...v0.4.0) - 2026-09-10
+
+### `toolu-orm-cli`
+
+#### Other
+- update Cargo.toml dependencies
+
+### `toolu-orm-query`
+
+#### Fixed
+- *(core,query)* [**breaking**] bump rusqlite to 0.40 and route both crates through the workspace pin
+
+### `toolu-orm-macros`
+
+#### Other
+- update Cargo.toml dependencies
+
+### `toolu-orm-connection`
+
+#### Other
+- update Cargo.toml dependencies
+
+### `toolu-orm-sqlite-vec-register`
+
+#### Other
+- update Cargo.toml dependencies
+
+### `toolu-orm-core`
+
+#### Fixed
+- *(core,query)* [**breaking**] bump rusqlite to 0.40 and route both crates through the workspace pin
+
 ## [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
 
 ### `toolu-orm-cli`
