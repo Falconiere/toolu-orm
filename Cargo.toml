@@ -76,6 +76,11 @@ rust_2018_idioms = { level = "warn", priority = -1 }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "process", "net", "io-util", "fs", "signal"] }
 
 # Database
+# `core` is the common minimum every member needs. Members add on top: a member
+# may name features absent here (they are unioned, never replaced), so keeping
+# this narrow stops orm-core, orm-query and orm-cli from shipping the remote
+# client and TLS stack to a downstream consumer that only wants a local DB.
+# orm-connection adds remote/replication/sync/tls for `Builder::new_synced_database`.
 libsql = { version = "0.9", default-features = false, features = ["core"] }
 rusqlite = { version = "0.40", features = ["bundled"] }
 tokio-postgres = { version = "0.7", features = ["with-uuid-1", "with-serde_json-1"] }
