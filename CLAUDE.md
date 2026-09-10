@@ -3,7 +3,7 @@
 Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc macros, drivers for libsql, rusqlite, and Postgres.
 
 ## Workspace
-- Virtual workspace; seven crates under `crates/`: orm-core, orm-macros, orm-query, orm-connection, orm-cli, orm (the `toolu-orm` facade), and orm-facade-consumer.
+- Virtual workspace; eight crates under `crates/`: orm-core, orm-macros, orm-query, orm-connection, orm-cli, orm (the `toolu-orm` facade), orm-facade-consumer, and `toolu-orm-sqlite-vec-register` (nested in `crates/orm-connection/`). The register crate owns the one `unsafe` call that registers sqlite-vec; it is published because orm-connection and orm-query depend on it behind their `sqlite-vec` feature, and `cargo publish` rejects any path-only dependency, optional or not.
 - orm-core is the foundation; every other crate depends on it. orm-cli also depends on orm-connection.
 - orm-macros is a proc-macro crate and can only export proc macros.
 - orm (`toolu-orm`) is a facade: only re-exports, no logic.
