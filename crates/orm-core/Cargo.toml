@@ -10,7 +10,7 @@ links = "toolu_orm_core"
 
 [dependencies]
 libsql = { version = "0.9", default-features = false, features = ["core"], optional = true }
-rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
+rusqlite = { workspace = true, optional = true }
 tokio-postgres = { version = "0.7", optional = true }
 postgres-types = { version = "0.2", optional = true, features = ["with-serde_json-1", "with-uuid-1"] }
 bytes = { version = "1", optional = true }
