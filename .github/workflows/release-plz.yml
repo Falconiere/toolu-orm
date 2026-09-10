@@ -2,10 +2,18 @@
 #
 #   release-plz-pr      — on push to main, opens/updates the release PR
 #                         (version bump + CHANGELOG.md).
-#   release-plz-release — on push to main, publishes every crate whose
+#   release-plz-release — on push to main, when that push merged a release PR
+#                         (head branch `release-plz-*`, see `release_always`
+#                         in release-plz.toml), publishes every crate whose
 #                         Cargo.toml version is not yet on crates.io, then
 #                         tags vX.Y.Z and creates the GitHub Release.
-#                         No-op when everything is already published.
+#                         No-op otherwise.
+#
+# The PR job `needs` the release job. They used to run in parallel: the PR job
+# read crates.io before the publish landed, decided the just-merged version was
+# still unreleased, and opened a duplicate release PR (#55). A failed publish
+# now also skips the PR job on purpose: a release PR opened on top of a
+# half-published version is a stale duplicate (#53), not a recovery.
 #
 # Uses the default GITHUB_TOKEN, so the release PR does not trigger the CI
 # workflow (GitHub suppresses runs for events raised by GITHUB_TOKEN). The PR
@@ -27,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,6 +52,7 @@ jobs:
 
   release-plz-pr:
     name: Release-plz PR
+    needs: release-plz-release
     runs-on: ubuntu-latest
     permissions:
       contents: write
