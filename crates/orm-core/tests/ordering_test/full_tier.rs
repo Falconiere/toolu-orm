@@ -113,10 +113,10 @@ fn full_ordering_13_tiers() {
       Operation::AlterEnum { .. } => 13,
       // `Operation` is `#[non_exhaustive]`; new variants get their own tier test.
       other => {
-        let detail = format!("{other:?}");
-        assert!(
-          detail.is_empty(),
-          "unexpected Operation variant in ordering fixture: {detail}"
+        assert_eq!(
+          Some(other),
+          None::<&Operation>,
+          "unexpected Operation variant in ordering fixture: {other:?}"
         );
         0
       },
