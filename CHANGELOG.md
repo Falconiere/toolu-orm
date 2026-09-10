@@ -7,19 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- *(core)* mark public schema/error enums `#[non_exhaustive]` (`DbCoreError`, `Operation`, `ColumnChange`, `ColumnType`, `VectorElement`, `TableKind`) so future variants stay minor bumps for downstream matchers
-- *(cli)* mark `MigrateError` `#[non_exhaustive]` for the same reason
+## `toolu-orm-cli` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
+
+### Added
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(cli)* map a driver's `no such module: …` into `MigrateError::MissingExtension` ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+
+### Fixed
+- *(cli)* [**breaking**] mark `MigrateError` non_exhaustive ([#50](https://github.com/Falconiere/toolu-orm/pull/50))
+
+### Breaking
+- *(cli)* added `MigrateError::MissingExtension`
+
+## `toolu-orm` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(cli)* embedded mark_applied / get_status ([#43](https://github.com/Falconiere/toolu-orm/pull/43))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+
+### Other
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm-query` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* add Postgres pgvector distance query surface ([#48](https://github.com/Falconiere/toolu-orm/pull/48))
+- *(cli,query)* blocking migrate/status and RusqliteConnection Executor ([#47](https://github.com/Falconiere/toolu-orm/pull/47))
+- *(core)* add Postgres FTS @@ / ts_rank query surface ([#45](https://github.com/Falconiere/toolu-orm/pull/45))
+- *(query)* add vec0 KNN form (MATCH + k + distance) ([#36](https://github.com/Falconiere/toolu-orm/pull/36))
+- *(core)* add FTS5 MATCH and bm25 query surface ([#34](https://github.com/Falconiere/toolu-orm/pull/34))
+
+### Other
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm-macros` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+
+## `toolu-orm-connection` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
+
+### Other
+- *(connection)* live sqlite-vec vec0 DDL and KNN ([#44](https://github.com/Falconiere/toolu-orm/pull/44))
+
+## `toolu-orm-core` - [0.3.0](https://github.com/Falconiere/toolu-orm/compare/v0.2.0...v0.3.0) - 2026-09-10
+
+### Added
+- *(core)* rebuild FTS5 from external content on shape change ([#49](https://github.com/Falconiere/toolu-orm/pull/49))
+- *(core)* add Postgres pgvector distance query surface ([#48](https://github.com/Falconiere/toolu-orm/pull/48))
+- *(core)* add Postgres FTS @@ / ts_rank query surface ([#45](https://github.com/Falconiere/toolu-orm/pull/45))
+- *(core)* model sqlite-vec vec0 virtual tables and Vector columns ([#35](https://github.com/Falconiere/toolu-orm/pull/35))
+- *(core)* add FTS5 MATCH and bm25 query surface ([#34](https://github.com/Falconiere/toolu-orm/pull/34))
+
+### Fixed
+- *(core)* [**breaking**] mark public schema/error enums non_exhaustive (`DbCoreError`, `Operation`, `ColumnChange`, `ColumnType`, `VectorElement`, `TableKind`) ([#50](https://github.com/Falconiere/toolu-orm/pull/50))
 
 ### Breaking
 - *(core)* added `Operation::RecreateFts5FromContent`, `ColumnType::Vector`, and several `DbCoreError` variants (downstream exhaustive matches must add arms or a wildcard)
-- *(cli)* added `MigrateError::MissingExtension`
-
-### Added
-- *(core)* Postgres pgvector distance operators (`<->` / `<=>` / `<#>`) with `ORDER BY … LIMIT k`
-- *(core)* rebuild FTS5 virtual tables from external `content=` on shape changes (drop + recreate + `rebuild`); refuse elsewhere with guidance
-- *(core)* model sqlite-vec `vec0` virtual tables, `ColumnType::Vector`, `#[vec0_table]`, and `Value::vector`
-- *(cli)* map a driver's `no such module: …` into `MigrateError::MissingExtension`
 
 ## `toolu-orm-cli` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/v0.1.2...v0.2.0) - 2026-09-08
 
