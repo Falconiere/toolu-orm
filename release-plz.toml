@@ -37,11 +37,20 @@ git_tag_enable = true
 git_release_enable = true
 
 [changelog]
+# One `## [x.y.z]` heading per release, written by the last package in
+# publish order (toolu-orm-cli, whose tag is the release), with every crate's
+# changes as `###` subsections beneath it. release-plz reads the GitHub
+# Release body from the topmost `## <version>` section of CHANGELOG.md
+# (parse-changelog only recognises headings that start with the version), so
+# a per-crate "## `crate` - [x.y.z]" heading leaves the release body empty
+# and any crate ordered after orm-cli would fall outside the section.
 body = """
-
-## `{{ package }}` - [{{ version }}]{%- if release_link -%}({{ release_link }}){% endif %} - {{ timestamp | date(format="%Y-%m-%d") }}
+{%- if package == "toolu-orm-cli" %}
+## [{{ version }}]{%- if release_link -%}({{ release_link }}){% endif %} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% endif %}
+### `{{ package }}`
 {% for group, commits in commits | group_by(attribute="group") %}
-### {{ group | upper_first }}
+#### {{ group | upper_first }}
 {% for commit in commits %}
 {%- if commit.scope -%}
 - *({{commit.scope}})* {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message }}
