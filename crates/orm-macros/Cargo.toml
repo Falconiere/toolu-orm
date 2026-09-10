@@ -24,7 +24,7 @@ serde_json = "1"
 toolu-orm-core = { path = "../orm-core", default-features = false }
 toolu-orm-query = { path = "../orm-query", default-features = false }
 tokio-postgres = { workspace = true }
-libsql = { workspace = true, default-features = false, features = ["core"] }
+libsql = { workspace = true }
 rusqlite.workspace = true
 trybuild = "1"
 
