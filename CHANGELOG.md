@@ -70,80 +70,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Breaking
 - *(core)* added `Operation::RecreateFts5FromContent`, `ColumnType::Vector`, and several `DbCoreError` variants (downstream exhaustive matches must add arms or a wildcard)
 
-## `toolu-orm-cli` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/v0.1.2...v0.2.0) - 2026-09-08
+## [0.2.0](https://github.com/Falconiere/toolu-orm/compare/v0.1.2...v0.2.0) - 2026-09-08
 
-### Added
+### `toolu-orm-cli`
+
+#### Added
 - *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
 - *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
 - *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
 - *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
 
-### Fixed
+#### Fixed
 - *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
 - *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
 
-## `toolu-orm` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.1.2...toolu-orm-v0.2.0) - 2026-09-08
+### `toolu-orm`
 
-### Added
+#### Added
 - *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
 - *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
 - *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
 - *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
 
-### Fixed
+#### Fixed
 - *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
 - *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
 
-## `toolu-orm-query` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-query-v0.1.2...toolu-orm-query-v0.2.0) - 2026-09-08
+### `toolu-orm-query`
 
-### Added
+#### Added
 - *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
 - *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
 - *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
 - *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
 
-### Fixed
+#### Fixed
 - *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
 - *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
 
-## `toolu-orm-macros` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-macros-v0.1.2...toolu-orm-macros-v0.2.0) - 2026-09-08
+### `toolu-orm-macros`
 
-### Added
+#### Added
 - *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
 - *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
 - *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
 - *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
 
-### Fixed
+#### Fixed
 - *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
 - *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
 
-## `toolu-orm-connection` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.1.2...toolu-orm-connection-v0.2.0) - 2026-09-08
+### `toolu-orm-connection`
 
-### Added
+#### Added
 - *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
 - *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
 - *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
 - *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
 - *(connection)* adopt a pre-configured rusqlite connection ([#24](https://github.com/Falconiere/toolu-orm/pull/24))
 
-### Fixed
+#### Fixed
 - *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
 - *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
 
-## `toolu-orm-core` - [0.2.0](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-core-v0.1.2...toolu-orm-core-v0.2.0) - 2026-09-08
+### `toolu-orm-core`
 
-### Added
+#### Added
 - *(core)* model virtual tables with TableKind and FTS5 builders ([#28](https://github.com/Falconiere/toolu-orm/pull/28))
 - *(connection)* add a blocking DbConnection trait for rusqlite ([#29](https://github.com/Falconiere/toolu-orm/pull/29))
 - *(cli)* apply migrations embedded in the binary with include_str! ([#30](https://github.com/Falconiere/toolu-orm/pull/30))
 - *(cli)* baseline an existing database with mark_applied ([#25](https://github.com/Falconiere/toolu-orm/pull/25))
 
-### Fixed
+#### Fixed
 - *(macros)* make #[derive(FromRow)] follow the active driver set ([#31](https://github.com/Falconiere/toolu-orm/pull/31))
 - *(macros)* emit absolute, consumer-resolved crate paths ([#26](https://github.com/Falconiere/toolu-orm/pull/26))
 
-### Added
+#### Added
 - *(orm-cli)* `migrate::run_migrate_embedded` applies migrations from a
   compile-time `&[EmbeddedMigration]` — SQL baked in with `include_str!` —
   so a single-binary distribution needs no migrations directory on the target
@@ -168,7 +170,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unreachable from the gate; a typo in one would have shipped silently
   ([#17](https://github.com/Falconiere/toolu-orm/issues/17)).
 
-### Fixed
+#### Fixed
 - *(macros)* `#[derive(FromRow)]` expands to the trait shape `toolu-orm-core`
   actually compiled, so it works on every driver combination — including all
   three single-driver builds, which previously failed to compile and forced a
@@ -194,7 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   option precedes it, so `#[serde(crate = "…", rename_all = "…")]` renames
   variants as written.
 
-### Changed
+#### Changed
 - `toolu_orm::prelude` is now a convenience rather than a requirement; it keeps
   exporting the macros, `toolu_orm_core`, `toolu_orm_query` and the active
   driver crate. The README and the docs site no longer ask facade users to add
@@ -202,124 +204,130 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#15]: https://github.com/Falconiere/toolu-orm/issues/15
 
-## `toolu-orm-cli` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/v0.1.1...v0.1.2) - 2026-09-07
+## [0.1.2](https://github.com/Falconiere/toolu-orm/compare/v0.1.1...v0.1.2) - 2026-09-07
 
-### Fixed
+### `toolu-orm-cli`
+
+#### Fixed
 - *(ci)* keep the Pages scopes out of the pull-request build
 
-### Other
+#### Other
 - link the facade macro-path caveat to issue #15
 - put the README quickstart on the facade it now installs
 - correct the facade install section in the README
 - fix the README quickstart and the FromRow/Executor description
 - mdBook documentation site with GitHub Pages deploy
 
-## `toolu-orm` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.1.1...toolu-orm-v0.1.2) - 2026-09-07
+### `toolu-orm`
 
-### Fixed
+#### Fixed
 - *(ci)* keep the Pages scopes out of the pull-request build
 
-### Other
+#### Other
 - link the facade macro-path caveat to issue #15
 - put the README quickstart on the facade it now installs
 - correct the facade install section in the README
 - fix the README quickstart and the FromRow/Executor description
 - mdBook documentation site with GitHub Pages deploy
 
-## `toolu-orm-query` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-query-v0.1.1...toolu-orm-query-v0.1.2) - 2026-09-07
+### `toolu-orm-query`
 
-### Fixed
+#### Fixed
 - *(ci)* keep the Pages scopes out of the pull-request build
 
-### Other
+#### Other
 - link the facade macro-path caveat to issue #15
 - put the README quickstart on the facade it now installs
 - correct the facade install section in the README
 - fix the README quickstart and the FromRow/Executor description
 - mdBook documentation site with GitHub Pages deploy
 
-## `toolu-orm-macros` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-macros-v0.1.1...toolu-orm-macros-v0.1.2) - 2026-09-07
+### `toolu-orm-macros`
 
-### Fixed
+#### Fixed
 - *(ci)* keep the Pages scopes out of the pull-request build
 
-### Other
+#### Other
 - link the facade macro-path caveat to issue #15
 - put the README quickstart on the facade it now installs
 - correct the facade install section in the README
 - fix the README quickstart and the FromRow/Executor description
 - mdBook documentation site with GitHub Pages deploy
 
-## `toolu-orm-connection` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.1.1...toolu-orm-connection-v0.1.2) - 2026-09-07
+### `toolu-orm-connection`
 
-### Fixed
+#### Fixed
 - *(ci)* keep the Pages scopes out of the pull-request build
 
-### Other
+#### Other
 - link the facade macro-path caveat to issue #15
 - put the README quickstart on the facade it now installs
 - correct the facade install section in the README
 - fix the README quickstart and the FromRow/Executor description
 - mdBook documentation site with GitHub Pages deploy
 
-## `toolu-orm-core` - [0.1.2](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-core-v0.1.1...toolu-orm-core-v0.1.2) - 2026-09-07
+### `toolu-orm-core`
 
-### Fixed
+#### Fixed
 - *(ci)* keep the Pages scopes out of the pull-request build
 
-### Other
+#### Other
 - link the facade macro-path caveat to issue #15
 - put the README quickstart on the facade it now installs
 - correct the facade install section in the README
 - fix the README quickstart and the FromRow/Executor description
 - mdBook documentation site with GitHub Pages deploy
 
-## `toolu-orm-cli` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/v0.1.0...v0.1.1) - 2026-09-07
+## [0.1.1](https://github.com/Falconiere/toolu-orm/compare/v0.1.0...v0.1.1) - 2026-09-07
 
-### Added
+### `toolu-orm-cli`
+
+#### Added
 - add the toolu-orm facade crate
 
-## `toolu-orm` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-v0.1.0...toolu-orm-v0.1.1) - 2026-09-07
+### `toolu-orm`
 
-### Added
+#### Added
 - add the toolu-orm facade crate
 - extract toolu-orm from yamless-orm
 
-### Other
+#### Other
 - *(orm)* apply rustfmt to the facade crate
 - scenario pages and testing guide
 - rewrite README as a full project guide
 
-## `toolu-orm-query` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-query-v0.1.0...toolu-orm-query-v0.1.1) - 2026-09-07
+### `toolu-orm-query`
 
-### Added
+#### Added
 - add the toolu-orm facade crate
 
-## `toolu-orm-macros` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-macros-v0.1.0...toolu-orm-macros-v0.1.1) - 2026-09-07
+### `toolu-orm-macros`
 
-### Added
+#### Added
 - add the toolu-orm facade crate
 
-## `toolu-orm-connection` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-connection-v0.1.0...toolu-orm-connection-v0.1.1) - 2026-09-07
+### `toolu-orm-connection`
 
-### Added
+#### Added
 - add the toolu-orm facade crate
 
-## `toolu-orm-core` - [0.1.1](https://github.com/Falconiere/toolu-orm/compare/toolu-orm-core-v0.1.0...toolu-orm-core-v0.1.1) - 2026-09-07
+### `toolu-orm-core`
 
-### Added
+#### Added
 - add the toolu-orm facade crate
 
-## `toolu-orm-cli` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
+## [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
 
-### Added
+### `toolu-orm-cli`
+
+#### Added
 - extract toolu-orm from yamless-orm
 
-### Fixed
+#### Fixed
 - address PR #4 review feedback and the CI docs check
 - *(cli)* skip comment-only chunks when applying a migration
 
-### Other
+#### Other
 - correct scenario pages, module docs, and the stale expr.rs reference
 - cover empty not_in on libsql and Postgres and ON DELETE CASCADE on Postgres
 - scenario pages and testing guide
@@ -327,100 +335,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rewrite README as a full project guide
 - automate crates.io releases with release-plz
 
-## `toolu-orm-connection` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
+### `toolu-orm-connection`
 
-### Added
+#### Added
 - extract toolu-orm from yamless-orm
 
-### Other
+#### Other
 - scenario pages and testing guide
 - *(connection)* rusqlite lane and live Postgres suites
 - rewrite README as a full project guide
 - automate crates.io releases with release-plz
 
-## `toolu-orm-query` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
+### `toolu-orm-query`
 
-### Added
+#### Added
 - extract toolu-orm from yamless-orm
 
-### Fixed
+#### Fixed
 - address PR #4 review feedback and the CI docs check
 
-### Other
+#### Other
 - cover empty not_in on libsql and Postgres and ON DELETE CASCADE on Postgres
 - scenario pages and testing guide
 - *(query)* revive libsql suites and add per-driver scenario suites
 - rewrite README as a full project guide
 - automate crates.io releases with release-plz
 
-## `toolu-orm-macros` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
+### `toolu-orm-macros`
 
-### Added
+#### Added
 - extract toolu-orm from yamless-orm
 
-### Other
+#### Other
 - scenario pages and testing guide
 - *(macros)* trybuild compile-fail cases
 - rewrite README as a full project guide
 - automate crates.io releases with release-plz
 
-## `toolu-orm-core` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
+### `toolu-orm-core`
 
-### Added
+#### Added
 - extract toolu-orm from yamless-orm
 
-### Fixed
+#### Fixed
 - *(core)* render empty in_list as a constant instead of IN ()
 - *(core)* render foreign keys on non-strict tables
 
-### Other
+#### Other
 - correct scenario pages, module docs, and the stale expr.rs reference
 - scenario pages and testing guide
 - *(core)* expr offsets, legacy snapshot, rename resolver
-- rewrite README as a full project guide
-- automate crates.io releases with release-plz
-
-## `toolu-orm-cli` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
-
-### Added
-- extract toolu-orm from yamless-orm
-
-### Other
-- rewrite README as a full project guide
-- automate crates.io releases with release-plz
-
-## `toolu-orm-connection` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
-
-### Added
-- extract toolu-orm from yamless-orm
-
-### Other
-- rewrite README as a full project guide
-- automate crates.io releases with release-plz
-
-## `toolu-orm-query` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
-
-### Added
-- extract toolu-orm from yamless-orm
-
-### Other
-- rewrite README as a full project guide
-- automate crates.io releases with release-plz
-
-## `toolu-orm-macros` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
-
-### Added
-- extract toolu-orm from yamless-orm
-
-### Other
-- rewrite README as a full project guide
-- automate crates.io releases with release-plz
-
-## `toolu-orm-core` - [0.1.0](https://github.com/Falconiere/toolu-orm/releases/tag/v0.1.0) - 2026-09-07
-
-### Added
-- extract toolu-orm from yamless-orm
-
-### Other
 - rewrite README as a full project guide
 - automate crates.io releases with release-plz
