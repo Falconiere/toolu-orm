@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1](https://github.com/Falconiere/toolu-orm/compare/v0.4.0...v0.4.1) - 2026-09-10
+
+### `toolu-orm-cli`
+
+#### Fixed
+- *(deps)* route every libsql pin through the workspace dependency
+
+### `toolu-orm-query`
+
+#### Fixed
+- *(deps)* route the tokio-postgres and postgres-types pins through the workspace
+- *(deps)* route every libsql pin through the workspace dependency
+
+### `toolu-orm-macros`
+
+#### Fixed
+- *(deps)* route every libsql pin through the workspace dependency
+
+### `toolu-orm-connection`
+
+#### Fixed
+- *(deps)* route every libsql pin through the workspace dependency
+
+#### Other
+- *(deps)* explain why the libsql feature set is split between root and orm-connection
+
+### `toolu-orm-core`
+
+#### Fixed
+- *(deps)* route the tokio-postgres and postgres-types pins through the workspace
+- *(deps)* route every libsql pin through the workspace dependency
+
 ## [0.4.0](https://github.com/Falconiere/toolu-orm/compare/v0.3.0...v0.4.0) - 2026-09-10
 
 ### `toolu-orm-cli`
