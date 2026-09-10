@@ -6,6 +6,7 @@ use crate::snapshot::ForeignKeyDef;
 use crate::table::TableDef;
 
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum ColumnChange {
   Type {
     column: String,
@@ -30,6 +31,7 @@ pub enum ColumnChange {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum Operation {
   CreateEnum {
     name: String,

@@ -9,6 +9,7 @@ use crate::dialect::Dialect;
 /// Fixed at creation together with the dimension: `sqlite-vec` has no way to
 /// widen or re-type a vector in place.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 #[serde(rename_all = "snake_case")]
 pub enum VectorElement {
   Float,
@@ -29,6 +30,7 @@ impl VectorElement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum ColumnType {
   // Core SQLite
   Text,

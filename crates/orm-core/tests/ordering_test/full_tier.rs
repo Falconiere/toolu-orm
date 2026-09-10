@@ -111,6 +111,15 @@ fn full_ordering_13_tiers() {
       Operation::DropTable { .. } => 11,
       Operation::DropEnum { .. } => 12,
       Operation::AlterEnum { .. } => 13,
+      // `Operation` is `#[non_exhaustive]`; new variants get their own tier test.
+      other => {
+        assert_eq!(
+          Some(other),
+          None::<&Operation>,
+          "unexpected Operation variant in ordering fixture: {other:?}"
+        );
+        0
+      },
     }
   };
 

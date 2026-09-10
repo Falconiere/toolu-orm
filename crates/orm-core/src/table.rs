@@ -11,6 +11,7 @@ use crate::index::IndexDef;
 /// inside the module parentheses, so the schema layer stays module-agnostic
 /// and each module gets its own builder (see [`crate::fts5`]).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 #[serde(rename_all = "snake_case")]
 pub enum TableKind {
   #[default]
