@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- *(core)* mark public schema/error enums `#[non_exhaustive]` (`DbCoreError`, `Operation`, `ColumnChange`, `ColumnType`, `VectorElement`, `TableKind`) so future variants stay minor bumps for downstream matchers
+- *(cli)* mark `MigrateError` `#[non_exhaustive]` for the same reason
+
+### Breaking
+- *(core)* added `Operation::RecreateFts5FromContent`, `ColumnType::Vector`, and several `DbCoreError` variants (downstream exhaustive matches must add arms or a wildcard)
+- *(cli)* added `MigrateError::MissingExtension`
+
 ### Added
 - *(core)* Postgres pgvector distance operators (`<->` / `<=>` / `<#>`) with `ORDER BY … LIMIT k`
 - *(core)* rebuild FTS5 virtual tables from external `content=` on shape changes (drop + recreate + `rebuild`); refuse elsewhere with guidance

@@ -4,6 +4,7 @@ use thiserror::Error;
 use toolu_orm_connection::DbError;
 
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum MigrateError {
   #[error("database error: {0}")]
   Database(String),

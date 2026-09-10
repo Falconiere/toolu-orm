@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum DbCoreError {
   #[error("failed to read snapshot: {0}")]
   SnapshotRead(String),
