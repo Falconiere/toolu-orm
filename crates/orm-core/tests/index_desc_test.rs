@@ -43,6 +43,7 @@ fn create_index_sql_renders_desc_suffix() {
       name: "idx_eval_runs_at".to_owned(),
       columns: vec![IndexColumn::desc("at")],
       unique: false,
+      where_clause: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -65,6 +66,7 @@ fn create_index_sql_keeps_ascending_without_desc() {
       name: "idx_eval_runs_at".to_owned(),
       columns: vec![IndexColumn::new("at")],
       unique: false,
+      where_clause: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -93,6 +95,7 @@ fn index_column_roundtrips_desc_object() -> Result<(), Box<dyn std::error::Error
     name: "idx_eval_runs_at".to_owned(),
     columns: vec![IndexColumn::desc("at"), IndexColumn::new("id")],
     unique: false,
+    where_clause: None,
   };
   let json = serde_json::to_string(&index)?;
   assert!(json.contains(r#""desc":true"#), "got: {json}");
@@ -112,12 +115,14 @@ fn diff_direction_change_is_drop_then_create() -> Result<(), Box<dyn std::error:
       name: "idx_eval_runs_at".to_owned(),
       columns: vec![IndexColumn::new("at")],
       unique: false,
+      where_clause: None,
     },
   )]));
   let new_reg = SchemaRegistry::from_tables(vec![table_with_index(IndexDef {
     name: "idx_eval_runs_at".to_owned(),
     columns: vec![IndexColumn::desc("at")],
     unique: false,
+    where_clause: None,
   })]);
   let ops = diff(&old, &new_reg)?;
   assert!(

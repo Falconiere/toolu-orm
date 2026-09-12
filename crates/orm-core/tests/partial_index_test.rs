@@ -4,7 +4,7 @@
 use toolu_orm_core::column::{ColumnDef, ColumnType};
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::diff::{diff, Operation};
-use toolu_orm_core::index::IndexDef;
+use toolu_orm_core::index::{IndexColumn, IndexDef};
 use toolu_orm_core::schema::SchemaRegistry;
 use toolu_orm_core::snapshot::Snapshot;
 use toolu_orm_core::sql::generate_sql_for;
@@ -43,7 +43,7 @@ fn table_with_index(index: IndexDef) -> TableDef {
 fn partial_index() -> IndexDef {
   IndexDef {
     name: "idx_memories_repo".to_owned(),
-    columns: vec!["repo".to_owned()],
+    columns: vec![IndexColumn::new("repo")],
     unique: false,
     where_clause: Some("deleted_at IS NULL".to_owned()),
   }
@@ -72,7 +72,7 @@ fn create_unique_index_sql_appends_where_predicate() {
     table: "memories".to_owned(),
     index: IndexDef {
       name: "idx_memories_repo_unique".to_owned(),
-      columns: vec!["repo".to_owned()],
+      columns: vec![IndexColumn::new("repo")],
       unique: true,
       where_clause: Some("deleted_at IS NULL".to_owned()),
     },
@@ -95,13 +95,13 @@ fn legacy_index_json_without_where_clause_deserializes() -> Result<(), Box<dyn s
   }"#;
   let index: IndexDef = serde_json::from_str(json)?;
   assert_eq!(index.name, "idx_email");
-  assert_eq!(index.columns, vec!["email"]);
+  assert_eq!(index.columns, vec![IndexColumn::new("email")]);
   assert!(index.unique);
   assert_eq!(index.where_clause, None);
 
   let with_none = IndexDef {
     name: "idx_email".to_owned(),
-    columns: vec!["email".to_owned()],
+    columns: vec![IndexColumn::new("email")],
     unique: true,
     where_clause: None,
   };
