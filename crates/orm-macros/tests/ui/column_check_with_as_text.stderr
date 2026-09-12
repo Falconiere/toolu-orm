@@ -1,0 +1,5 @@
+error: cannot combine check = "..." with as_text; pick one source of truth for the column CHECK
+  --> tests/ui/column_check_with_as_text.rs:14:21
+   |
+14 |   #[column(as_text, check = "kind IN ('decision','bug')")]
+   |                     ^^^^^

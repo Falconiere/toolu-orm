@@ -36,5 +36,6 @@ test, update its page.
 | [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |
 | [Renames](renames.md) | A `RenameResolver` turns drop+create into `RENAME TABLE` / `RENAME COLUMN`. |
 | [Macro compile errors](macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |
+| [Column CHECK attribute](column-check.md) | `#[column(check = "...")]` sets `ColumnDef.check`; SQL and snapshot use the existing path. |
 | [Facade crate](facade.md) | `toolu-orm` re-exports the stack; `#[table]` and the builders work with it as the only dependency. |
 | [Lanes and revived suites](lanes.md) | Which CI lane compiles which suite, and the executor/transaction suites brought back from bit-rot. |

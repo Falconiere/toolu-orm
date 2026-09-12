@@ -59,19 +59,27 @@ fn column_def_tokens(core: &TokenStream, col: &ColumnInput) -> TokenStream {
   } else {
     map_type(core, &col.type_spec, &col.original_type)
   };
-  let (col_type, check_expr) = match mapped {
-    MappedColumn::Marker(tokens) => (tokens, quote! { None }),
+  let (col_type, enum_check) = match mapped {
+    MappedColumn::Marker(tokens) => (tokens, None),
     MappedColumn::Enum { type_path } => {
       let col_name = &col.field_name;
       (
         column_type_tokens(core, "Text"),
-        quote! {{
+        Some(quote! {{
           let variants = <#type_path as #core::column::EnumSchema>::variants();
           let values: Vec<String> = variants.iter().map(|v| format!("'{v}'")).collect();
           Some(format!(r#"CHECK("{}" IN ({}))"#, #col_name, values.join(", ")))
-        }},
+        }}),
       )
     },
+  };
+  let check_expr = if let Some(body) = &col.check {
+    let wrapped = format!("CHECK ({body})");
+    quote! { Some(#wrapped.to_owned()) }
+  } else if let Some(tokens) = enum_check {
+    tokens
+  } else {
+    quote! { None }
   };
   let pk = col.flags.primary_key();
   let nn = col.flags.not_null();

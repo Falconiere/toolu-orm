@@ -35,6 +35,8 @@ pub struct ColumnInput {
   pub references: Option<String>,
   pub on_delete: Option<String>,
   pub on_update: Option<String>,
+  /// Raw CHECK body from `#[column(check = "...")]`, without the `CHECK (...)` wrapper.
+  pub check: Option<String>,
   /// Read only by `#[vec0_table]`; empty for every other column.
   pub vec0: Vec0ColumnInput,
 }
@@ -63,6 +65,7 @@ pub fn parse_struct(item: &ItemStruct) -> Result<Vec<ColumnInput>> {
       references: col_attrs.references,
       on_delete: col_attrs.on_delete,
       on_update: col_attrs.on_update,
+      check: col_attrs.check,
       vec0: col_attrs.vec0,
     });
   }
@@ -76,6 +79,7 @@ struct ColumnAttrs {
   references: Option<String>,
   on_delete: Option<String>,
   on_update: Option<String>,
+  check: Option<String>,
   vec0: Vec0ColumnInput,
 }
 
@@ -87,6 +91,7 @@ fn parse_column_attrs(attrs: &[Attribute]) -> Result<ColumnAttrs> {
     references: None,
     on_delete: None,
     on_update: None,
+    check: None,
     vec0: Vec0ColumnInput::default(),
   };
 
@@ -94,61 +99,98 @@ fn parse_column_attrs(attrs: &[Attribute]) -> Result<ColumnAttrs> {
     if !attr.path().is_ident("column") {
       continue;
     }
-    attr.parse_nested_meta(|meta| {
-      if meta.path.is_ident("as_text") {
-        result.flags.set_as_text();
-      } else if meta.path.is_ident("column_type") {
-        let value = meta.value()?;
-        let expr: syn::Expr = value.parse()?;
-        if let syn::Expr::Lit(expr_lit) = expr {
-          if let Lit::Str(s) = expr_lit.lit {
-            result.column_type = Some(s.value());
-          }
-        } else if let syn::Expr::Path(expr_path) = expr {
-          if let Some(segment) = expr_path.path.segments.last() {
-            result.column_type = Some(segment.ident.to_string());
-          }
-        }
-      } else if meta.path.is_ident("primary_key") {
-        result.flags.set_primary_key();
-      } else if meta.path.is_ident("not_null") {
-        result.flags.set_not_null();
-      } else if meta.path.is_ident("unique") {
-        result.flags.set_unique();
-      } else if meta.path.is_ident("unindexed") {
-        result.flags.set_unindexed();
-      } else if meta.path.is_ident("default") {
-        let value = meta.value()?;
-        let lit: Lit = value.parse()?;
-        if let Lit::Str(s) = lit {
-          result.default = Some(s.value());
-        }
-      } else if meta.path.is_ident("references") {
-        let value = meta.value()?;
-        let lit: Lit = value.parse()?;
-        if let Lit::Str(s) = lit {
-          result.references = Some(s.value());
-        }
-      } else if meta.path.is_ident("on_delete") {
-        let value = meta.value()?;
-        let lit: Lit = value.parse()?;
-        if let Lit::Str(s) = lit {
-          result.on_delete = Some(s.value());
-        }
-      } else if meta.path.is_ident("on_update") {
-        let value = meta.value()?;
-        let lit: Lit = value.parse()?;
-        if let Lit::Str(s) = lit {
-          result.on_update = Some(s.value());
-        }
-      } else {
-        parse_vec0_meta(&meta, &mut result.vec0, &mut result.flags)?;
-      }
-      Ok(())
-    })?;
+    attr.parse_nested_meta(|meta| apply_column_meta(&meta, &mut result))?;
   }
 
   Ok(result)
+}
+
+fn apply_column_meta(
+  meta: &syn::meta::ParseNestedMeta<'_>,
+  result: &mut ColumnAttrs,
+) -> Result<()> {
+  if meta.path.is_ident("as_text") {
+    if result.check.is_some() {
+      return Err(meta.error(
+        "cannot combine check = \"...\" with as_text; pick one source of truth for the column CHECK",
+      ));
+    }
+    result.flags.set_as_text();
+    return Ok(());
+  }
+  if meta.path.is_ident("column_type") {
+    parse_column_type(meta, result)?;
+    return Ok(());
+  }
+  if meta.path.is_ident("primary_key") {
+    result.flags.set_primary_key();
+    return Ok(());
+  }
+  if meta.path.is_ident("not_null") {
+    result.flags.set_not_null();
+    return Ok(());
+  }
+  if meta.path.is_ident("unique") {
+    result.flags.set_unique();
+    return Ok(());
+  }
+  if meta.path.is_ident("unindexed") {
+    result.flags.set_unindexed();
+    return Ok(());
+  }
+  if meta.path.is_ident("default") {
+    result.default = Some(parse_str_lit(meta)?);
+    return Ok(());
+  }
+  if meta.path.is_ident("references") {
+    result.references = Some(parse_str_lit(meta)?);
+    return Ok(());
+  }
+  if meta.path.is_ident("on_delete") {
+    result.on_delete = Some(parse_str_lit(meta)?);
+    return Ok(());
+  }
+  if meta.path.is_ident("on_update") {
+    result.on_update = Some(parse_str_lit(meta)?);
+    return Ok(());
+  }
+  if meta.path.is_ident("check") {
+    if result.flags.as_text() {
+      return Err(meta.error(
+        "cannot combine check = \"...\" with as_text; pick one source of truth for the column CHECK",
+      ));
+    }
+    result.check = Some(parse_str_lit(meta)?);
+    return Ok(());
+  }
+  parse_vec0_meta(meta, &mut result.vec0, &mut result.flags)
+}
+
+fn parse_str_lit(meta: &syn::meta::ParseNestedMeta<'_>) -> Result<String> {
+  let value = meta.value()?;
+  let lit: Lit = value.parse()?;
+  if let Lit::Str(s) = lit {
+    return Ok(s.value());
+  }
+  Err(meta.error("expected a string literal"))
+}
+
+fn parse_column_type(
+  meta: &syn::meta::ParseNestedMeta<'_>,
+  result: &mut ColumnAttrs,
+) -> Result<()> {
+  let value = meta.value()?;
+  let expr: syn::Expr = value.parse()?;
+  if let syn::Expr::Lit(expr_lit) = expr {
+    if let Lit::Str(s) = expr_lit.lit {
+      result.column_type = Some(s.value());
+    }
+  } else if let syn::Expr::Path(expr_path) = expr {
+    if let Some(segment) = expr_path.path.segments.last() {
+      result.column_type = Some(segment.ident.to_string());
+    }
+  }
+  Ok(())
 }
 
 fn extract_type_spec(ty: &syn::Type) -> Result<TypeSpec> {
