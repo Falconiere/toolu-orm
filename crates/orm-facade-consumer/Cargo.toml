@@ -32,5 +32,11 @@ path = "tests/facade_only_test.rs"
 name = "facade_only_from_row_test"
 path = "tests/facade_only_from_row_test.rs"
 
+# Compile-proof that macro-generated public items carry docs: the binary is
+# `#![deny(missing_docs)]` and exports one of each table macro from a `pub mod`.
+[[test]]
+name = "facade_only_missing_docs_test"
+path = "tests/facade_only_missing_docs_test.rs"
+
 [lints]
 workspace = true

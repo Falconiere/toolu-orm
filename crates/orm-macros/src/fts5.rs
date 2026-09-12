@@ -136,6 +136,7 @@ pub fn expand(attrs: &Fts5Attrs, input: &TableInput) -> TokenStream {
   let option_calls = option_calls(attrs);
 
   quote! {
+    #[automatically_derived]
     impl #core::table::TableSchema for #struct_name {
       fn table_def() -> #core::table::TableDef {
         #core::fts5::Fts5Table::new(#table_name)

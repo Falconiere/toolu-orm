@@ -28,6 +28,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
   let index_defs = input.indexes.iter().map(|i| index_def_tokens(&core, i));
 
   quote! {
+      #[automatically_derived]
       impl #core::table::TableSchema for #struct_name {
           fn table_def() -> #core::table::TableDef {
               #core::table::TableDef {
@@ -174,22 +175,34 @@ pub fn expand_builder_methods(input: &TableInput) -> TokenStream {
   let query = paths::query();
   let struct_name = &input.struct_name;
   let table_name = &input.table_name;
+  let select_doc = format!("A SELECT builder over \"{table_name}\".");
+  let select_for_doc =
+    format!("A SELECT builder over \"{table_name}\" that selects the columns of `T`.");
+  let insert_doc = format!("An INSERT builder over \"{table_name}\".");
+  let update_doc = format!("An UPDATE builder over \"{table_name}\".");
+  let delete_doc = format!("A DELETE builder over \"{table_name}\".");
 
   quote! {
+    #[automatically_derived]
     impl #struct_name {
+      #[doc = #select_doc]
       pub fn select() -> #query::select::SelectBuilder {
         #query::select::SelectBuilder::new(#table_name)
       }
+      #[doc = #select_for_doc]
       pub fn select_for<T: #core::row::FromRow>() -> #query::select::SelectBuilder {
         #query::select::SelectBuilder::new(#table_name)
           .columns_raw(T::REQUIRED_COLUMNS)
       }
+      #[doc = #insert_doc]
       pub fn insert() -> #query::insert::InsertBuilder {
         #query::insert::InsertBuilder::new(#table_name)
       }
+      #[doc = #update_doc]
       pub fn update() -> #query::update::UpdateBuilder {
         #query::update::UpdateBuilder::new(#table_name)
       }
+      #[doc = #delete_doc]
       pub fn delete() -> #query::delete::DeleteBuilder {
         #query::delete::DeleteBuilder::new(#table_name)
       }
