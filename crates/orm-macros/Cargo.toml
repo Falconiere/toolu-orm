@@ -62,6 +62,10 @@ name = "table_macro_test"
 path = "tests/table_macro_test/mod.rs"
 required-features = ["postgres"]
 
+[[test]]
+name = "column_check_test"
+path = "tests/column_check_test.rs"
+
 # trybuild compile-fail cases for the macro error paths (tests/ui/*.rs).
 [[test]]
 name = "compile_fail_test"
