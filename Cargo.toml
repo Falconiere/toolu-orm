@@ -72,8 +72,13 @@ rust_2018_idioms = { level = "warn", priority = -1 }
 
 # ── Shared dependencies ───────────────────────────────────────────
 [workspace.dependencies]
-# Async runtime
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "process", "net", "io-util", "fs", "signal"] }
+# Async runtime. tokio's own default feature set is empty, and a member can add
+# features on top of a workspace entry but never remove them, so the root
+# carries the common minimum — nothing — and each member names only what its
+# src/ calls: orm-connection `rt` + `time` (spawn_blocking, time::sleep),
+# orm-query `sync` (the libsql transaction mutex). orm-cli calls no tokio API.
+# Test-only needs (`macros`, `rt-multi-thread`) live in [dev-dependencies].
+tokio = "1"
 
 # Database
 # `core` is the common minimum every member needs. Members add on top: a member

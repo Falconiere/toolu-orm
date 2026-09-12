@@ -13,7 +13,8 @@ toolu-orm-core = { path = "../orm-core", version = "0.4.1", default-features = f
 serde_json = "1"
 thiserror = "2"
 async-trait = "0.1"
-tokio = { version = "1", features = ["sync"], optional = true }
+# `sync` for the tokio::sync::Mutex in transaction.rs (libsql only).
+tokio = { workspace = true, features = ["sync"], optional = true }
 
 # Driver dependencies — mutually exclusive per consumer
 libsql = { workspace = true, optional = true }
@@ -33,7 +34,6 @@ rusqlite = [
 ]
 postgres = [
   "dep:tokio-postgres",
-  "dep:tokio",
   "toolu-orm-core/postgres",
 ]
 # Live sqlite-vec lane: implies rusqlite + register helper + from_connection.
@@ -45,7 +45,9 @@ sqlite-vec = [
 ]
 
 [dev-dependencies]
-tokio = { version = "1", features = ["rt", "macros"] }
+# `macros` for #[tokio::test]; `rt` for its runtime and for tokio::spawn in the
+# postgres fixtures.
+tokio = { workspace = true, features = ["rt", "macros"] }
 serde = { version = "1", features = ["derive"] }
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
 toolu-orm-core = { path = "../orm-core", default-features = false }

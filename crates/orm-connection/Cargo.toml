@@ -12,7 +12,9 @@ toolu-orm-core = { path = "../orm-core", version = "0.4.1", default-features = f
 async-trait.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-tokio = { workspace = true, features = ["macros", "rt", "time"] }
+# `rt` for spawn_blocking / JoinError (rusqlite_impl.rs), `time` for the
+# libsql retry backoff (libsql_impl.rs). Test-only features are in dev-deps.
+tokio = { workspace = true, features = ["rt", "time"] }
 
 # Adds to the workspace entry's `core`; these four gate `build_synced_db`'s
 # `Builder::new_synced_database` and `Database::sync`. No other crate needs them.
@@ -44,6 +46,9 @@ postgres = [
 sqlite-vec = ["dep:toolu-orm-sqlite-vec-register"]
 
 [dev-dependencies]
+# `macros` for #[tokio::test]; `rt-multi-thread` for the multi_thread-flavor
+# test in tests/rusqlite_blocking_concurrency_test.rs.
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-postgres = { workspace = true }
 libsql = { workspace = true }
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
