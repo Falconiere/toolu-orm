@@ -12,7 +12,7 @@ autotests = false
 proc-macro = true
 
 [dependencies]
-toolu-orm-core = { path = "../orm-core", version = "0.4.3", default-features = false }
+toolu-orm-core = { path = "../orm-core", version = "0.4.4", default-features = false }
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
