@@ -28,7 +28,6 @@ pub fn expand(input: &TableInput) -> TokenStream {
   let index_defs = input.indexes.iter().map(|i| index_def_tokens(&core, i));
 
   quote! {
-      #[automatically_derived]
       impl #core::table::TableSchema for #struct_name {
           fn table_def() -> #core::table::TableDef {
               #core::table::TableDef {
@@ -183,7 +182,6 @@ pub fn expand_builder_methods(input: &TableInput) -> TokenStream {
   let delete_doc = format!("A DELETE builder over \"{table_name}\".");
 
   quote! {
-    #[automatically_derived]
     impl #struct_name {
       #[doc = #select_doc]
       pub fn select() -> #query::select::SelectBuilder {

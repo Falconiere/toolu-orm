@@ -20,7 +20,6 @@ pub fn expand(input: &TableInput) -> syn::Result<TokenStream> {
   // Zero or many vector columns are both legal `vec0` shapes, so they are not
   // refused here.
   Ok(quote! {
-    #[automatically_derived]
     impl #core::table::TableSchema for #struct_name {
       fn table_def() -> #core::table::TableDef {
         #core::vec0::Vec0Table::new(#table_name)
