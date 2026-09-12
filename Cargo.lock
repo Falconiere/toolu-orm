@@ -2415,7 +2415,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "toolu-orm-connection",
  "toolu-orm-core",
@@ -2425,7 +2425,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-cli"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "libsql",
  "rusqlite",
@@ -2441,7 +2441,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-connection"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "async-trait",
  "deadpool-postgres",
@@ -2462,7 +2462,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-core"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "bytes",
  "libsql",
@@ -2479,14 +2479,14 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-facade-consumer"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "toolu-orm",
 ]
 
 [[package]]
 name = "toolu-orm-macros"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "libsql",
  "proc-macro-crate",
@@ -2504,7 +2504,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-query"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "async-trait",
  "libsql",
@@ -2522,7 +2522,7 @@ dependencies = [
 
 [[package]]
 name = "toolu-orm-sqlite-vec-register"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "rusqlite",
  "sqlite-vec",
