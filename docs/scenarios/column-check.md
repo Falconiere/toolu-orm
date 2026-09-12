@@ -20,6 +20,6 @@ cargo nextest run -p toolu-orm-macros -E 'binary(column_check_test)'
 
 | Lane | Binary | Test |
 |---|---|---|
-| default | column_check_test | column_check_attr_sets_wrapped_check |
-| default | column_check_test | column_check_renders_in_create_table_sql |
-| default | column_check_test | column_check_flows_through_snapshot_unchanged |
+| all | column_check_test | column_check_attr_sets_wrapped_check |
+| all | column_check_test | column_check_renders_in_create_table_sql |
+| all | column_check_test | column_check_flows_through_snapshot_unchanged |
