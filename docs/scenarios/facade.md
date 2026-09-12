@@ -14,6 +14,7 @@
 | Generated schema | `table_def()` carries the table name and column order; the companion module exposes `TABLE` and `ALL_COLUMNS`. |
 | Generated builders | `select()` renders through `toolu-orm-query`, with a typed column driving `ORDER BY`, proving the facade's feature forwarding reaches it. |
 | Views and derives | `#[view]`, `#[derive(ColumnEnum)]`, `#[derive(Relational)]` and `#[derive(FromRow)]` all expand under the single-dependency constraint, reaching `serde` / `serde_json` / the driver row types through `toolu-orm-core`'s re-exports. `FromRow` additionally resolves `impl_derived_from_row!` — a `macro_rules!` at `toolu-orm-core`'s root — through the facade re-export. |
+| `missing_docs` | `#[table]`, `#[fts5_table]` and `#[vec0_table]` emit `#[doc = "…"]` on the companion module, its constants, and the builder methods, so a `pub mod` of macro tables compiles under `#![deny(missing_docs)]`. |
 | Prelude | `toolu_orm::prelude` still exports the macros and the crate names, for code that writes `toolu_orm_core::…` itself. |
 
 The single-dependency constraint lives in `crates/orm-facade-consumer/Cargo.toml`,
@@ -59,3 +60,4 @@ cargo nextest run -p toolu-orm-facade-consumer --features postgres
 | default | facade_only_test | relational_derive_decodes_a_json_row |
 | default | facade_only_test | relational_derive_decodes_a_null_relation_as_empty |
 | default | facade_only_from_row_test | from_row_derive_reports_required_columns |
+| default | facade_only_missing_docs_test | missing_docs_pub_mod_compiles_with_macro_tables |
