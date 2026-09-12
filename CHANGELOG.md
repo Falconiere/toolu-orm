@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### `toolu-orm-macros`
+
+#### Fixed
+- *(macros)* emit docs on generated public table items ([#69](https://github.com/Falconiere/toolu-orm/pull/69)) ([#72](https://github.com/Falconiere/toolu-orm/pull/72))
+
 ## [0.4.2](https://github.com/Falconiere/toolu-orm/compare/v0.4.1...v0.4.2) - 2026-09-12
 
 ### `toolu-orm-cli`
