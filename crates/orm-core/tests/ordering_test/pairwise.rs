@@ -92,7 +92,7 @@ fn add_column_before_create_index() {
       table: "users".to_owned(),
       index: IndexDef {
         name: "idx_email".to_owned(),
-        columns: vec!["email".to_owned()],
+        columns: vec!["email".into()],
         unique: true,
         where_clause: None,
       },

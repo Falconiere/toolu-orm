@@ -50,6 +50,10 @@ name = "vec0_macro_test"
 path = "tests/vec0_macro_test.rs"
 
 [[test]]
+name = "index_desc_macro_test"
+path = "tests/index_desc_macro_test.rs"
+
+[[test]]
 name = "relation_parsing_test"
 path = "tests/relation_parsing_test.rs"
 

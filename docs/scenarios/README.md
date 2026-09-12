@@ -35,6 +35,7 @@ test, update its page.
 | [pgvector KNN](pgvector-knn.md) | `<->` / `<=>` / `<#>` distance `ORDER BY … LIMIT k` as a Postgres-only surface, embedded vector literals, and the SQLite refusal. |
 | [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |
 | [Partial indexes](partial-indexes.md) | `#[index(..., where = "…")]` predicates on `IndexDef`, SQL render, serde, and drop+create diffs. |
+| [Index column DESC](index-desc.md) | `desc(col)` in `#[index]` / `#[unique_index]`, SQL `DESC`, serde string lists, diff drop+create. |
 | [Renames](renames.md) | A `RenameResolver` turns drop+create into `RENAME TABLE` / `RENAME COLUMN`. |
 | [Macro compile errors](macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |
 | [Column CHECK attribute](column-check.md) | `#[column(check = "...")]` sets `ColumnDef.check`; SQL and snapshot use the existing path. |

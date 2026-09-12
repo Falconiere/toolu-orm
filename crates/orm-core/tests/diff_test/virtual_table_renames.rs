@@ -53,7 +53,7 @@ fn renaming_a_virtual_table_onto_an_index_is_refused() {
   indexed.name = "note_fts".to_owned();
   indexed.indexes.push(IndexDef {
     name: "idx_note_fts_body".to_owned(),
-    columns: vec!["body".to_owned()],
+    columns: vec!["body".into()],
     unique: false,
     where_clause: None,
   });

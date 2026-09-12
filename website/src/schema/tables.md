@@ -51,8 +51,8 @@ pipeline_runs::status;       // Column<Text>
 |---|---|
 | `#[table(name = "…")]` | The SQL table name. Required — it also names the generated column module. |
 | `#[table(name = "…", strict = true)]` | Emits a SQLite/Turso `STRICT` table and switches DDL to the STRICT type set. |
-| `#[index("name", col_a, col_b)]` | Secondary index. Repeatable. |
-| `#[unique_index("name", col)]` | Unique index. Repeatable — this is how you express multi-column uniqueness. |
+| `#[index("name", col_a, col_b)]` | Secondary index. Repeatable. Use `desc(col)` for a descending column. |
+| `#[unique_index("name", col)]` | Unique index. Repeatable — this is how you express multi-column uniqueness. `desc(col)` works the same way. |
 | `#[view(Name, pick(a, b))]` / `#[view(Name, omit(c))]` | Generates a subset struct from the table. See [Enums and views](enums-views.md). |
 
 ## Column attributes

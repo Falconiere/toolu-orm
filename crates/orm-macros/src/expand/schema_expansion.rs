@@ -130,13 +130,22 @@ fn fk_action_tokens(core: &TokenStream, opt: &Option<String>) -> TokenStream {
 
 fn index_def_tokens(core: &TokenStream, idx: &IndexInput) -> TokenStream {
   let name = &idx.name;
-  let columns = &idx.columns;
   let unique = idx.unique;
   let where_clause = option_string_tokens(&idx.where_clause);
+  let columns = idx.columns.iter().map(|col| {
+    let col_name = &col.name;
+    let desc = col.desc;
+    quote! {
+      #core::index::IndexColumn {
+        name: #col_name.to_owned(),
+        desc: #desc,
+      }
+    }
+  });
   quote! {
       #core::index::IndexDef {
           name: #name.to_owned(),
-          columns: vec![#(#columns.to_owned()),*],
+          columns: vec![#(#columns),*],
           unique: #unique,
           where_clause: #where_clause,
       }

@@ -139,7 +139,7 @@ fn declaring_an_index_on_a_new_virtual_table_is_refused() {
   let mut indexed = memory_fts();
   indexed.indexes.push(IndexDef {
     name: "idx_memory_fts_body".to_owned(),
-    columns: vec!["body".to_owned()],
+    columns: vec!["body".into()],
     unique: false,
     where_clause: None,
   });
