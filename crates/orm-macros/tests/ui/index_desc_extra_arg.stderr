@@ -1,0 +1,5 @@
+error: desc() takes exactly one column identifier
+ --> tests/ui/index_desc_extra_arg.rs:6:34
+  |
+6 | #[index("idx_widgets_at", desc(at, extra))]
+  |                                  ^

@@ -1,0 +1,5 @@
+error: expected column identifier, desc(column), or where = "..."
+ --> tests/ui/index_desc_unknown_fn.rs:6:27
+  |
+6 | #[index("idx_widgets_at", asc(at))]
+  |                           ^^^

@@ -16,6 +16,8 @@
 | `index_duplicate_where.rs` | `#[index(..., where = "...", where = "...")]` | duplicate where clause on index |
 | `index_where_not_string.rs` | `#[index(..., where = 123)]` | expected string literal |
 | `index_where_bare.rs` | `#[index(..., where)]` | expected `=` |
+| `index_desc_extra_arg.rs` | `#[index(..., desc(at, extra))]` | desc() takes exactly one column identifier |
+| `index_desc_unknown_fn.rs` | `#[index(..., asc(at))]` | expected column identifier, desc(column), or where = "..." |
 | `view_unknown_mode.rs` | `#[view(V, drop(a))]` | expected `omit` or `pick` |
 | `relational_on_enum.rs` | `#[derive(Relational)]` on an enum | #[derive(Relational)] only works on structs |
 | `relational_missing_table.rs` | struct without `#[relational(table = ...)]` | #[derive(Relational)] requires #[relational(table = "...")] |

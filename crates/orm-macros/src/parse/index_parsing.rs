@@ -98,14 +98,25 @@ impl Parse for IndexArgs {
           ));
         }
         where_clause = Some(predicate.value());
-      } else if input.peek(Ident) && input.peek2(syn::token::Paren) {
-        columns.push(parse_desc_column(input)?);
       } else if input.peek(Ident) {
-        let column: Ident = input.parse()?;
-        columns.push(IndexColumnInput {
-          name: column.to_string(),
-          desc: false,
-        });
+        let fork = input.fork();
+        let ident: Ident = fork.parse()?;
+        if fork.peek(syn::token::Paren) {
+          if ident == "desc" {
+            columns.push(parse_desc_column(input)?);
+          } else {
+            return Err(syn::Error::new_spanned(
+              ident,
+              "expected column identifier, desc(column), or where = \"...\"",
+            ));
+          }
+        } else {
+          let column: Ident = input.parse()?;
+          columns.push(IndexColumnInput {
+            name: column.to_string(),
+            desc: false,
+          });
+        }
       } else {
         return Err(syn::Error::new(
           input.span(),

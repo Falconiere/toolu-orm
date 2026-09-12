@@ -1,4 +1,4 @@
-use serde::de::{Deserializer, Error as DeError};
+use serde::de::Deserializer;
 use serde::ser::Serializer;
 use serde::{Deserialize, Serialize};
 
@@ -71,7 +71,7 @@ impl<'de> Deserialize<'de> for IndexColumn {
         desc: bool,
       },
     }
-    match Wire::deserialize(deserializer).map_err(DeError::custom)? {
+    match Wire::deserialize(deserializer)? {
       Wire::Name(name) => Ok(Self { name, desc: false }),
       Wire::Full { name, desc } => Ok(Self { name, desc }),
     }
