@@ -14,7 +14,6 @@ toolu-orm-connection = { path = "../orm-connection", version = "0.4.1", default-
 libsql = { workspace = true, optional = true }
 rusqlite = { workspace = true, optional = true }
 tokio-postgres = { workspace = true, optional = true }
-tokio = { version = "1", features = ["full"] }
 thiserror = "2"
 
 [features]
@@ -138,7 +137,11 @@ tempfile = "3"
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
 # `#[table]` expansions reference toolu_orm_query builder types.
 toolu-orm-query = { path = "../orm-query", default-features = false }
-tokio = { version = "1", features = ["full"] }
+# Tests only. `#[tokio::test]` needs `macros` for the attribute and `rt` for
+# the current-thread Runtime it builds to drive each test. src/ names no tokio
+# API: its async fns are driven by whoever calls them, and the one runtime
+# service they lean on (spawn_blocking) is declared by toolu-orm-connection.
+tokio = { workspace = true, features = ["rt", "macros"] }
 tokio-postgres = { workspace = true }
 libsql = { workspace = true }
 
