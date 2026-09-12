@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `toolu-orm-macros`
 
 #### Added
+- *(schema)* allow DESC columns on indexes ([#70](https://github.com/Falconiere/toolu-orm/pull/70)) ([#80](https://github.com/Falconiere/toolu-orm/pull/80))
+
+### `toolu-orm-core`
+
+#### Added
+- *(schema)* allow DESC columns on indexes ([#70](https://github.com/Falconiere/toolu-orm/pull/70)) ([#80](https://github.com/Falconiere/toolu-orm/pull/80))
+
+### `toolu-orm-macros`
+
+#### Added
 - *(core,macros)* add partial index where clauses ([#67](https://github.com/Falconiere/toolu-orm/pull/67)) ([#78](https://github.com/Falconiere/toolu-orm/pull/78))
 - *(macros)* add #[column(check = "...")] for raw CHECKs ([#66](https://github.com/Falconiere/toolu-orm/pull/66)) ([#75](https://github.com/Falconiere/toolu-orm/pull/75))
 
