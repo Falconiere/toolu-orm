@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3](https://github.com/Falconiere/toolu-orm/compare/v0.4.2...v0.4.3) - 2025-09-12
+
+### `toolu-orm-cli`
+
+#### Fixed
+- *(cli)* apply migration chunks with execute_batch ([#64](https://github.com/Falconiere/toolu-orm/pull/64)) ([#73](https://github.com/Falconiere/toolu-orm/pull/73))
+
 ### `toolu-orm-macros`
 
 #### Fixed
