@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### `toolu-orm-macros`
+
+#### Added
+- *(core,macros)* add partial index where clauses ([#67](https://github.com/Falconiere/toolu-orm/pull/67)) ([#78](https://github.com/Falconiere/toolu-orm/pull/78))
+- *(macros)* add #[column(check = "...")] for raw CHECKs ([#66](https://github.com/Falconiere/toolu-orm/pull/66)) ([#75](https://github.com/Falconiere/toolu-orm/pull/75))
+
+### `toolu-orm-core`
+
+#### Added
+- *(core,macros)* add partial index where clauses ([#67](https://github.com/Falconiere/toolu-orm/pull/67)) ([#78](https://github.com/Falconiere/toolu-orm/pull/78))
+
 ## [0.4.3](https://github.com/Falconiere/toolu-orm/compare/v0.4.2...v0.4.3) - 2025-09-12
 
 ### `toolu-orm-cli`
