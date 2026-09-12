@@ -102,7 +102,7 @@ fn snapshot_indexes_use_btreemap() -> Result<(), Box<dyn std::error::Error>> {
     "idx_email".to_owned(),
     IndexDef {
       name: "idx_email".to_owned(),
-      columns: vec!["email".to_owned()],
+      columns: vec!["email".into()],
       unique: true,
       where_clause: None,
     },

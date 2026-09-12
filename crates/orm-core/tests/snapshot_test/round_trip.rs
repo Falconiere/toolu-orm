@@ -72,7 +72,7 @@ fn test_snapshot_round_trip_with_indexes() -> Result<(), Box<dyn std::error::Err
     }],
     indexes: vec![IndexDef {
       name: "idx_repo".to_owned(),
-      columns: vec!["repo_id".to_owned()],
+      columns: vec!["repo_id".into()],
       unique: false,
       where_clause: None,
     }],

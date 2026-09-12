@@ -23,7 +23,7 @@ fn test_diff_create_index() {
   let mut new_t = table("t", vec![col("id", ColumnType::Text, true, false)]);
   new_t.indexes = vec![IndexDef {
     name: "idx_t_id".to_owned(),
-    columns: vec!["id".to_owned()],
+    columns: vec!["id".into()],
     unique: false,
     where_clause: None,
   }];
@@ -39,7 +39,7 @@ fn test_diff_drop_index() {
   let mut old_t = table("t", vec![col("id", ColumnType::Text, true, false)]);
   old_t.indexes = vec![IndexDef {
     name: "idx_old".to_owned(),
-    columns: vec!["id".to_owned()],
+    columns: vec!["id".into()],
     unique: false,
     where_clause: None,
   }];
@@ -59,7 +59,7 @@ fn test_diff_alter_index() {
   let mut old_t = table("t", vec![col("id", ColumnType::Text, true, false)]);
   old_t.indexes = vec![IndexDef {
     name: "idx_t_id".to_owned(),
-    columns: vec!["id".to_owned()],
+    columns: vec!["id".into()],
     unique: false,
     where_clause: None,
   }];
@@ -67,7 +67,7 @@ fn test_diff_alter_index() {
   let mut new_t = table("t", vec![col("id", ColumnType::Text, true, false)]);
   new_t.indexes = vec![IndexDef {
     name: "idx_t_id".to_owned(),
-    columns: vec!["id".to_owned()],
+    columns: vec!["id".into()],
     unique: true,
     where_clause: None,
   }];
@@ -87,7 +87,7 @@ fn test_diff_create_table_emits_indexes() {
   let mut new_t = table("t", vec![col("id", ColumnType::Text, true, false)]);
   new_t.indexes = vec![IndexDef {
     name: "idx_t_id".to_owned(),
-    columns: vec!["id".to_owned()],
+    columns: vec!["id".into()],
     unique: false,
     where_clause: None,
   }];

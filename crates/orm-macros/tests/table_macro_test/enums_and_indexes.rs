@@ -5,7 +5,10 @@
 //! Tests: ColumnEnum variants, enum CHECK constraints, index/unique_index
 //! parsing, full cross-crate integration (PipelineRun schema + SQL).
 
-use toolu_orm_core::column::{ColumnType, EnumSchema, ForeignKeyAction, Text, Timestamp, Uuid};
+use toolu_orm_core::column::{
+  ColumnType, EnumSchema, ForeignKeyAction, Text, Timestamp, Uuid, Varchar,
+};
+use toolu_orm_core::index::IndexColumn;
 use toolu_orm_core::table::TableSchema;
 use toolu_orm_macros::{table, ColumnEnum};
 
@@ -72,8 +75,6 @@ fn test_object_type_now_generates_check() -> Result<(), Box<dyn std::error::Erro
 
 // --- Index parsing ---
 
-use toolu_orm_core::column::Varchar;
-
 #[table(name = "test_indexes")]
 #[index("idx_test_name", name)]
 #[index("idx_test_composite", name, repo_id)]
@@ -96,7 +97,7 @@ fn test_indexes_in_table_def() -> Result<(), Box<dyn std::error::Error>> {
     .iter()
     .find(|i| i.name == "idx_test_name")
     .ok_or("missing idx_test_name")?;
-  assert_eq!(idx.columns, vec!["name"]);
+  assert_eq!(idx.columns, vec![IndexColumn::new("name")]);
   assert!(!idx.unique);
 
   let composite = def
@@ -104,7 +105,10 @@ fn test_indexes_in_table_def() -> Result<(), Box<dyn std::error::Error>> {
     .iter()
     .find(|i| i.name == "idx_test_composite")
     .ok_or("missing idx_test_composite")?;
-  assert_eq!(composite.columns, vec!["name", "repo_id"]);
+  assert_eq!(
+    composite.columns,
+    vec![IndexColumn::new("name"), IndexColumn::new("repo_id")]
+  );
   assert!(!composite.unique);
 
   let unique = def
@@ -112,7 +116,7 @@ fn test_indexes_in_table_def() -> Result<(), Box<dyn std::error::Error>> {
     .iter()
     .find(|i| i.name == "idx_test_unique")
     .ok_or("missing idx_test_unique")?;
-  assert_eq!(unique.columns, vec!["email"]);
+  assert_eq!(unique.columns, vec![IndexColumn::new("email")]);
   assert!(unique.unique);
   Ok(())
 }

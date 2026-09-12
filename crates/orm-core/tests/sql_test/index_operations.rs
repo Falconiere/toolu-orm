@@ -17,7 +17,7 @@ fn test_create_index_sql() {
     table: "pipelines".to_owned(),
     index: IndexDef {
       name: "idx_pipelines_repo_id".to_owned(),
-      columns: vec!["repo_id".to_owned()],
+      columns: vec!["repo_id".into()],
       unique: false,
       where_clause: None,
     },
@@ -36,7 +36,7 @@ fn test_create_unique_index_sql() {
     table: "pipelines".to_owned(),
     index: IndexDef {
       name: "idx_unique_name".to_owned(),
-      columns: vec!["repo_id".to_owned(), "name".to_owned()],
+      columns: vec!["repo_id".into(), "name".into()],
       unique: true,
       where_clause: None,
     },
