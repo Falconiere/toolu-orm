@@ -9,8 +9,8 @@ description = "Migration CLI (generate, migrate, status) for toolu-orm"
 autotests = false
 
 [dependencies]
-toolu-orm-core = { path = "../orm-core", version = "0.4.3", default-features = false }
-toolu-orm-connection = { path = "../orm-connection", version = "0.4.3", default-features = false }
+toolu-orm-core = { path = "../orm-core", version = "0.5.0", default-features = false }
+toolu-orm-connection = { path = "../orm-connection", version = "0.5.0", default-features = false }
 libsql = { workspace = true, optional = true }
 rusqlite = { workspace = true, optional = true }
 tokio-postgres = { workspace = true, optional = true }
