@@ -34,6 +34,7 @@ test, update its page.
 | [vec0 KNN](vec0-knn.md) | `SelectBuilder::knn` (`MATCH` + hidden `k`), `vec0::distance`, Postgres refusal, and the filtered-KNN oversample note. |
 | [pgvector KNN](pgvector-knn.md) | `<->` / `<=>` / `<#>` distance `ORDER BY … LIMIT k` as a Postgres-only surface, embedded vector literals, and the SQLite refusal. |
 | [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |
+| [Partial indexes](partial-indexes.md) | `#[index(..., where = "…")]` predicates on `IndexDef`, SQL render, serde, and drop+create diffs. |
 | [Renames](renames.md) | A `RenameResolver` turns drop+create into `RENAME TABLE` / `RENAME COLUMN`. |
 | [Macro compile errors](macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |
 | [Column CHECK attribute](column-check.md) | `#[column(check = "...")]` sets `ColumnDef.check`; SQL and snapshot use the existing path. |

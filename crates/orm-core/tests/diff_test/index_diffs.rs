@@ -25,6 +25,7 @@ fn test_diff_create_index() {
     name: "idx_t_id".to_owned(),
     columns: vec!["id".to_owned()],
     unique: false,
+    where_clause: None,
   }];
   let new_reg = SchemaRegistry::from_tables(vec![new_t]);
   let ops = diff(&old, &new_reg).expect("diff should succeed");
@@ -40,6 +41,7 @@ fn test_diff_drop_index() {
     name: "idx_old".to_owned(),
     columns: vec!["id".to_owned()],
     unique: false,
+    where_clause: None,
   }];
   let old = Snapshot::from_registry(&SchemaRegistry::from_tables(vec![old_t]));
   let new_reg = SchemaRegistry::from_tables(vec![table(
@@ -59,6 +61,7 @@ fn test_diff_alter_index() {
     name: "idx_t_id".to_owned(),
     columns: vec!["id".to_owned()],
     unique: false,
+    where_clause: None,
   }];
   let old = Snapshot::from_registry(&SchemaRegistry::from_tables(vec![old_t]));
   let mut new_t = table("t", vec![col("id", ColumnType::Text, true, false)]);
@@ -66,6 +69,7 @@ fn test_diff_alter_index() {
     name: "idx_t_id".to_owned(),
     columns: vec!["id".to_owned()],
     unique: true,
+    where_clause: None,
   }];
   let new_reg = SchemaRegistry::from_tables(vec![new_t]);
   let ops = diff(&old, &new_reg).expect("diff should succeed");
@@ -85,6 +89,7 @@ fn test_diff_create_table_emits_indexes() {
     name: "idx_t_id".to_owned(),
     columns: vec!["id".to_owned()],
     unique: false,
+    where_clause: None,
   }];
   let new_reg = SchemaRegistry::from_tables(vec![new_t]);
   let ops = diff(&old, &new_reg).expect("diff should succeed");

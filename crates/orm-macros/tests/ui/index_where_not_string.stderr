@@ -1,0 +1,5 @@
+error: expected string literal
+ --> tests/ui/index_where_not_string.rs:6:43
+  |
+6 | #[index("idx_widgets_name", name, where = 123)]
+  |                                           ^^^

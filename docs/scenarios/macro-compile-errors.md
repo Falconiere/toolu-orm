@@ -13,6 +13,9 @@
 | `table_name_not_string.rs` | `#[table(name = 1)]` | expected a string literal |
 | `table_strict_not_bool.rs` | `#[table(name = "t", strict = maybe)]` (a non-literal value; a string literal reaches a later check, "expected true or false") | expected a bool literal |
 | `index_name_not_string.rs` | `#[index(123)]` | first arg must be index name string |
+| `index_duplicate_where.rs` | `#[index(..., where = "...", where = "...")]` | duplicate where clause on index |
+| `index_where_not_string.rs` | `#[index(..., where = 123)]` | expected string literal |
+| `index_where_bare.rs` | `#[index(..., where)]` | expected `=` |
 | `view_unknown_mode.rs` | `#[view(V, drop(a))]` | expected `omit` or `pick` |
 | `relational_on_enum.rs` | `#[derive(Relational)]` on an enum | #[derive(Relational)] only works on structs |
 | `relational_missing_table.rs` | struct without `#[relational(table = ...)]` | #[derive(Relational)] requires #[relational(table = "...")] |

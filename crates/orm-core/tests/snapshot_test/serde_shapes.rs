@@ -104,6 +104,7 @@ fn snapshot_indexes_use_btreemap() -> Result<(), Box<dyn std::error::Error>> {
       name: "idx_email".to_owned(),
       columns: vec!["email".to_owned()],
       unique: true,
+      where_clause: None,
     },
   );
 

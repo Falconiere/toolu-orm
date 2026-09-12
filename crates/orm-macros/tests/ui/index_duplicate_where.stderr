@@ -1,0 +1,5 @@
+error: duplicate where clause on index
+ --> tests/ui/index_duplicate_where.rs:6:65
+  |
+6 | #[index("idx_widgets_name", name, where = "deleted_at IS NULL", where = "name IS NOT NULL")]
+  |                                                                 ^^^^^

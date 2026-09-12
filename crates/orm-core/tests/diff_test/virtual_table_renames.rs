@@ -55,6 +55,7 @@ fn renaming_a_virtual_table_onto_an_index_is_refused() {
     name: "idx_note_fts_body".to_owned(),
     columns: vec!["body".to_owned()],
     unique: false,
+    where_clause: None,
   });
   let error = diff_with_resolver(&old, &registry(vec![indexed]), &RenameMemoryFts)
     .expect_err("expected the change to be refused");

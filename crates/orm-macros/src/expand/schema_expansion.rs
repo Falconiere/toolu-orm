@@ -132,11 +132,13 @@ fn index_def_tokens(core: &TokenStream, idx: &IndexInput) -> TokenStream {
   let name = &idx.name;
   let columns = &idx.columns;
   let unique = idx.unique;
+  let where_clause = option_string_tokens(&idx.where_clause);
   quote! {
       #core::index::IndexDef {
           name: #name.to_owned(),
           columns: vec![#(#columns.to_owned()),*],
           unique: #unique,
+          where_clause: #where_clause,
       }
   }
 }

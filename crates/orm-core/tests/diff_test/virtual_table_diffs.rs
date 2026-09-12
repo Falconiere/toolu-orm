@@ -141,6 +141,7 @@ fn declaring_an_index_on_a_new_virtual_table_is_refused() {
     name: "idx_memory_fts_body".to_owned(),
     columns: vec!["body".to_owned()],
     unique: false,
+    where_clause: None,
   });
   assert_eq!(
     refusal(&Snapshot::empty(), &registry(vec![indexed])),

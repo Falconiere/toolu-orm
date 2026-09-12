@@ -92,6 +92,7 @@ fn test_table_def_with_indexes_and_strict() -> Result<(), Box<dyn std::error::Er
       name: "idx_pipelines_repo_id".to_owned(),
       columns: vec!["repo_id".to_owned()],
       unique: false,
+      where_clause: None,
     }],
     strict: true,
     kind: toolu_orm_core::table::TableKind::Ordinary,
