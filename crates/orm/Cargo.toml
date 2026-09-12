@@ -9,10 +9,10 @@ description = "Schema-driven Rust ORM: migrations, type-safe query builders and 
 autotests = false
 
 [dependencies]
-toolu-orm-core = { path = "../orm-core", version = "0.4.1", default-features = false }
-toolu-orm-macros = { path = "../orm-macros", version = "0.4.1", default-features = false }
-toolu-orm-query = { path = "../orm-query", version = "0.4.1", default-features = false }
-toolu-orm-connection = { path = "../orm-connection", version = "0.4.1", default-features = false }
+toolu-orm-core = { path = "../orm-core", version = "0.4.2", default-features = false }
+toolu-orm-macros = { path = "../orm-macros", version = "0.4.2", default-features = false }
+toolu-orm-query = { path = "../orm-query", version = "0.4.2", default-features = false }
+toolu-orm-connection = { path = "../orm-connection", version = "0.4.2", default-features = false }
 
 [features]
 default = []

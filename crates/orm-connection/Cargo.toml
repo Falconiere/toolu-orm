@@ -8,7 +8,7 @@ readme.workspace = true
 description = "Connection pooling and driver adapters (libsql, rusqlite, Postgres) for toolu-orm"
 
 [dependencies]
-toolu-orm-core = { path = "../orm-core", version = "0.4.1", default-features = false, features = [] }
+toolu-orm-core = { path = "../orm-core", version = "0.4.2", default-features = false, features = [] }
 async-trait.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
@@ -26,7 +26,7 @@ postgres-types = { workspace = true, optional = true }
 tokio-postgres-rustls = { workspace = true, optional = true }
 rustls = { workspace = true, optional = true }
 rustls-native-certs = { workspace = true, optional = true }
-toolu-orm-sqlite-vec-register = { path = "sqlite-vec-register", version = "0.4.1", optional = true }
+toolu-orm-sqlite-vec-register = { path = "sqlite-vec-register", version = "0.4.2", optional = true }
 
 [features]
 default = []
