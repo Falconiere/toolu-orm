@@ -12,7 +12,8 @@
 //! let indexes = parse_index_attrs(&mut item_struct)?;
 //! ```
 
-use syn::{Attribute, Ident, ItemStruct, Result};
+use syn::parse::{Parse, ParseStream};
+use syn::{Attribute, Ident, ItemStruct, LitStr, Result, Token};
 
 use super::column_parsing::ColumnInput;
 
@@ -20,6 +21,7 @@ pub struct IndexInput {
   pub name: String,
   pub columns: Vec<String>,
   pub unique: bool,
+  pub where_clause: Option<String>,
 }
 
 pub struct TableInput {
@@ -48,38 +50,64 @@ pub fn parse_index_attrs(item: &mut ItemStruct) -> Result<Vec<IndexInput>> {
 }
 
 fn parse_index_attr(attr: &Attribute, unique: bool) -> Result<IndexInput> {
-  let args = attr
-    .parse_args_with(syn::punctuated::Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated)?;
-  let mut iter = args.iter();
-  let name = match iter.next() {
-    Some(syn::Expr::Lit(syn::ExprLit {
-      lit: syn::Lit::Str(s),
-      ..
-    })) => s.value(),
-    _ => {
-      return Err(syn::Error::new_spanned(
-        attr,
-        "first arg must be index name string",
-      ))
-    },
-  };
-  let columns: Vec<String> = iter
-    .map(|expr| {
-      if let syn::Expr::Path(p) = expr {
-        Ok(
-          p.path
-            .get_ident()
-            .map(|i| i.to_string())
-            .unwrap_or_default(),
-        )
-      } else {
-        Err(syn::Error::new_spanned(expr, "expected column identifier"))
-      }
-    })
-    .collect::<Result<_>>()?;
+  let args: IndexArgs = attr.parse_args()?;
   Ok(IndexInput {
-    name,
-    columns,
+    name: args.name,
+    columns: args.columns,
     unique,
+    where_clause: args.where_clause,
   })
+}
+
+struct IndexArgs {
+  name: String,
+  columns: Vec<String>,
+  where_clause: Option<String>,
+}
+
+impl Parse for IndexArgs {
+  fn parse(input: ParseStream<'_>) -> Result<Self> {
+    if !input.peek(LitStr) {
+      return Err(syn::Error::new(
+        input.span(),
+        "first arg must be index name string",
+      ));
+    }
+    let name: LitStr = input.parse()?;
+    let mut columns = Vec::new();
+    let mut where_clause = None;
+
+    while !input.is_empty() {
+      input.parse::<Token![,]>()?;
+      if input.is_empty() {
+        break;
+      }
+      if input.peek(Token![where]) {
+        let where_token: Token![where] = input.parse()?;
+        input.parse::<Token![=]>()?;
+        let predicate: LitStr = input.parse()?;
+        if where_clause.is_some() {
+          return Err(syn::Error::new_spanned(
+            where_token,
+            "duplicate where clause on index",
+          ));
+        }
+        where_clause = Some(predicate.value());
+      } else if input.peek(Ident) {
+        let column: Ident = input.parse()?;
+        columns.push(column.to_string());
+      } else {
+        return Err(syn::Error::new(
+          input.span(),
+          "expected column identifier or where = \"...\"",
+        ));
+      }
+    }
+
+    Ok(Self {
+      name: name.value(),
+      columns,
+      where_clause,
+    })
+  }
 }

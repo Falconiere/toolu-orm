@@ -19,6 +19,7 @@ fn test_create_index_sql() {
       name: "idx_pipelines_repo_id".to_owned(),
       columns: vec!["repo_id".to_owned()],
       unique: false,
+      where_clause: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -37,6 +38,7 @@ fn test_create_unique_index_sql() {
       name: "idx_unique_name".to_owned(),
       columns: vec!["repo_id".to_owned(), "name".to_owned()],
       unique: true,
+      where_clause: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);

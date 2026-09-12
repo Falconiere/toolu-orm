@@ -66,6 +66,10 @@ required-features = ["postgres"]
 name = "column_check_test"
 path = "tests/column_check_test.rs"
 
+[[test]]
+name = "partial_index_macro_test"
+path = "tests/partial_index_macro_test.rs"
+
 # trybuild compile-fail cases for the macro error paths (tests/ui/*.rs).
 [[test]]
 name = "compile_fail_test"

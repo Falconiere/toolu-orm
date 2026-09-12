@@ -74,6 +74,7 @@ fn test_snapshot_round_trip_with_indexes() -> Result<(), Box<dyn std::error::Err
       name: "idx_repo".to_owned(),
       columns: vec!["repo_id".to_owned()],
       unique: false,
+      where_clause: None,
     }],
     strict: true,
     kind: toolu_orm_core::table::TableKind::Ordinary,

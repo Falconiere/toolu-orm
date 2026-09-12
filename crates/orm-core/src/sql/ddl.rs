@@ -84,8 +84,12 @@ pub(crate) fn create_index_sql(table: &str, index: &IndexDef) -> String {
   let unique = if index.unique { "UNIQUE " } else { "" };
   let cols: Vec<String> = index.columns.iter().map(|c| format!("\"{c}\"")).collect();
   let cols_str = cols.join(", ");
+  let where_sql = match &index.where_clause {
+    Some(predicate) => format!(" WHERE {predicate}"),
+    None => String::new(),
+  };
   format!(
-    "CREATE {unique}INDEX IF NOT EXISTS \"{}\" ON \"{table}\" ({cols_str});",
+    "CREATE {unique}INDEX IF NOT EXISTS \"{}\" ON \"{table}\" ({cols_str}){where_sql};",
     index.name
   )
 }
