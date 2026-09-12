@@ -137,8 +137,10 @@ tempfile = "3"
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
 # `#[table]` expansions reference toolu_orm_query builder types.
 toolu-orm-query = { path = "../orm-query", default-features = false }
-# `macros` for #[tokio::test]; `rt` for its current-thread runtime. src/ itself
-# calls no tokio API; the async connections come from toolu-orm-connection.
+# Tests only. `#[tokio::test]` needs `macros` for the attribute and `rt` for
+# the current-thread Runtime it builds to drive each test. src/ names no tokio
+# API: its async fns are driven by whoever calls them, and the one runtime
+# service they lean on (spawn_blocking) is declared by toolu-orm-connection.
 tokio = { workspace = true, features = ["rt", "macros"] }
 tokio-postgres = { workspace = true }
 libsql = { workspace = true }
