@@ -28,6 +28,20 @@ pub enum ColumnChange {
     old: bool,
     new: bool,
   },
+  /// Column-level `primary_key` flag flipped; SQLite must recreate the table.
+  PrimaryKey {
+    column: String,
+    old: bool,
+    new: bool,
+  },
+  /// `autoincrement` flag flipped; SQLite must recreate the table.
+  Autoincrement {
+    column: String,
+    old: bool,
+    new: bool,
+  },
+  /// Table-level composite primary key column list changed.
+  CompositePrimaryKey { old: Vec<String>, new: Vec<String> },
 }
 
 #[derive(Debug, Clone, PartialEq)]

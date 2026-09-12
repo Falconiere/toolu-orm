@@ -19,6 +19,7 @@ fn col(name: &str, ct: ColumnType, pk: bool, nn: bool) -> ColumnDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   }
 }
 
@@ -30,6 +31,7 @@ fn sample_registry() -> SchemaRegistry {
       col("title", ColumnType::Text, false, false),
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   }])
@@ -56,8 +58,10 @@ fn test_generate_creates_journal_and_snapshot() -> TestResult {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: true,
     kind: TableKind::Ordinary,
   }]);
@@ -94,6 +98,7 @@ fn test_generate_incremental_migration() -> TestResult {
     name: "conversations".to_owned(),
     columns: vec![col("id", ColumnType::Text, true, false)],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   }]);
@@ -153,8 +158,10 @@ fn generate_creates_postgres_migration() -> TestResult {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   }]);
@@ -193,8 +200,10 @@ fn generate_creates_sqlite_migration() -> TestResult {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   }]);
@@ -231,8 +240,10 @@ fn generate_sets_dialect_in_snapshot() -> TestResult {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   }]);

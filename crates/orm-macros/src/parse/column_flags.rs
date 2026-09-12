@@ -13,6 +13,7 @@ const FLAG_AS_TEXT: u8 = 1 << 3;
 const FLAG_UNINDEXED: u8 = 1 << 4;
 const FLAG_PARTITION_KEY: u8 = 1 << 5;
 const FLAG_AUXILIARY: u8 = 1 << 6;
+const FLAG_AUTOINCREMENT: u8 = 1 << 7;
 
 impl ColumnFlags {
   pub const fn primary_key(self) -> bool {
@@ -39,6 +40,10 @@ impl ColumnFlags {
   pub const fn auxiliary(self) -> bool {
     self.has(FLAG_AUXILIARY)
   }
+  /// SQLite `INTEGER PRIMARY KEY AUTOINCREMENT`.
+  pub const fn autoincrement(self) -> bool {
+    self.has(FLAG_AUTOINCREMENT)
+  }
 
   pub(super) fn set_primary_key(&mut self) {
     self.0 |= FLAG_PRIMARY_KEY;
@@ -60,6 +65,9 @@ impl ColumnFlags {
   }
   pub(super) fn set_auxiliary(&mut self) {
     self.0 |= FLAG_AUXILIARY;
+  }
+  pub(super) fn set_autoincrement(&mut self) {
+    self.0 |= FLAG_AUTOINCREMENT;
   }
 
   const fn has(self, flag: u8) -> bool {

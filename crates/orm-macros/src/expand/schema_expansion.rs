@@ -26,6 +26,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
 
   let column_defs = input.columns.iter().map(|c| column_def_tokens(&core, c));
   let index_defs = input.indexes.iter().map(|i| index_def_tokens(&core, i));
+  let primary_key = &input.primary_key;
 
   quote! {
       impl #core::table::TableSchema for #struct_name {
@@ -38,6 +39,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
                   indexes: vec![
                       #(#index_defs),*
                   ],
+                  primary_key: vec![#(#primary_key.to_owned()),*],
                   strict: #strict,
                   kind: #core::table::TableKind::Ordinary,
               }
@@ -85,6 +87,7 @@ fn column_def_tokens(core: &TokenStream, col: &ColumnInput) -> TokenStream {
   let nn = col.flags.not_null();
   let unique = col.flags.unique();
   let unindexed = col.flags.unindexed();
+  let autoincrement = col.flags.autoincrement();
   let default_expr = option_string_tokens(&col.default);
   let refs_expr = option_string_tokens(&col.references);
   let on_delete_expr = fk_action_tokens(core, &col.on_delete);
@@ -103,6 +106,7 @@ fn column_def_tokens(core: &TokenStream, col: &ColumnInput) -> TokenStream {
           on_update: #on_update_expr,
           check: #check_expr,
           unindexed: #unindexed,
+          autoincrement: #autoincrement,
       }
   }
 }

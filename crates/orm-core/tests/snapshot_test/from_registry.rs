@@ -20,6 +20,7 @@ fn from_registry_extracts_foreign_keys() -> Result<(), Box<dyn std::error::Error
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
       ColumnDef {
         name: "author_id".to_owned(),
@@ -33,9 +34,11 @@ fn from_registry_extracts_foreign_keys() -> Result<(), Box<dyn std::error::Error
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -70,6 +73,7 @@ fn from_registry_columns_are_btreemap_keyed_by_name() -> Result<(), Box<dyn std:
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
       ColumnDef {
         name: "email".to_owned(),
@@ -83,9 +87,11 @@ fn from_registry_columns_are_btreemap_keyed_by_name() -> Result<(), Box<dyn std:
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -123,8 +129,10 @@ fn from_registry_extracts_check_constraints() -> Result<(), Box<dyn std::error::
       on_update: None,
       check: Some("CHECK(\"status\" IN ('draft', 'active'))".to_owned()),
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };

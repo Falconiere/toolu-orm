@@ -35,6 +35,7 @@ pub struct TableInput {
   pub struct_name: Ident,
   pub columns: Vec<ColumnInput>,
   pub indexes: Vec<IndexInput>,
+  pub primary_key: Vec<String>,
 }
 
 pub fn parse_index_attrs(item: &mut ItemStruct) -> Result<Vec<IndexInput>> {

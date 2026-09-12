@@ -39,6 +39,20 @@ pub(crate) fn compute_column_changes(
       new: new.unique,
     });
   }
+  if old.primary_key != new.primary_key {
+    changes.push(ColumnChange::PrimaryKey {
+      column: name.to_owned(),
+      old: old.primary_key,
+      new: new.primary_key,
+    });
+  }
+  if old.autoincrement != new.autoincrement {
+    changes.push(ColumnChange::Autoincrement {
+      column: name.to_owned(),
+      old: old.autoincrement,
+      new: new.autoincrement,
+    });
+  }
 
   changes
 }

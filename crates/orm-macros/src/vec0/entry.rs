@@ -39,6 +39,7 @@ pub fn expand_vec0_table(attr: TokenStream, item: TokenStream) -> syn::Result<To
     struct_name: item_struct.ident.clone(),
     columns,
     indexes: Vec::new(),
+    primary_key: Vec::new(),
   };
 
   let schema_impl = expand(&input)?;

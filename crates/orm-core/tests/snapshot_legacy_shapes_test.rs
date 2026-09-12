@@ -29,6 +29,7 @@ fn users_column(name: &str, primary_key: bool, not_null: bool) -> ColumnDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   }
 }
 
@@ -40,6 +41,7 @@ fn matching_registry() -> SchemaRegistry {
       users_column("name", false, false),
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -49,6 +51,7 @@ fn matching_registry() -> SchemaRegistry {
     name: "posts".to_owned(),
     columns: vec![users_column("id", true, true), author_id],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };

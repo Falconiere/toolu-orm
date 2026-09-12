@@ -69,6 +69,7 @@ fn test_snapshot_round_trip_with_indexes() -> Result<(), Box<dyn std::error::Err
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![IndexDef {
       name: "idx_repo".to_owned(),
@@ -76,6 +77,7 @@ fn test_snapshot_round_trip_with_indexes() -> Result<(), Box<dyn std::error::Err
       unique: false,
       where_clause: None,
     }],
+    primary_key: vec![],
     strict: true,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   }]);

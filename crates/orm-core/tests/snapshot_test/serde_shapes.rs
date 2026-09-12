@@ -23,6 +23,7 @@ fn snapshot_roundtrip_with_btreemap_columns() -> Result<(), Box<dyn std::error::
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     },
   );
   columns.insert(
@@ -39,6 +40,7 @@ fn snapshot_roundtrip_with_btreemap_columns() -> Result<(), Box<dyn std::error::
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     },
   );
 
@@ -48,6 +50,7 @@ fn snapshot_roundtrip_with_btreemap_columns() -> Result<(), Box<dyn std::error::
     indexes: BTreeMap::new(),
     foreign_keys: BTreeMap::new(),
     check_constraints: BTreeMap::new(),
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -114,6 +117,7 @@ fn snapshot_indexes_use_btreemap() -> Result<(), Box<dyn std::error::Error>> {
     indexes,
     foreign_keys: BTreeMap::new(),
     check_constraints: BTreeMap::new(),
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };

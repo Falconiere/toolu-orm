@@ -4,7 +4,6 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::column::ColumnDef;
 use crate::error::DbCoreError;
-use crate::index::IndexDef;
 use crate::rename::{NoRenames, RenameResolver};
 use crate::schema::SchemaRegistry;
 use crate::snapshot::Snapshot;
@@ -13,7 +12,8 @@ use crate::table::TableDef;
 use super::column::compute_column_changes;
 use super::enums::diff_enums;
 use super::fk::{diff_check_constraints_inner, diff_foreign_keys_inner};
-use super::operation::Operation;
+use super::indexes::diff_indexes_inner;
+use super::operation::{ColumnChange, Operation};
 use super::virtual_tables::{check_new_virtual_table, check_virtual_pair, VirtualPairCheck};
 
 /// # Errors
@@ -129,6 +129,16 @@ fn diff_tables(
       table,
       resolver,
     );
+    if old_st.primary_key != table.primary_key {
+      ops.push(Operation::AlterColumn {
+        table: table.name.clone(),
+        changes: vec![ColumnChange::CompositePrimaryKey {
+          old: old_st.primary_key.clone(),
+          new: table.primary_key.clone(),
+        }],
+        table_def: table.clone(),
+      });
+    }
     diff_indexes_inner(&mut ops, &table.name, &old_st.indexes, &new_st.indexes);
     diff_foreign_keys_inner(
       &mut ops,
@@ -209,37 +219,6 @@ fn diff_columns_for_table(
         table: table_name.to_owned(),
         changes,
         table_def: new_table_def.clone(),
-      });
-    }
-  }
-}
-
-fn diff_indexes_inner(
-  ops: &mut Vec<Operation>,
-  table_name: &str,
-  old_indexes: &BTreeMap<String, IndexDef>,
-  new_indexes: &BTreeMap<String, IndexDef>,
-) {
-  for (name, old_idx) in old_indexes {
-    match new_indexes.get(name) {
-      None => {
-        ops.push(Operation::DropIndex { name: name.clone() });
-      },
-      Some(new_idx) if new_idx != old_idx => {
-        ops.push(Operation::DropIndex { name: name.clone() });
-        ops.push(Operation::CreateIndex {
-          table: table_name.to_owned(),
-          index: new_idx.clone(),
-        });
-      },
-      _ => {},
-    }
-  }
-  for (name, new_idx) in new_indexes {
-    if !old_indexes.contains_key(name) {
-      ops.push(Operation::CreateIndex {
-        table: table_name.to_owned(),
-        index: new_idx.clone(),
       });
     }
   }

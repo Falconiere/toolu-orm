@@ -18,10 +18,14 @@
 mod column_flags;
 mod column_parsing;
 mod index_parsing;
+mod pk_validation;
+mod primary_key_parsing;
 pub mod relation_parsing;
 mod table_attrs;
 mod vec0_column;
 
 pub use column_parsing::{parse_struct, strip_column_attrs, ColumnInput, TypeSpec};
 pub use index_parsing::{parse_index_attrs, IndexInput, TableInput};
+pub use pk_validation::{reject_mixed_primary_keys, validate_autoincrement};
+pub use primary_key_parsing::parse_primary_key_attr;
 pub use table_attrs::parse_table_attrs;

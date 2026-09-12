@@ -12,5 +12,6 @@
 pub mod builder_methods;
 pub mod column_types_and_fk;
 pub mod enums_and_indexes;
+pub mod primary_keys;
 pub mod schema_basics;
 pub mod views;

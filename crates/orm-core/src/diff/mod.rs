@@ -4,6 +4,7 @@ mod column;
 mod engine;
 mod enums;
 mod fk;
+mod indexes;
 mod operation;
 mod virtual_tables;
 

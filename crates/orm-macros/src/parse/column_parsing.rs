@@ -126,6 +126,10 @@ fn apply_column_meta(
     result.flags.set_primary_key();
     return Ok(());
   }
+  if meta.path.is_ident("autoincrement") {
+    result.flags.set_autoincrement();
+    return Ok(());
+  }
   if meta.path.is_ident("not_null") {
     result.flags.set_not_null();
     return Ok(());

@@ -91,6 +91,8 @@ pub struct SnapshotTable {
   pub indexes: BTreeMap<String, IndexDef>,
   pub foreign_keys: BTreeMap<String, ForeignKeyDef>,
   pub check_constraints: BTreeMap<String, String>,
+  /// Table-level composite primary key; empty when the key is per-column.
+  pub primary_key: Vec<String>,
   pub strict: bool,
   /// [`TableKind::Ordinary`] for every table written before virtual tables
   /// existed, and omitted from the JSON when ordinary.
@@ -143,6 +145,7 @@ impl Snapshot {
           indexes,
           foreign_keys: fks,
           check_constraints: checks,
+          primary_key: table.primary_key.clone(),
           strict: table.strict,
           kind: table.kind.clone(),
         },
@@ -171,6 +174,7 @@ impl Snapshot {
           name: name.clone(),
           columns: ordered_columns(&snap_table),
           indexes: snap_table.indexes.values().cloned().collect(),
+          primary_key: snap_table.primary_key.clone(),
           strict: snap_table.strict,
           kind: snap_table.kind.clone(),
         }

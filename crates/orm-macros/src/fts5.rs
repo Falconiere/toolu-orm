@@ -64,6 +64,8 @@ pub fn check_columns(columns: &[ColumnInput]) -> syn::Result<()> {
   for column in columns {
     let offender = if column.flags.primary_key() {
       "primary_key"
+    } else if column.flags.autoincrement() {
+      "autoincrement"
     } else if column.flags.not_null() {
       "not_null"
     } else if column.flags.unique() {

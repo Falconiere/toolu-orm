@@ -1,0 +1,5 @@
+error: `id`: autoincrement is only valid on Integer columns
+ --> tests/ui/autoincrement_non_integer.rs:8:11
+  |
+8 |   pub id: String,
+  |           ^^^^^^

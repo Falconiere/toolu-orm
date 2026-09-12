@@ -126,6 +126,7 @@ fn a_module_without_arguments_omits_the_parentheses() {
     name: "series".to_owned(),
     columns: vec![],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::virtual_table("series", vec![]),
   };
@@ -143,6 +144,7 @@ fn neither_name_can_end_the_statement() {
     name: "hostile\"; DROP TABLE users; --".to_owned(),
     columns: vec![],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::virtual_table("fts5\"); DROP TABLE users; --", vec![]),
   };
@@ -171,6 +173,7 @@ fn a_newline_in_a_name_stays_inside_the_skipped_table_comment() {
     name: "hostile\nDROP TABLE users;".to_owned(),
     columns: vec![],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::virtual_table("fts5\nDROP TABLE users;", vec![]),
   };
