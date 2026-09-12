@@ -102,7 +102,12 @@ async fn composite_primary_key_ddl_runs_on_libsql() -> TestResult {
     "INSERT INTO memory_tags (memory_id, tag) VALUES ('m1', 'a')",
   )
   .await;
-  assert!(dup.is_err(), "duplicate composite key must fail");
+  let err = dup.expect_err("duplicate composite key must fail");
+  let msg = err.to_string();
+  assert!(
+    msg.contains("UNIQUE") || msg.contains("unique") || msg.contains("constraint"),
+    "expected unique/constraint failure, got: {msg}"
+  );
   exec(
     &conn,
     "INSERT INTO memory_tags (memory_id, tag) VALUES ('m1', 'b')",

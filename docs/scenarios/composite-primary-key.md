@@ -33,3 +33,11 @@ cargo nextest run -p toolu-orm-macros -E 'binary(compile_fail_test)'
 |---|---|---|
 | default | composite_pk_sqlite_test | composite_primary_key_ddl_runs_on_libsql |
 | default | composite_pk_sqlite_test | autoincrement_assigns_ids_on_libsql |
+| postgres | table_macro_test | primary_keys::composite_primary_key_lands_in_table_def |
+| postgres | table_macro_test | primary_keys::autoincrement_lands_in_column_def_and_sql |
+| default | sql_test | primary_key_operations::composite_primary_key_renders_as_table_constraint |
+| default | sql_test | primary_key_operations::autoincrement_renders_sqlite_primary_key_autoincrement |
+| default | sql_test | primary_key_operations::autoincrement_maps_to_identity_on_postgres |
+| default | diff_test | primary_key_diffs::composite_primary_key_change_recreates_table |
+| default | diff_test | primary_key_diffs::autoincrement_flag_change_recreates_table |
+| default | compile_fail_test | compile_fail |

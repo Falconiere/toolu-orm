@@ -52,8 +52,17 @@ pub fn validate_autoincrement(columns: &[ColumnInput]) -> Result<()> {
 }
 
 fn is_integer_column(column: &ColumnInput) -> bool {
-  if column.explicit_column_type.as_deref() == Some("Integer") {
-    return true;
+  if let Some(explicit) = column.explicit_column_type.as_deref() {
+    if is_integer_name(explicit) {
+      return true;
+    }
   }
-  matches!(&column.type_spec, TypeSpec::Simple(name) if name == "Integer")
+  matches!(&column.type_spec, TypeSpec::Simple(name) if is_integer_name(name))
+}
+
+fn is_integer_name(name: &str) -> bool {
+  matches!(
+    name,
+    "Integer" | "integer" | "INTEGER" | "i64" | "i32" | "u32" | "u64" | "isize" | "usize"
+  )
 }
