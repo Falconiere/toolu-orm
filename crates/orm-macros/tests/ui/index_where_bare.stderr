@@ -1,0 +1,5 @@
+error: expected `=`
+ --> tests/ui/index_where_bare.rs:6:40
+  |
+6 | #[index("idx_widgets_name", name, where)]
+  |                                        ^
