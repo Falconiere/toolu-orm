@@ -18,7 +18,8 @@ use toolu_orm_core::journal::compute_hash;
 
 use baseline_dir::{migrations_dir, write_migrations};
 use embedded_list::{
-  as_files, honest, list, tampered, OwnedMigration, CREATE_SQL, FAILING_SQL, MAKE_T_SQL, SEED_T_SQL,
+  as_files, honest, list, tampered, OwnedMigration, CREATE_SQL, FAILING_SQL, MAKE_T_SQL,
+  MULTI_SEMI_FAILING_SQL, MULTI_SEMI_SQL, SEED_T_SQL,
 };
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -197,6 +198,33 @@ async fn a_failing_statement_rolls_back_only_its_own_migration() -> TestResult {
     "the first statement's table survived the rollback"
   );
   assert_eq!(recorded(&conn).await?, ["0001_init.sql"]);
+  Ok(())
+}
+
+#[tokio::test]
+async fn a_semicolon_chunk_without_breakpoint_applies_every_statement() -> TestResult {
+  let conn = connect().await?;
+  let migrations = vec![honest("0001_multi.sql", MULTI_SEMI_SQL)];
+
+  assert_eq!(migrate(&conn, &migrations).await?, 1);
+  assert_eq!(has_table(&conn, "alpha").await?, 1);
+  assert_eq!(has_table(&conn, "beta").await?, 1);
+  assert_eq!(recorded(&conn).await?, ["0001_multi.sql"]);
+  Ok(())
+}
+
+#[tokio::test]
+async fn a_failing_semicolon_chunk_rolls_back_the_whole_migration() -> TestResult {
+  let conn = connect().await?;
+  let migrations = vec![honest("0001_bad_multi.sql", MULTI_SEMI_FAILING_SQL)];
+
+  let Err(err) = migrate(&conn, &migrations).await else {
+    return Err("a failing semicolon chunk was applied".into());
+  };
+  assert!(matches!(err, MigrateError::Database(_)), "got {err:?}");
+  assert!(err.to_string().contains("0001_bad_multi.sql"), "{err}");
+  assert_eq!(has_table(&conn, "alpha").await?, 0);
+  assert_eq!(recorded(&conn).await?, [] as [&str; 0]);
   Ok(())
 }
 

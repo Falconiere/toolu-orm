@@ -10,15 +10,17 @@ rollback are the same on both paths. After [#37](https://github.com/Falconiere/t
 `get_status_embedded` are the same twins for baselining and status — the list is
 the journal, so a single-binary adopter never needs a migrations directory.
 **Drivers:** libsql (SQLite) and Postgres for the async path; rusqlite via `*_blocking` twins (see [Blocking connection](blocking-connection.md)).
-**Issue:** [#16](https://github.com/Falconiere/toolu-orm/issues/16), [#37](https://github.com/Falconiere/toolu-orm/issues/37).
+**Issue:** [#16](https://github.com/Falconiere/toolu-orm/issues/16), [#37](https://github.com/Falconiere/toolu-orm/issues/37), [#64](https://github.com/Falconiere/toolu-orm/issues/64).
 
 ## What is proven
 
 The fixture is one two-statement migration (`CREATE_SQL`, split by
 `--> statement-breakpoint`, creating `users` **and** `audit`) plus smaller
-single-statement ones. `audit` is the witness that the statement *after* the
-separator ran; `half`, from the deliberately failing migration, is the witness
-that a rolled-back migration left nothing behind. Hashes are real
+single-statement ones, and a no-breakpoint multi-statement body
+(`MULTI_SEMI_SQL` / `MULTI_SEMI_FAILING_SQL`) that proves a `;`-separated
+chunk runs via `execute_batch`. `audit` is the witness that the statement
+*after* the separator ran; `half`, from the deliberately failing migration, is
+the witness that a rolled-back migration left nothing behind. Hashes are real
 `compute_hash` output, and a "tampered" entry declares the hash of one body
 while carrying another — the shipped `.sql` someone edited without re-hashing.
 For baseline, the adopted database already has `users`; `audit` must stay absent
@@ -33,6 +35,8 @@ if baselining truly executes no SQL.
 | a list naming the same migration twice | `MigrateError::DuplicateMigration` naming it; **no** `_migrations` table is created and nothing runs — a hand-written array can repeat a name where a generated journal cannot |
 | `&[]` | `0`; `_migrations` exists and is empty |
 | an entry whose second statement fails | `MigrateError::Database` prefixed with the name; that migration's first statement is rolled back too; the entry before it stays applied and recorded |
+| a single chunk with two `CREATE TABLE`s separated only by `;` (no breakpoint) | returns `1`; both tables exist; `_migrations` records the entry — plain SQL files need `execute_batch`, not single-statement `execute` |
+| the same shape when the second statement fails | `MigrateError::Database`; neither table exists; `_migrations` has no row for it |
 | entries whose names sort the other way (`0009_make_t` before `0001_seed_t`) | applied in **list** order, so the insert finds its table; `_migrations.id` order matches the list — the list is the declaration of order, exactly as `_journal.json` is on disk |
 | a database migrated by `run_migrate` from a directory, then handed the equivalent list | `0`; `_migrations` unchanged |
 | a database migrated from the list, then handed the equivalent directory | `0` — the two sources are interchangeable, so a project can switch between releases |
@@ -65,6 +69,8 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-cli --features postgres -E 'bin
 | default | migrate_embedded_test | a_repeated_name_is_rejected_before_anything_is_written |
 | default | migrate_embedded_test | an_empty_list_still_creates_the_migrations_table |
 | default | migrate_embedded_test | a_failing_statement_rolls_back_only_its_own_migration |
+| default | migrate_embedded_test | a_semicolon_chunk_without_breakpoint_applies_every_statement |
+| default | migrate_embedded_test | a_failing_semicolon_chunk_rolls_back_the_whole_migration |
 | default | migrate_embedded_test | the_list_order_wins_over_the_name_order |
 | default | migrate_embedded_test | verify_hash_checks_a_migration_without_a_database |
 | default | migrate_embedded_test | a_directory_migrated_database_accepts_the_equivalent_embedded_list |
