@@ -23,6 +23,7 @@ fn col(name: &str, ct: ColumnType, pk: bool, nn: bool) -> ColumnDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   }
 }
 
@@ -35,6 +36,7 @@ fn table_with_index(index: IndexDef) -> TableDef {
       col("deleted_at", ColumnType::Timestamp, false, false),
     ],
     indexes: vec![index],
+    primary_key: Vec::new(),
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   }

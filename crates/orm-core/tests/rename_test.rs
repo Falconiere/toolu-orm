@@ -49,6 +49,7 @@ fn text_column(name: &str, primary_key: bool) -> ColumnDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   }
 }
 
@@ -62,6 +63,7 @@ fn registry_with_table(table_name: &str, column_names: &[&str]) -> SchemaRegistr
     name: table_name.to_owned(),
     columns,
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   }])

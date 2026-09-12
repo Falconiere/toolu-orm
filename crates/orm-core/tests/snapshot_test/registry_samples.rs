@@ -20,6 +20,7 @@ pub(crate) fn sample_registry() -> SchemaRegistry {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
       ColumnDef {
         name: "created_at".to_owned(),
@@ -33,9 +34,11 @@ pub(crate) fn sample_registry() -> SchemaRegistry {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   }])

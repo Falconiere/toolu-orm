@@ -12,6 +12,7 @@ fn create_enum_before_create_table() {
         name: "posts".to_owned(),
         columns: vec![],
         indexes: vec![],
+        primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
       },
@@ -45,6 +46,7 @@ fn drop_index_before_alter_column() {
         name: "users".to_owned(),
         columns: vec![],
         indexes: vec![],
+        primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
       },
@@ -111,6 +113,7 @@ fn add_column_before_create_index() {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     },
   ];

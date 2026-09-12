@@ -63,8 +63,10 @@ fn a_vector_column_on_an_ordinary_table_is_a_byte_column() {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   };

@@ -12,6 +12,7 @@ fn alter_column_postgres_uses_alter_table() {
     name: "users".to_owned(),
     columns: vec![],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -52,6 +53,7 @@ fn alter_column_sqlite_uses_table_recreation_path() {
       col("age", ColumnType::BigInt, false, false),
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };

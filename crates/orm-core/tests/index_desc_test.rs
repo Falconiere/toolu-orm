@@ -22,6 +22,7 @@ fn col(name: &str) -> toolu_orm_core::column::ColumnDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   }
 }
 
@@ -30,6 +31,7 @@ fn table_with_index(index: IndexDef) -> TableDef {
     name: "eval_runs".to_owned(),
     columns: vec![col("id"), col("at")],
     indexes: vec![index],
+    primary_key: Vec::new(),
     strict: false,
     kind: TableKind::Ordinary,
   }

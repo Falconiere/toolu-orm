@@ -39,11 +39,13 @@ fn memories() -> TableDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   };
   TableDef {
     name: "memories".to_owned(),
     columns: vec![column("id", true), column("body", false)],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   }

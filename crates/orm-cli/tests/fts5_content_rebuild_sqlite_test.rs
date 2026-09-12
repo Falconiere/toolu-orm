@@ -39,6 +39,7 @@ fn memories() -> TableDef {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
       ColumnDef {
         name: "body".to_owned(),
@@ -52,9 +53,11 @@ fn memories() -> TableDef {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   }

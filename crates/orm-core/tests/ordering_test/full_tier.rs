@@ -35,6 +35,7 @@ fn full_ordering_13_tiers() {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     },
     Operation::AlterColumn {
@@ -48,6 +49,7 @@ fn full_ordering_13_tiers() {
         name: "t".to_owned(),
         columns: vec![],
         indexes: vec![],
+        primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
       },
@@ -70,6 +72,7 @@ fn full_ordering_13_tiers() {
         name: "new_table".to_owned(),
         columns: vec![],
         indexes: vec![],
+        primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
       },

@@ -108,6 +108,7 @@ impl Fts5Table {
       name: self.name,
       columns: self.columns,
       indexes: Vec::new(),
+      primary_key: Vec::new(),
       strict: false,
       kind: TableKind::virtual_table(FTS5_MODULE, args),
     }
@@ -126,6 +127,7 @@ impl Fts5Table {
       on_update: None,
       check: None,
       unindexed,
+      autoincrement: false,
     });
     self
   }

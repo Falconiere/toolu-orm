@@ -25,6 +25,7 @@ fn snapshot_with_fks(
       indexes: BTreeMap::new(),
       foreign_keys: fks,
       check_constraints: BTreeMap::new(),
+      primary_key: vec![],
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
     },

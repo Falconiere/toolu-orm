@@ -1,0 +1,5 @@
+error: `id`: autoincrement requires #[column(primary_key)]
+ --> tests/ui/autoincrement_without_pk.rs:8:11
+  |
+8 |   pub id: i64,
+  |           ^^^

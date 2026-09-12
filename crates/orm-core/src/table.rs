@@ -61,6 +61,11 @@ pub struct TableDef {
   pub columns: Vec<ColumnDef>,
   #[serde(default)]
   pub indexes: Vec<IndexDef>,
+  /// Table-level composite primary key column names. Empty means the key is
+  /// declared per-column via [`ColumnDef::primary_key`]. Defaulted so older
+  /// snapshots still deserialize.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  pub primary_key: Vec<String>,
   #[serde(default)]
   pub strict: bool,
   /// Defaults to [`TableKind::Ordinary`], so snapshots written before virtual

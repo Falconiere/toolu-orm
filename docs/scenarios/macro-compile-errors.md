@@ -29,6 +29,9 @@
 | `fts5_path_attr.rs` | `#[fts5_table(fts5::tokenize = "porter")]` | expected a simple identifier |
 | `fts5_column_constraint.rs` | `#[column(unindexed, primary_key)]` on an FTS5 column | `primary_key` on `memory_id`: an fts5 column carries no constraints, only #[column(unindexed)] |
 | `column_check_with_as_text.rs` | `#[column(as_text, check = "...")]` on a `ColumnEnum` field | cannot combine check = "..." with as_text; pick one source of truth for the column CHECK |
+| `primary_key_mixed.rs` | `#[primary_key(...)]` plus `#[column(primary_key)]` | cannot combine #[primary_key(...)] with #[column(primary_key)] on the same table |
+| `autoincrement_without_pk.rs` | `#[column(autoincrement)]` without `primary_key` | autoincrement requires #[column(primary_key)] |
+| `autoincrement_non_integer.rs` | `autoincrement` on a `Text` column | autoincrement is only valid on Integer columns |
 | `vec0_missing_dim.rs` | `Vector` field without `dim` | is a Vector and needs its dimension: #[column(dim = 1024)] |
 | `vec0_dim_on_non_vector.rs` | `dim` on a non-`Vector` field | only a Vector column carries it |
 | `vec0_bit_distance_metric.rs` | `element = "bit"` with `distance_metric` | a bit vector has no distance_metric |

@@ -17,8 +17,10 @@ fn make_table(name: &str) -> TableDef {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   }

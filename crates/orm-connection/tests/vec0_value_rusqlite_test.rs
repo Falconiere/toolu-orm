@@ -50,6 +50,7 @@ fn embeddings_ddl() -> String {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
       ColumnDef {
         name: "vec".to_owned(),
@@ -66,9 +67,11 @@ fn embeddings_ddl() -> String {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
   };

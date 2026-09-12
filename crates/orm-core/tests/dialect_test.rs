@@ -102,6 +102,7 @@ fn postgres_maps_timestamp_default_in_column_def() {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   };
   assert_eq!(
     col
@@ -126,6 +127,7 @@ fn sqlite_preserves_timestamp_default_in_column_def() {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   };
   assert_eq!(
     col
@@ -150,6 +152,7 @@ fn postgres_maps_uuid_default_in_column_def() {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   };
   assert_eq!(
     col
@@ -174,6 +177,7 @@ fn sqlite_preserves_uuid_default_in_column_def() {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   };
   assert_eq!(
     col

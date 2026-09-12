@@ -26,6 +26,8 @@ where
     indexes: &'a BTreeMap<String, IndexDef>,
     foreign_keys: &'a BTreeMap<String, ForeignKeyDef>,
     check_constraints: &'a BTreeMap<String, String>,
+    #[serde(skip_serializing_if = "<[String]>::is_empty")]
+    primary_key: &'a [String],
     strict: bool,
     #[serde(skip_serializing_if = "TableKind::is_ordinary")]
     kind: &'a TableKind,
@@ -36,6 +38,7 @@ where
     indexes: &table.indexes,
     foreign_keys: &table.foreign_keys,
     check_constraints: &table.check_constraints,
+    primary_key: &table.primary_key,
     strict: table.strict,
     kind: &table.kind,
   }
@@ -57,6 +60,8 @@ where
     foreign_keys: BTreeMap<String, ForeignKeyDef>,
     #[serde(default)]
     check_constraints: BTreeMap<String, String>,
+    #[serde(default)]
+    primary_key: Vec<String>,
     #[serde(default)]
     strict: bool,
     #[serde(default)]
@@ -81,6 +86,7 @@ where
     indexes,
     foreign_keys: w.foreign_keys,
     check_constraints: w.check_constraints,
+    primary_key: w.primary_key,
     strict: w.strict,
     kind: w.kind,
   })

@@ -42,6 +42,7 @@ fn test_alter_column_generates_table_recreation_sqlite() {
         col("title", ColumnType::Text, false, true),
       ],
       indexes: vec![],
+      primary_key: vec![],
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
     },

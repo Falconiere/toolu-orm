@@ -83,6 +83,7 @@ impl Vec0Column {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }
   }
 

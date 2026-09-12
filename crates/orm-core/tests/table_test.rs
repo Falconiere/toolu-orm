@@ -15,6 +15,7 @@ fn col(name: &str, ct: ColumnType, pk: bool, nn: bool) -> ColumnDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   }
 }
 
@@ -35,6 +36,7 @@ fn test_table_def_creation() {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
       ColumnDef {
         name: "title".to_owned(),
@@ -48,9 +50,11 @@ fn test_table_def_creation() {
         on_update: None,
         check: None,
         unindexed: false,
+        autoincrement: false,
       },
     ],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -74,8 +78,10 @@ fn test_table_def_find_column() {
       on_update: None,
       check: None,
       unindexed: false,
+      autoincrement: false,
     }],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -94,6 +100,7 @@ fn test_table_def_with_indexes_and_strict() -> Result<(), Box<dyn std::error::Er
       unique: false,
       where_clause: None,
     }],
+    primary_key: vec![],
     strict: true,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };
@@ -110,6 +117,7 @@ fn test_table_def_defaults_no_strict_no_indexes() {
     name: "legacy".to_owned(),
     columns: vec![],
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   };

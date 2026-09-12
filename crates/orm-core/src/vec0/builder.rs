@@ -161,6 +161,7 @@ impl Vec0Table {
       name: self.name,
       columns,
       indexes: Vec::new(),
+      primary_key: Vec::new(),
       strict: false,
       kind: TableKind::virtual_table(VEC0_MODULE, args),
     }

@@ -57,6 +57,16 @@ pub(crate) fn alter_column_statements_postgres(
           ));
         }
       },
+      ColumnChange::PrimaryKey { column, .. } | ColumnChange::Autoincrement { column, .. } => {
+        out.push(format!(
+          "-- PRIMARY KEY / AUTOINCREMENT change on \"{table}\".\"{column}\" requires table recreation on Postgres"
+        ));
+      },
+      ColumnChange::CompositePrimaryKey { .. } => {
+        out.push(format!(
+          "-- composite PRIMARY KEY change on \"{table}\" requires table recreation on Postgres"
+        ));
+      },
     }
   }
   out
@@ -70,6 +80,9 @@ pub(crate) fn needs_recreation_sqlite(changes: &[ColumnChange]) -> bool {
         | ColumnChange::Default { .. }
         | ColumnChange::Nullable { .. }
         | ColumnChange::Unique { .. }
+        | ColumnChange::PrimaryKey { .. }
+        | ColumnChange::Autoincrement { .. }
+        | ColumnChange::CompositePrimaryKey { .. }
     )
   })
 }

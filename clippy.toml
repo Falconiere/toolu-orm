@@ -1,6 +1,7 @@
 cognitive-complexity-threshold = 20
-# `ColumnDef` mirrors SQL column flags: primary_key, not_null, unique, unindexed.
-max-struct-bools = 4
+# `ColumnDef` mirrors SQL column flags: primary_key, not_null, unique,
+# unindexed, autoincrement.
+max-struct-bools = 5
 allow-expect-in-tests = true
 allow-unwrap-in-tests = true
 too-many-lines-threshold = 150

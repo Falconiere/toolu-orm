@@ -16,6 +16,7 @@ pub(crate) fn col(name: &str, ct: ColumnType, pk: bool, nn: bool) -> ColumnDef {
     on_update: None,
     check: None,
     unindexed: false,
+    autoincrement: false,
   }
 }
 
@@ -24,6 +25,7 @@ pub(crate) fn table(name: &str, columns: Vec<ColumnDef>) -> TableDef {
     name: name.to_owned(),
     columns,
     indexes: vec![],
+    primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
   }

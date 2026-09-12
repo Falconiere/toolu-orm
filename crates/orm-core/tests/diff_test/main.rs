@@ -3,6 +3,7 @@
 mod enum_diffs;
 mod fk_diffs;
 mod index_diffs;
+mod primary_key_diffs;
 mod rename_diffs;
 mod table_diff_scenarios;
 mod table_operation_variants;

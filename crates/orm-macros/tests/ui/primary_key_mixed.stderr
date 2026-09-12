@@ -1,0 +1,5 @@
+error: `memory_id`: cannot combine #[primary_key(...)] with #[column(primary_key)] on the same table
+ --> tests/ui/primary_key_mixed.rs:9:18
+  |
+9 |   pub memory_id: String,
+  |                  ^^^^^^

@@ -28,6 +28,11 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
     Err(e) => return e.to_compile_error().into(),
   };
 
+  let primary_key = match parse::parse_primary_key_attr(&mut item_struct) {
+    Ok(pk) => pk,
+    Err(e) => return e.to_compile_error().into(),
+  };
+
   // Parse and strip #[view] attrs from the struct
   let views = match parse_view_attrs(&mut item_struct) {
     Ok(v) => v,
@@ -39,12 +44,20 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
     Err(e) => return e.to_compile_error().into(),
   };
 
+  if let Err(e) = parse::reject_mixed_primary_keys(&primary_key, &columns) {
+    return e.to_compile_error().into();
+  }
+  if let Err(e) = parse::validate_autoincrement(&columns) {
+    return e.to_compile_error().into();
+  }
+
   let input = parse::TableInput {
     table_name,
     strict,
     struct_name: item_struct.ident.clone(),
     columns,
     indexes,
+    primary_key,
   };
 
   let expanded = expand::expand(&input);
@@ -121,6 +134,7 @@ fn expand_fts5_table(attr: TokenStream, item: TokenStream) -> syn::Result<TokenS
     struct_name: item_struct.ident.clone(),
     columns,
     indexes: Vec::new(),
+    primary_key: Vec::new(),
   };
 
   let schema_impl = fts5::expand(&attrs, &input);
