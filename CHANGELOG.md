@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0](https://github.com/Falconiere/toolu-orm/compare/v0.5.0...v0.6.0) - 2026-09-12
+
+### `toolu-orm-cli`
+
+#### Added
+- *(schema)* composite primary key and AUTOINCREMENT ([#65](https://github.com/Falconiere/toolu-orm/pull/65)) ([#82](https://github.com/Falconiere/toolu-orm/pull/82))
+
+### `toolu-orm-macros`
+
+#### Added
+- *(schema)* composite primary key and AUTOINCREMENT ([#65](https://github.com/Falconiere/toolu-orm/pull/65)) ([#82](https://github.com/Falconiere/toolu-orm/pull/82))
+- *(schema)* allow DESC columns on indexes ([#70](https://github.com/Falconiere/toolu-orm/pull/70)) ([#80](https://github.com/Falconiere/toolu-orm/pull/80))
+
+### `toolu-orm-connection`
+
+#### Added
+- *(schema)* composite primary key and AUTOINCREMENT ([#65](https://github.com/Falconiere/toolu-orm/pull/65)) ([#82](https://github.com/Falconiere/toolu-orm/pull/82))
+
+### `toolu-orm-core`
+
+#### Added
+- *(schema)* composite primary key and AUTOINCREMENT ([#65](https://github.com/Falconiere/toolu-orm/pull/65)) ([#82](https://github.com/Falconiere/toolu-orm/pull/82))
+- *(schema)* allow DESC columns on indexes ([#70](https://github.com/Falconiere/toolu-orm/pull/70)) ([#80](https://github.com/Falconiere/toolu-orm/pull/80))
+
 ### `toolu-orm-macros`
 
 #### Added
