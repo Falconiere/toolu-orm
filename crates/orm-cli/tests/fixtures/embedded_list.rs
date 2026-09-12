@@ -16,6 +16,14 @@ pub const CREATE_SQL: &str = "CREATE TABLE users (id TEXT PRIMARY KEY);\n\
 /// A migration whose second statement fails on both SQLite and Postgres.
 pub const FAILING_SQL: &str =
   "CREATE TABLE half (id TEXT);\n--> statement-breakpoint\nINSERT INTO nope VALUES (1);";
+/// Two CREATE TABLEs in one chunk, separated only by `;` — no breakpoint.
+/// rusqlite's `Connection::execute` rejects this; `execute_batch` must run both.
+pub const MULTI_SEMI_SQL: &str =
+  "CREATE TABLE alpha (id TEXT PRIMARY KEY);\nCREATE TABLE beta (id TEXT);";
+/// Same shape as [`MULTI_SEMI_SQL`], but the second statement fails so the chunk
+/// must roll back and leave neither table (and no `_migrations` row).
+pub const MULTI_SEMI_FAILING_SQL: &str =
+  "CREATE TABLE alpha (id TEXT PRIMARY KEY);\nINSERT INTO nope VALUES (1);";
 /// Order-sensitive pair: the insert only works after the create.
 pub const MAKE_T_SQL: &str = "CREATE TABLE t (id TEXT);";
 pub const SEED_T_SQL: &str = "INSERT INTO t (id) VALUES ('seeded');";

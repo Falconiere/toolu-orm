@@ -42,8 +42,10 @@ fn execute_statements(
     if !has_statement(statement) {
       continue;
     }
+    // `execute_batch`: a chunk may hold several `;`-separated statements (plain
+    // SQL files). `execute_sql` is single-statement on rusqlite (`MultipleStatement`).
     conn
-      .execute_sql(statement.trim(), vec![])
+      .execute_batch(statement.trim())
       .map_err(|e| map_statement_error(file_label, &e))?;
   }
   Ok(())

@@ -38,6 +38,8 @@ Paired with `RusqliteConnection::from_connection` (sync, non-fallible), there is
 | rusqlite-only | migrate_blocking_test | run_migrate_blocking_legacy_path_without_journal |
 | rusqlite-only | migrate_embedded_blocking_test | run_migrate_embedded_blocking_applies_list |
 | rusqlite-only | migrate_embedded_blocking_test | tampered_hash_fails_without_runtime |
+| rusqlite-only | migrate_embedded_blocking_test | a_semicolon_chunk_without_breakpoint_applies_every_statement |
+| rusqlite-only | migrate_embedded_blocking_test | a_failing_semicolon_chunk_rolls_back_the_whole_migration |
 | rusqlite-only | migrate_baseline_blocking_test | mark_applied_blocking_records_without_running_sql |
 | rusqlite-only | migrate_baseline_blocking_test | mark_applied_through_blocking_records_prefix |
 | rusqlite-only | migrate_baseline_blocking_test | unknown_name_is_not_in_journal |
