@@ -14,9 +14,9 @@ generation.
 
 | Shape | Proof |
 |---|---|
-| Composite `PRIMARY KEY (memory_id, tag)` | Generated SQL runs on libsql; duplicate `(memory_id, tag)` inserts fail; a second tag for the same memory succeeds |
+| Composite `PRIMARY KEY (memory_id, tag)` | Generated SQL runs on libsql; duplicate `(memory_id, tag)` inserts fail with a unique/constraint error; a second tag for the same memory succeeds |
 | `INTEGER PRIMARY KEY AUTOINCREMENT` | Generated SQL runs on libsql; two `DEFAULT VALUES` inserts get ids `1` then `2` |
-| Macro / DDL / diff | `#[primary_key(...)]` and `autoincrement` land in `TableDef`; key-set and autoincrement flips emit SQLite recreation SQL; trybuild pins the mixed-key and autoincrement compile errors |
+| Macro / DDL / diff | `#[primary_key(...)]` and `autoincrement` land in `TableDef` (`table_macro_test` / `sql_test` / `diff_test`); trybuild pins the mixed-key and autoincrement compile errors |
 
 ## How to run
 
@@ -33,11 +33,3 @@ cargo nextest run -p toolu-orm-macros -E 'binary(compile_fail_test)'
 |---|---|---|
 | default | composite_pk_sqlite_test | composite_primary_key_ddl_runs_on_libsql |
 | default | composite_pk_sqlite_test | autoincrement_assigns_ids_on_libsql |
-| postgres | table_macro_test | primary_keys::composite_primary_key_lands_in_table_def |
-| postgres | table_macro_test | primary_keys::autoincrement_lands_in_column_def_and_sql |
-| default | sql_test | primary_key_operations::composite_primary_key_renders_as_table_constraint |
-| default | sql_test | primary_key_operations::autoincrement_renders_sqlite_primary_key_autoincrement |
-| default | sql_test | primary_key_operations::autoincrement_maps_to_identity_on_postgres |
-| default | diff_test | primary_key_diffs::composite_primary_key_change_recreates_table |
-| default | diff_test | primary_key_diffs::autoincrement_flag_change_recreates_table |
-| default | compile_fail_test | compile_fail |
