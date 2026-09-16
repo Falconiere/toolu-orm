@@ -46,6 +46,16 @@ pub enum MigrateError {
   /// the whole migration was rolled back.
   #[error("{file}: left {count} foreign key violation(s) behind; rolled back")]
   ForeignKeyViolation { file: String, count: i64 },
+
+  /// Putting back the SQLite pragmas the runner borrowed failed. When the
+  /// migration itself had already failed, `source` keeps that error whole, so
+  /// a caller can still match on what actually went wrong.
+  #[error("{message}")]
+  PragmaRestore {
+    message: String,
+    #[source]
+    source: Option<Box<MigrateError>>,
+  },
 }
 
 pub(crate) fn map_db(err: &DbError) -> MigrateError {

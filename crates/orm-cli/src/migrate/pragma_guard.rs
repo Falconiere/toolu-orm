@@ -172,15 +172,21 @@ pub(super) async fn restore_pragmas(
   }
 }
 
-/// Folds a failed restore into whatever the migration itself reported.
+/// Reports a failed restore without losing what the migration itself reported:
+/// the message carries both, and the migration's own error stays whole as the
+/// [`MigrateError::PragmaRestore`] source so a caller can still match on it.
 pub(super) fn restore_failure(
   outcome: Result<(), MigrateError>,
   restore_err: &str,
 ) -> MigrateError {
-  match outcome {
-    Ok(()) => MigrateError::Database(format!("restoring SQLite pragmas: {restore_err}")),
-    Err(prior) => MigrateError::Database(format!(
-      "{prior}; restoring SQLite pragmas also failed: {restore_err}"
-    )),
+  let Err(prior) = outcome else {
+    return MigrateError::PragmaRestore {
+      message: format!("restoring SQLite pragmas failed: {restore_err}"),
+      source: None,
+    };
+  };
+  MigrateError::PragmaRestore {
+    message: format!("{prior}; restoring SQLite pragmas also failed: {restore_err}"),
+    source: Some(Box::new(prior)),
   }
 }
