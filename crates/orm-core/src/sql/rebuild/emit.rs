@@ -5,8 +5,10 @@ use crate::sql::ddl::{create_index_sql, create_table_sql_named};
 
 use super::plan::RebuildPlan;
 
-/// Separator between the rebuild's own statements, matching the one
-/// [`generate_sql_for`](crate::sql::generate_sql_for) puts between chunks.
+/// Separator between the rebuild's own statements. The marker is what the
+/// migration runner splits on; the blank lines around it in
+/// [`generate_sql_for`](crate::sql::generate_sql_for) only space out chunks
+/// that belong to different operations.
 const BREAKPOINT: &str = "\n--> statement-breakpoint\n";
 
 /// The name the rebuild creates the replacement table under before renaming it

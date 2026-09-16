@@ -26,6 +26,22 @@ const ORPHANING_SQL: &str = "PRAGMA foreign_keys = OFF;\n\
                              --> statement-breakpoint\n\
                              DELETE FROM users WHERE id = 'u1';";
 
+/// A hand-written rebuild in a journal-free directory, which the runner applies
+/// as one batch. Its pragma still has to be hoisted out of the transaction.
+const LEGACY_REBUILD_SQL: &str = "PRAGMA foreign_keys = OFF;\n\
+   CREATE TABLE \"_toolu_new_users\" (\n\
+     \"id\" TEXT NOT NULL PRIMARY KEY,\n\
+     \"name\" TEXT NOT NULL,\n\
+     \"email\" TEXT NOT NULL,\n\
+     \"bio\" TEXT\n\
+   );\n\
+   INSERT INTO \"_toolu_new_users\" (\"id\", \"name\", \"email\", \"bio\") \
+     SELECT \"id\", \"name\", \"email\", \"bio\" FROM \"users\";\n\
+   DROP TABLE \"users\";\n\
+   PRAGMA legacy_alter_table = ON;\n\
+   ALTER TABLE \"_toolu_new_users\" RENAME TO \"users\";\n\
+   PRAGMA legacy_alter_table = OFF;";
+
 #[tokio::test]
 async fn a_copy_that_violates_not_null_rolls_the_whole_rebuild_back() -> TestResult {
   let (_tmp, dir) = migrations_dir()?;
@@ -116,6 +132,37 @@ async fn an_orphaned_row_fails_the_migration_and_restores_foreign_keys() -> Test
   assert!(
     foreign_keys_on(&conn).await?,
     "the suspended foreign keys were never restored"
+  );
+  Ok(())
+}
+
+#[tokio::test]
+async fn a_journal_free_rebuild_is_guarded_the_same_way() -> TestResult {
+  let (_tmp, dir) = migrations_dir()?;
+  let conn = connect().await?;
+  exec(&conn, "PRAGMA foreign_keys = ON").await?;
+
+  run_generate(&registry_v1(), &dir, "init", Dialect::Sqlite)?;
+  run_migrate(&conn, &dir, Dialect::Sqlite).await?;
+  seed_user_and_post(&conn).await?;
+  // Drop the journal so the runner falls back to plain directory scanning.
+  std::fs::remove_file(format!("{dir}/_journal.json"))?;
+  std::fs::write(format!("{dir}/0002_legacy_rebuild.sql"), LEGACY_REBUILD_SQL)?;
+
+  assert_eq!(run_migrate(&conn, &dir, Dialect::Sqlite).await?, 1);
+
+  assert_eq!(
+    scalar(&conn, "SELECT count(*) FROM posts").await?,
+    1,
+    "the legacy path let the rebuild cascade-delete the child row"
+  );
+  assert_eq!(
+    column_names(&conn, "users").await?,
+    ["id", "name", "email", "bio"]
+  );
+  assert!(
+    foreign_keys_on(&conn).await?,
+    "the legacy path never restored the suspended foreign keys"
   );
   Ok(())
 }

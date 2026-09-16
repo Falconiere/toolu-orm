@@ -75,6 +75,7 @@ references `users(id)`. Every assertion is made on the live database through
 | Alter + add in one diff | `age` arrives with its declared default on the pre-existing row, `users` exists once, no staging table is left |
 | Alter + drop in one diff | `bio` is gone, the row survives, `name` is now NOT NULL |
 | A failed copy changes nothing | a row with a NULL `name` makes the NOT NULL rebuild fail: the table, its columns, its rows, `_migrations` and the pragma are all as they were |
+| A journal-free directory is guarded too | a hand-written rebuild applied through the legacy (no `_journal.json`) path keeps the child row and restores the pragma |
 | An orphan fails the migration | a hand-written embedded migration that deletes a parent gets `MigrateError::ForeignKeyViolation`, is rolled back whole, and foreign keys come back on |
 | The blocking runner behaves the same | the reproduction and the pragma round trip on rusqlite |
 
@@ -115,5 +116,6 @@ cargo nextest run -p toolu-orm-core -E 'binary(sql_test)'
 | default | sqlite_rebuild_column_sets_libsql_test | altering_and_dropping_a_column_applies_in_one_rebuild |
 | default | sqlite_rebuild_rollback_libsql_test | a_copy_that_violates_not_null_rolls_the_whole_rebuild_back |
 | default | sqlite_rebuild_rollback_libsql_test | an_orphaned_row_fails_the_migration_and_restores_foreign_keys |
+| default | sqlite_rebuild_rollback_libsql_test | a_journal_free_rebuild_is_guarded_the_same_way |
 | rusqlite-only | sqlite_rebuild_blocking_test | blocking_rebuild_keeps_cascading_child_rows_and_their_fk_target |
 | rusqlite-only | sqlite_rebuild_blocking_test | blocking_rebuild_leaves_foreign_keys_off_when_they_started_off |
