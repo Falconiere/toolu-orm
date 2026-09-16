@@ -142,11 +142,19 @@ fn hex_to_bytes(hex: &str) -> Option<Vec<u8>> {
   let mut out = Vec::with_capacity(raw.len() / 2);
   for pair in raw.chunks_exact(2) {
     let [high, low] = pair else { return None };
-    let high = u8::try_from(char::from(*high).to_digit(16)?).ok()?;
-    let low = u8::try_from(char::from(*low).to_digit(16)?).ok()?;
-    out.push(high * 16 + low);
+    out.push(hex_nibble(*high)? * 16 + hex_nibble(*low)?);
   }
   Some(out)
+}
+
+/// One hex digit's value, upper or lower case; `None` for any other byte.
+fn hex_nibble(digit: u8) -> Option<u8> {
+  match digit {
+    b'0'..=b'9' => Some(digit - b'0'),
+    b'a'..=b'f' => Some(digit - b'a' + 10),
+    b'A'..=b'F' => Some(digit - b'A' + 10),
+    _ => None,
+  }
 }
 
 fn row_error(field_name: &str, detail: &str) -> DbCoreError {

@@ -81,7 +81,7 @@ Binary seed: owner `o1` with files `f1` (`X'0102FF007F'`), `f2` (`X''`) and `f3`
 ```sh
 cargo nextest run -p toolu-orm-query --features libsql -E 'binary(libsql_relational_test) + binary(libsql_relational_blob_test)'
 cargo nextest run -p toolu-orm-query --features rusqlite -E 'binary(rusqlite_relational_test) + binary(rusqlite_relational_blob_test)'
-cargo nextest run --workspace -E 'binary(relational_binary_sql_test) + binary(relational_binary_decode_test)'
+cargo nextest run -p toolu-orm-query -E 'binary(relational_binary_sql_test) + binary(relational_binary_decode_test)'
 docker compose -f docker-compose.test.yaml up -d --wait
 TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres -E 'binary(postgres_relational_test) + binary(postgres_relational_blob_test)'
 ```

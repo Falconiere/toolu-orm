@@ -1,6 +1,7 @@
 //! Postgres lateral join SQL generation for relational SELECT queries.
 
-use super::config::{push_qualified, RelationalSelectBuilder};
+use super::config::RelationalSelectBuilder;
+use super::identifier::push_qualified;
 use super::relation_column::RelationColumn;
 
 /// Appends the projected columns of one relation.

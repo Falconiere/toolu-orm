@@ -18,7 +18,11 @@ use toolu_orm_query::select::RelationColumn;
 
 use pg::{client, TestResult};
 
+/// `files.payload` for f1.
 const PAYLOAD: &[u8] = &[0x01, 0x02, 0xFF, 0x00, 0x7F];
+/// `owners.avatar` for o1 — deliberately a different byte order than
+/// [`PAYLOAD`], so a decoded avatar can never pass as a decoded payload.
+const AVATAR: &[u8] = &[0x01, 0x02, 0x00, 0xFF, 0x7F];
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 struct FileRow {
@@ -150,7 +154,7 @@ async fn with_one_round_trips_bytea_and_reports_an_orphan() -> TestResult {
   assert_eq!(owner.id, "o1");
   assert_eq!(
     owner.avatar.as_deref(),
-    Some(&[0x01, 0x02, 0x00, 0xFF, 0x7F][..]),
+    Some(AVATAR),
     "the parent's bytea column must survive byte for byte"
   );
 
@@ -164,7 +168,7 @@ async fn with_one_round_trips_bytea_and_reports_an_orphan() -> TestResult {
   let null_avatar = by_id.get("f3").ok_or("f3 missing")?;
   assert_eq!(
     null_avatar.owner.as_ref().map(|o| o.avatar.clone()),
-    Some(Some(vec![0x01, 0x02, 0x00, 0xFF, 0x7F])),
+    Some(Some(AVATAR.to_vec())),
     "f3 still points at o1"
   );
   Ok(())

@@ -6,6 +6,7 @@
 
 mod config;
 mod decode;
+mod identifier;
 mod postgres_sql;
 mod relation_column;
 mod sqlite_sql;

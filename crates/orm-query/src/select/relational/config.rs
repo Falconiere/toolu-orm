@@ -1,5 +1,6 @@
 //! RelationalSelectBuilder and RelationConfig for eager-loaded relation queries.
 
+use super::identifier::push_qualified;
 use super::relation_column::RelationColumn;
 
 /// Configuration for a single relation to be loaded.
@@ -188,13 +189,4 @@ impl RelationalSelectBuilder {
       sql.push_str(" LIMIT 1");
     }
   }
-}
-
-/// Appends `"qualifier"."column"` to the SQL buffer.
-pub(super) fn push_qualified(sql: &mut String, qualifier: &str, column: &str) {
-  sql.push('"');
-  sql.push_str(qualifier);
-  sql.push_str("\".\"");
-  sql.push_str(column);
-  sql.push('"');
 }
