@@ -2,10 +2,13 @@
 //!
 //! # Public API
 //!
-//! - [`RelationalSelectBuilder`], [`RelationConfig`]
+//! - [`RelationalSelectBuilder`], [`RelationConfig`], [`RelationColumn`]
 
 mod config;
+mod decode;
 mod postgres_sql;
+mod relation_column;
 mod sqlite_sql;
 
 pub use config::{RelationConfig, RelationalSelectBuilder};
+pub use relation_column::RelationColumn;

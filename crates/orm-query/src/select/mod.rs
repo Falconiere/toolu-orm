@@ -24,4 +24,4 @@ cfg_single_backend! {
 }
 
 pub use builder::SelectBuilder;
-pub use relational::{RelationConfig, RelationalSelectBuilder};
+pub use relational::{RelationColumn, RelationConfig, RelationalSelectBuilder};
