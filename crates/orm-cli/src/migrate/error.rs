@@ -40,6 +40,12 @@ pub enum MigrateError {
      provides it on the connection before running migrations"
   )]
   MissingExtension { file: String, module: String },
+
+  /// The migration suspended SQLite's foreign keys and left rows that violate
+  /// one, so `PRAGMA foreign_key_check` reported them before the commit and
+  /// the whole migration was rolled back.
+  #[error("{file}: left {count} foreign key violation(s) behind; rolled back")]
+  ForeignKeyViolation { file: String, count: i64 },
 }
 
 pub(crate) fn map_db(err: &DbError) -> MigrateError {

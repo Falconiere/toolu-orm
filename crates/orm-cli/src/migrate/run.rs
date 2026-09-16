@@ -9,6 +9,7 @@ use toolu_orm_core::journal::{Journal, JournalEntry};
 use super::apply::apply_migration;
 use super::error::MigrateError;
 use super::pending::get_pending_migrations;
+use super::pragma_guard::{arm_pragmas, check_foreign_keys, restore_pragmas, PragmaGuard};
 use super::store::{ensure_migrations_table, get_applied_migrations, record_migration};
 use super::transaction::{begin, commit, rollback_after};
 
@@ -81,14 +82,29 @@ async fn apply_migration_legacy(
   let sql = std::fs::read_to_string(&path)
     .map_err(|e| MigrateError::ReadFile(format!("{}: {e}", path.display())))?;
 
+  let guard = arm_pragmas(conn, &sql, dialect).await?;
+  let outcome = legacy_in_transaction(conn, &sql, migration_file, dialect, guard).await;
+  restore_pragmas(conn, guard, outcome).await
+}
+
+/// A plain (journal-free) file is executed as one batch, so its statements are
+/// not split; the foreign-key handling is the same as for a journal entry.
+async fn legacy_in_transaction(
+  conn: &impl DbConnection,
+  sql: &str,
+  migration_file: &str,
+  dialect: Dialect,
+  guard: PragmaGuard,
+) -> Result<(), MigrateError> {
   begin(conn).await?;
 
   let result = async {
     conn
-      .execute_batch(&sql)
+      .execute_batch(sql)
       .await
       .map_err(|e| MigrateError::Database(format!("migration {migration_file}: {e}")))?;
-    record_migration(conn, migration_file, "", dialect).await
+    record_migration(conn, migration_file, "", dialect).await?;
+    check_foreign_keys(conn, guard, migration_file).await
   }
   .await;
 

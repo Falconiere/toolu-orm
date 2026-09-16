@@ -74,11 +74,27 @@ fn composite_primary_key_sql(columns: &[String]) -> String {
   format!("PRIMARY KEY ({})", cols.join(", "))
 }
 
+/// `CREATE TABLE IF NOT EXISTS` for `table` under its own name.
 pub(crate) fn create_table_sql(table: &TableDef, dialect: Dialect) -> String {
+  create_table_sql_named(&table.name, table, dialect, true)
+}
+
+/// `table`'s definition rendered under `name` instead of its own.
+///
+/// The SQLite table rebuild needs the identical rendering — STRICT, composite
+/// primary key, CHECK, REFERENCES, AUTOINCREMENT — under a staging name, and
+/// needs it *without* `IF NOT EXISTS`: a staging name that is already taken
+/// must fail the migration rather than quietly adopt whatever sits there.
+pub(crate) fn create_table_sql_named(
+  name: &str,
+  table: &TableDef,
+  dialect: Dialect,
+  if_not_exists: bool,
+) -> String {
   if let TableKind::Virtual { module, args } = &table.kind {
     return match dialect {
-      Dialect::Sqlite => create_virtual_table_sql(&table.name, module, args),
-      Dialect::Postgres => unsupported_dialect_comment(&table.name, module, dialect),
+      Dialect::Sqlite => create_virtual_table_sql(name, module, args),
+      Dialect::Postgres => unsupported_dialect_comment(name, module, dialect),
     };
   }
   let mut defs: Vec<String> = table
@@ -90,17 +106,13 @@ pub(crate) fn create_table_sql(table: &TableDef, dialect: Dialect) -> String {
     defs.push(composite_primary_key_sql(&table.primary_key));
   }
   let cols = defs.join(",\n    ");
-  if table.strict && matches!(dialect, Dialect::Sqlite) {
-    format!(
-      "CREATE TABLE IF NOT EXISTS \"{}\" (\n    {cols}\n) STRICT;",
-      table.name
-    )
+  let guard = if if_not_exists { "IF NOT EXISTS " } else { "" };
+  let strict = if table.strict && matches!(dialect, Dialect::Sqlite) {
+    " STRICT"
   } else {
-    format!(
-      "CREATE TABLE IF NOT EXISTS \"{}\" (\n    {cols}\n);",
-      table.name
-    )
-  }
+    ""
+  };
+  format!("CREATE TABLE {guard}\"{name}\" (\n    {cols}\n){strict};")
 }
 
 pub(crate) fn create_index_sql(table: &str, index: &IndexDef) -> String {
@@ -130,31 +142,6 @@ pub(crate) fn create_index_sql(table: &str, index: &IndexDef) -> String {
 pub(crate) fn add_column_sql(table: &str, column: &ColumnDef, dialect: Dialect) -> String {
   let col_sql = column_def_sql(column, false, dialect);
   format!("ALTER TABLE \"{table}\" ADD COLUMN {col_sql};")
-}
-
-pub(crate) fn recreation_sql(table_name: &str, new_def: &TableDef) -> String {
-  let old_name = format!("_{table_name}_old");
-  let cols_csv = new_def
-    .columns
-    .iter()
-    .map(|c| format!("\"{}\"", c.name))
-    .collect::<Vec<_>>()
-    .join(", ");
-  let create_sql = create_table_sql(new_def, Dialect::Sqlite);
-
-  format!(
-    "PRAGMA foreign_keys = OFF;\n\
-     --> statement-breakpoint\n\
-     ALTER TABLE \"{table_name}\" RENAME TO \"{old_name}\";\n\
-     --> statement-breakpoint\n\
-     {create_sql}\n\
-     --> statement-breakpoint\n\
-     INSERT INTO \"{table_name}\" ({cols_csv}) SELECT {cols_csv} FROM \"{old_name}\";\n\
-     --> statement-breakpoint\n\
-     DROP TABLE \"{old_name}\";\n\
-     --> statement-breakpoint\n\
-     PRAGMA foreign_keys = ON;"
-  )
 }
 
 /// Drop + recreate an FTS5 table, then rebuild from its external content table.
