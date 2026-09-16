@@ -93,6 +93,11 @@ path = "tests/relational_sqlite_sql_test.rs"
 name = "relational_postgres_sql_test"
 path = "tests/relational_postgres_sql_test.rs"
 
+# Binary relation columns: SQL generation and JSON decoding only, no driver
+# type in either binary, so both belong in the feature-less default lane
+# (`cargo nextest run --workspace`). Declaring `required-features` here would
+# take them OUT of the only lane that runs them. Their live counterparts are
+# `{rusqlite,libsql,postgres}_relational_blob_test` below.
 [[test]]
 name = "relational_binary_sql_test"
 path = "tests/relational_binary_sql_test.rs"
