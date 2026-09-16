@@ -28,6 +28,10 @@ macro_rules! impl_async_fetch {
         exec.query_map::<T>(&sql, params).await
       }
 
+      /// Sends the bounded query of
+      /// [`to_first_row_sql`](Self::to_first_row_sql), so the database returns
+      /// at most one row and at most one row is ever decoded.
+      ///
       /// # Errors
       ///
       /// Returns [`QueryError`] when the query fails, mapping fails, or no row is found.
@@ -35,10 +39,12 @@ macro_rules! impl_async_fetch {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<T, $crate::QueryError> {
-        let results = self.fetch_all::<T>(exec).await?;
+        let results = self.fetch_first_row::<T>(exec).await?;
         super::shared::first_or_not_found(results, &self.table)
       }
 
+      /// [`Self::fetch_one`]'s bound, with an absent row as `None`.
+      ///
       /// # Errors
       ///
       /// Returns [`QueryError`] when the query or row mapping fails.
@@ -46,8 +52,17 @@ macro_rules! impl_async_fetch {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<Option<T>, $crate::QueryError> {
-        let results = self.fetch_all::<T>(exec).await?;
+        let results = self.fetch_first_row::<T>(exec).await?;
         Ok(results.into_iter().next())
+      }
+
+      /// At most one decoded row, for the two first-row fetch methods.
+      async fn fetch_first_row<T: toolu_orm_core::row::FromRow + Send>(
+        &self,
+        exec: &(impl $crate::executor::Executor + Send + Sync),
+      ) -> Result<Vec<T>, $crate::QueryError> {
+        let (sql, params) = self.to_first_row_sql();
+        exec.query_map::<T>(&sql, params).await
       }
 
       /// # Errors
@@ -103,6 +118,10 @@ macro_rules! impl_sync_fetch {
         exec.query_map::<T>(&sql, params)
       }
 
+      /// Sends the bounded query of
+      /// [`to_first_row_sql`](Self::to_first_row_sql), so the database returns
+      /// at most one row and at most one row is ever decoded.
+      ///
       /// # Errors
       ///
       /// Returns [`QueryError`] when the query fails, mapping fails, or no row is found.
@@ -110,10 +129,12 @@ macro_rules! impl_sync_fetch {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<T, $crate::QueryError> {
-        let results = self.fetch_all::<T>(exec)?;
+        let results = self.fetch_first_row::<T>(exec)?;
         super::shared::first_or_not_found(results, &self.table)
       }
 
+      /// [`Self::fetch_one`]'s bound, with an absent row as `None`.
+      ///
       /// # Errors
       ///
       /// Returns [`QueryError`] when the query or row mapping fails.
@@ -121,8 +142,17 @@ macro_rules! impl_sync_fetch {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<Option<T>, $crate::QueryError> {
-        let results = self.fetch_all::<T>(exec)?;
+        let results = self.fetch_first_row::<T>(exec)?;
         Ok(results.into_iter().next())
+      }
+
+      /// At most one decoded row, for the two first-row fetch methods.
+      fn fetch_first_row<T: toolu_orm_core::row::FromRow>(
+        &self,
+        exec: &impl $crate::executor::Executor,
+      ) -> Result<Vec<T>, $crate::QueryError> {
+        let (sql, params) = self.to_first_row_sql();
+        exec.query_map::<T>(&sql, params)
       }
 
       /// # Errors

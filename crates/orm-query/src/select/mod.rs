@@ -16,6 +16,7 @@
 mod builder;
 mod knn;
 pub mod relational;
+mod row_limit;
 
 use crate::where_clause::cfg_single_backend;
 

@@ -54,6 +54,7 @@ Every builder renders to `(String, Vec<Value>)`:
 | `.to_sql()` | Same, for `Dialect::CURRENT` (the dialect implied by the active features). |
 | `.to_count_sql_for(dialect)` / `.to_count_sql()` | The same query wrapped in `COUNT(*)`. |
 | `.to_exists_sql_for(dialect)` / `.to_exists_sql()` | The same query as an existence check. |
+| `.to_first_row_sql_for(dialect)` / `.to_first_row_sql()` | The same query bounded to at most one row — what `fetch_one` and `fetch_optional` send. |
 
 Rendering never touches the database, which is why the builders compile with any
 feature combination and are straightforward to unit test.
@@ -85,6 +86,14 @@ let any: bool   = UsersTable::select().filter(users::org_id.eq("org123")).exists
 `fetch_all`, `fetch_one` and `fetch_optional` are generic over
 [`FromRow`](../schema/row-mapping.md); `count` and `exists` are not, they render
 the count/exists form of the query.
+
+`fetch_one` and `fetch_optional` send the bounded form of the query, so the
+database returns **at most one row** and at most one row is ever decoded —
+a match of ten thousand rows still costs one decode, and a row further down the
+result set that fails to decode cannot fail an otherwise valid first row.
+Filters, `ORDER BY` and `OFFSET` are preserved; an explicit `.limit(0)` still
+yields no row, and an explicit positive limit still yields that page's first
+row. Use `fetch_all` when you want the whole result set.
 
 `select_for::<T>()` sets the column list from `T::REQUIRED_COLUMNS`, so the
 projection always matches the struct being decoded. Use `select()` plus
