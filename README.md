@@ -622,6 +622,7 @@ let pg = PgDatabase::init(&PgConfig {
   host: "localhost".into(), port: 5432,
   user: "app".into(), password: std::env::var("PGPASSWORD")?, dbname: "app".into(),
   max_connections: 10, ssl: true,
+  checkout_timeout: Some(PgConfig::DEFAULT_CHECKOUT_TIMEOUT),
 }).await?;
 let conn = pg.connect().await?;
 ```

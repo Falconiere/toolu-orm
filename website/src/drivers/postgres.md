@@ -23,6 +23,7 @@ let pg = PgDatabase::init(&PgConfig {
   dbname: "app".into(),
   max_connections: 10,
   ssl: true,
+  checkout_timeout: Some(PgConfig::DEFAULT_CHECKOUT_TIMEOUT),
 }).await?;
 
 let conn = pg.connect().await?;   // PgConnection — DbConnection
@@ -31,6 +32,13 @@ let conn = pg.connect().await?;   // PgConnection — DbConnection
 `PgDatabase::init` builds the pool; `connect()` checks one connection out of it.
 `ssl: true` enables rustls; leave it `false` for a local development database
 that speaks plaintext.
+
+`checkout_timeout` bounds how long `connect()` waits for a free pool slot
+(deadpool's checkout **wait** timeout) — distinct from connection-creation or
+recycle timeouts, which are separate deadpool settings this config does not
+expose. `Some(PgConfig::DEFAULT_CHECKOUT_TIMEOUT)` (5s) is the documented
+default; `None` opts out for an unbounded wait, matching the pool's behavior
+before this setting existed.
 
 `PgConfig::for_test("my_schema")` builds the configuration the test suites use —
 `localhost:5433`, user and password `toolu` — with `TEST_DB_HOST`, `TEST_DB_PORT`,
