@@ -17,6 +17,7 @@ Type-safe query builders for toolu-orm — Select, Insert, Update, Delete with f
 
 ## Key Modules
 - `select/builder.rs` — SelectBuilder (columns, joins, filters, order, limit, offset)
+- `select/row_limit.rs` — the LIMIT/OFFSET tail, and `to_first_row_sql` (the at-most-one-row query `fetch_one` / `fetch_optional` send)
 - `insert.rs` — InsertBuilder (set, or_replace, or_ignore)
 - `update.rs` — UpdateBuilder (set, set_expr, filter)
 - `delete.rs` — DeleteBuilder (filter)
