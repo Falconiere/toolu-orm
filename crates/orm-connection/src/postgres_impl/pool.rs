@@ -163,16 +163,22 @@ impl PgDatabase {
   }
 
   fn checkout_error(&self, e: &PoolError) -> DbError {
-    if matches!(e, PoolError::Timeout(TimeoutType::Wait)) {
-      return match self.checkout_timeout {
-        Some(d) => DbError::Pool(format!(
-          "pool checkout timed out after {d:?} waiting for a connection"
-        )),
-        None => DbError::Pool(format!(
-          "pool checkout timed out waiting for a connection: {e}"
-        )),
-      };
+    let PoolError::Timeout(timeout_type) = e else {
+      return DbError::Pool(format!("pool checkout failed: {e}"));
+    };
+    if !matches!(timeout_type, TimeoutType::Wait) {
+      // This config only sets deadpool's wait timeout, so Create/Recycle
+      // should never fire — but if deadpool ever changes that, still label
+      // it a timeout instead of falling through to the generic message.
+      return DbError::Pool(format!("pool checkout timed out ({timeout_type:?}): {e}"));
     }
-    DbError::Pool(format!("pool checkout failed: {e}"))
+    match self.checkout_timeout {
+      Some(d) => DbError::Pool(format!(
+        "pool checkout timed out after {d:?} waiting for a connection"
+      )),
+      None => DbError::Pool(format!(
+        "pool checkout timed out waiting for a connection: {e}"
+      )),
+    }
   }
 }

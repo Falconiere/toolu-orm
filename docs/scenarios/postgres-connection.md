@@ -2,7 +2,7 @@
 
 **Feature:** `PgDatabase::init(&PgConfig)` opens a `deadpool-postgres` pool with an eager connectivity check; `connect()` hands out a `PgConnection` implementing `DbConnection` (`execute_sql`, `query_map`, `execute_batch`). `PgConfig::checkout_timeout` bounds how long `connect()` waits for a pool slot.
 **Drivers:** Postgres only (SQLite has no pool; see [Lanes](lanes.md)).
-**Spec:** AC-3, [pg-pool-checkout-timeout-design](../toolu/specs/2026-09-16-pg-pool-checkout-timeout-design.md).
+**Spec:** AC-3.
 
 ## What is proven
 
