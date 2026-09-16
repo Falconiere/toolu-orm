@@ -22,15 +22,35 @@ use toolu_orm_query::QueryError;
 const ID: Column<Integer> = Column::new("item", "id");
 
 /// A client on its own schema whose `item` table holds ids `1..=rows`.
+///
+/// The seed's own row count is asserted, so every decode assertion below rests
+/// on a table proven to hold `rows` rows rather than on an assumption.
 async fn seeded(
   schema: &str,
   rows: i64,
 ) -> Result<tokio_postgres::Client, Box<dyn std::error::Error>> {
   let client = pg::client(schema).await?;
   client.batch_execute(ITEM_DDL_POSTGRES).await?;
-  client.batch_execute(&seed_sql_postgres(rows)).await?;
-  reset();
+  reseed(&client, rows).await?;
   Ok(client)
+}
+
+/// Replaces `item`'s contents with ids `1..=rows`, asserting the insert count.
+async fn reseed(
+  client: &tokio_postgres::Client,
+  rows: i64,
+) -> Result<(), Box<dyn std::error::Error>> {
+  client.execute("TRUNCATE item", &[]).await?;
+  let inserted = client
+    .execute(seed_sql_postgres(rows).as_str(), &[])
+    .await?;
+  assert_eq!(
+    i64::try_from(inserted)?,
+    rows,
+    "seed inserted the wrong count"
+  );
+  reset();
+  Ok(())
 }
 
 fn items() -> SelectBuilder {
@@ -136,9 +156,7 @@ async fn decoded_rows_stay_one_as_cardinality_grows() -> TestResult {
   let client = seeded("q_pg_first_row_growth", 1).await?;
 
   for rows in [1, 10, 1_000, ROW_COUNT] {
-    client.batch_execute("TRUNCATE item").await?;
-    client.batch_execute(&seed_sql_postgres(rows)).await?;
-    reset();
+    reseed(&client, rows).await?;
 
     let first: CountedId = items().order_by(ID.asc()).fetch_one(&client).await?;
 

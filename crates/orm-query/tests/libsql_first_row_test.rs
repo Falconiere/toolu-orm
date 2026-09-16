@@ -17,11 +17,19 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 const ID: Column<Integer> = Column::new("item", "id");
 
 /// An in-memory database whose `item` table holds ids `1..=rows`.
+///
+/// The seed's own row count is asserted, so every decode assertion below rests
+/// on a table proven to hold `rows` rows rather than on an assumption.
 async fn seeded(rows: i64) -> Result<libsql::Connection, Box<dyn std::error::Error>> {
   let db = libsql::Builder::new_local(":memory:").build().await?;
   let conn = db.connect()?;
   conn.execute(ITEM_DDL_SQLITE, ()).await?;
-  conn.execute(&seed_sql_sqlite(rows), ()).await?;
+  let inserted = conn.execute(&seed_sql_sqlite(rows), ()).await?;
+  assert_eq!(
+    i64::try_from(inserted)?,
+    rows,
+    "seed inserted the wrong count"
+  );
   reset();
   Ok(conn)
 }

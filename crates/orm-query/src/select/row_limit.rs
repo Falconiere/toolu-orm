@@ -9,7 +9,9 @@ use super::SelectBuilder;
 
 /// The row bound a first-row fetch asks the database for.
 ///
-/// `min(n, 1)`, with an absent limit reading as "no bound yet":
+/// `min(n, 1)`, with an absent limit reading as "no bound yet". A minimum, not
+/// a clamp: a value below `1` is already smaller, so `0` and any negative limit
+/// pass through unchanged rather than being pulled up to `1`.
 ///
 /// - no limit — `1`; the caller wants one row, so ask for one row.
 /// - a positive limit — `1`; `LIMIT` truncates after `ORDER BY` and `OFFSET`,

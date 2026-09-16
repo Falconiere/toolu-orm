@@ -7,7 +7,10 @@
 //!
 //! [`decoded`] reads a process-global counter. `cargo nextest` gives each test
 //! its own process (and `cargo test` is banned by CLAUDE.md), so a
-//! [`reset`]-then-assert pair is exact rather than merely indicative.
+//! [`reset`]-then-assert pair is exact rather than merely indicative. Every
+//! access is `SeqCst`: a counter read once per assertion has no hot path to
+//! protect, and the strongest ordering keeps the exactness claim from resting
+//! on which thread a driver happened to decode on.
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -38,18 +41,18 @@ static DECODED: AtomicUsize = AtomicUsize::new(0);
 
 /// Zeroes the decode counter. Call it immediately before the fetch under test.
 pub fn reset() {
-  DECODED.store(0, Ordering::Relaxed);
+  DECODED.store(0, Ordering::SeqCst);
 }
 
 /// Rows decoded since the last [`reset`].
 pub fn decoded() -> usize {
-  DECODED.load(Ordering::Relaxed)
+  DECODED.load(Ordering::SeqCst)
 }
 
 /// Counts the decode and accepts any row of a seeded table, whose ids run
 /// `1..=ROW_COUNT`; anything else means the fixture, not the fetch, is wrong.
 fn count_id(id: i64) -> Result<i64, DbCoreError> {
-  DECODED.fetch_add(1, Ordering::Relaxed);
+  DECODED.fetch_add(1, Ordering::SeqCst);
   if id >= 1 {
     Ok(id)
   } else {
@@ -62,7 +65,7 @@ fn count_id(id: i64) -> Result<i64, DbCoreError> {
 /// Counts the decode and accepts only `id == 1`, so any attempt to decode a
 /// later row of an ascending scan surfaces as a `RowMapping` error.
 fn only_first_id(id: i64) -> Result<i64, DbCoreError> {
-  DECODED.fetch_add(1, Ordering::Relaxed);
+  DECODED.fetch_add(1, Ordering::SeqCst);
   if id == 1 {
     Ok(id)
   } else {

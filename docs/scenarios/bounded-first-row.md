@@ -45,7 +45,7 @@ cargo nextest run -p toolu-orm-query -E 'binary(first_row_sql_test)'
 cargo nextest run -p toolu-orm-query --features libsql -E 'binary(libsql_first_row_test)'
 cargo nextest run -p toolu-orm-query --features rusqlite -E 'binary(rusqlite_first_row_test)'
 docker compose -f docker-compose.test.yaml up -d --wait
-TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres -E 'binary(postgres_first_row_test)'
+TEST_DB_PORT=5434 cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer --features postgres -E 'binary(postgres_first_row_test)'
 ```
 
 ## Tests

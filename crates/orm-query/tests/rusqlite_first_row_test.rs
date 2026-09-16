@@ -19,10 +19,18 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 const ID: Column<Integer> = Column::new("item", "id");
 
 /// An in-memory database whose `item` table holds ids `1..=rows`.
+///
+/// The seed's own row count is asserted, so every decode assertion below rests
+/// on a table proven to hold `rows` rows rather than on an assumption.
 fn seeded(rows: i64) -> Result<rusqlite::Connection, Box<dyn std::error::Error>> {
   let conn = rusqlite::Connection::open_in_memory()?;
   conn.execute(ITEM_DDL_SQLITE, ())?;
-  conn.execute_batch(&seed_sql_sqlite(rows))?;
+  let inserted = conn.execute(&seed_sql_sqlite(rows), ())?;
+  assert_eq!(
+    i64::try_from(inserted)?,
+    rows,
+    "seed inserted the wrong count"
+  );
   reset();
   Ok(conn)
 }
