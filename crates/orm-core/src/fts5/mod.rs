@@ -24,4 +24,4 @@ pub use aux_fn::{
 };
 pub use builder::{Fts5Table, FTS5_MODULE};
 pub use options::Fts5Options;
-pub use sync::{sync_trigger_names, Fts5Sync};
+pub use sync::{sync_trigger_names, Fts5Sync, Fts5SyncTriggers};

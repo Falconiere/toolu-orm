@@ -8,26 +8,13 @@ use toolu_orm_core::column::ColumnType;
 use toolu_orm_core::fts5::{sync_trigger_names, Fts5Sync, Fts5Table};
 use toolu_orm_core::snapshot::Snapshot;
 
-use schema::{memories, memory_fts, memory_fts_unsynced, registry, snapshot_of};
-
-/// The recorded declaration, or an empty one so a failed assertion names the
-/// field that differs rather than the absence of the whole spec.
-fn recorded(table: &toolu_orm_core::table::TableDef) -> Fts5Sync {
-  assert!(
-    table.fts5_sync.is_some(),
-    "sync_content() recorded nothing on {}",
-    table.name
-  );
-  table.fts5_sync.clone().unwrap_or_default()
-}
+use schema::{memories, memory_fts, memory_fts_sync, memory_fts_unsynced, registry, snapshot_of};
 
 #[test]
 fn sync_content_records_the_content_table_rowid_and_columns() {
-  let sync = recorded(&memory_fts());
-  assert_eq!(sync.content_table, "memories");
-  assert_eq!(sync.content_rowid, "id");
-  assert_eq!(sync.columns, ["body", "note"]);
-  assert_eq!(sync.indexed_columns, ["body"]);
+  // The whole declaration against a literal, so neither a missing spec nor a
+  // field added later can slip past.
+  assert_eq!(memory_fts().fts5_sync, Some(memory_fts_sync()));
 }
 
 #[test]
@@ -44,9 +31,15 @@ fn an_all_unindexed_table_records_no_indexed_columns() {
     .content_rowid("id")
     .sync_content()
     .build();
-  let sync = recorded(&table);
-  assert_eq!(sync.columns, ["note"]);
-  assert!(sync.indexed_columns.is_empty());
+  assert_eq!(
+    table.fts5_sync,
+    Some(Fts5Sync {
+      content_table: "memories".to_owned(),
+      content_rowid: "id".to_owned(),
+      columns: vec!["note".to_owned()],
+      indexed_columns: vec![],
+    })
+  );
 }
 
 #[test]
@@ -55,19 +48,25 @@ fn a_missing_content_option_is_recorded_as_empty_rather_than_dropped() {
     .column("body", ColumnType::Text)
     .sync_content()
     .build();
-  let sync = recorded(&table);
-  assert_eq!(sync.content_table, "");
-  assert_eq!(sync.content_rowid, "");
+  assert_eq!(
+    table.fts5_sync,
+    Some(Fts5Sync {
+      content_table: String::new(),
+      content_rowid: String::new(),
+      columns: vec!["body".to_owned()],
+      indexed_columns: vec!["body".to_owned()],
+    })
+  );
 }
 
 #[test]
 fn trigger_names_key_on_the_fts_table_alone() {
   assert_eq!(
-    sync_trigger_names("memory_fts"),
+    sync_trigger_names("memory_fts").all(),
     [
-      "toolu_fts5_memory_fts_insert".to_owned(),
-      "toolu_fts5_memory_fts_delete".to_owned(),
-      "toolu_fts5_memory_fts_update".to_owned(),
+      "toolu_fts5_memory_fts_insert",
+      "toolu_fts5_memory_fts_delete",
+      "toolu_fts5_memory_fts_update",
     ]
   );
   assert_ne!(
@@ -86,7 +85,7 @@ fn the_snapshot_round_trip_preserves_the_declaration() {
     restored
       .find_table("memory_fts")
       .and_then(|t| t.fts5_sync.clone()),
-    memory_fts().fts5_sync
+    Some(memory_fts_sync())
   );
   assert_eq!(
     restored
@@ -136,6 +135,6 @@ fn from_registry_carries_the_declaration_into_the_snapshot_table() {
       .tables
       .get("memory_fts")
       .and_then(|t| t.fts5_sync.clone()),
-    memory_fts().fts5_sync
+    Some(memory_fts_sync())
   );
 }

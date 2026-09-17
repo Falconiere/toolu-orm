@@ -5,7 +5,7 @@ use toolu_orm_core::column::{ColumnDef, ColumnType};
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::diff::{diff, diff_with_resolver};
 use toolu_orm_core::error::DbCoreError;
-use toolu_orm_core::fts5::Fts5Table;
+use toolu_orm_core::fts5::{Fts5Sync, Fts5Table};
 use toolu_orm_core::rename::RenameResolver;
 use toolu_orm_core::schema::SchemaRegistry;
 use toolu_orm_core::snapshot::Snapshot;
@@ -73,6 +73,17 @@ pub fn memory_fts_named(name: &str, tokenize: &str) -> TableDef {
 
 pub fn memory_fts() -> TableDef {
   memory_fts_named("memory_fts", "porter")
+}
+
+/// The declaration [`memory_fts`] is expected to record, written out rather
+/// than read back off the table, so the builder is asserted against a literal.
+pub fn memory_fts_sync() -> Fts5Sync {
+  Fts5Sync {
+    content_table: "memories".to_owned(),
+    content_rowid: "id".to_owned(),
+    columns: vec!["body".to_owned(), "note".to_owned()],
+    indexed_columns: vec!["body".to_owned()],
+  }
 }
 
 /// The same table without the opt-in: an external-content index whose triggers

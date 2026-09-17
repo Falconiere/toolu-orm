@@ -39,23 +39,44 @@ pub struct Fts5Sync {
   pub indexed_columns: Vec<String>,
 }
 
-/// The insert, delete and update trigger names for `fts_table`, in creation
-/// order.
+/// The three generated trigger names for one FTS5 table.
 ///
 /// They key on the FTS table alone: it has exactly one declaration, so two FTS
 /// tables sharing one content table still get distinct names, and a drop needs
 /// nothing but the FTS table's name.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Fts5SyncTriggers {
+  /// Fires after a row is inserted into the content table.
+  pub insert: String,
+  /// Fires after a row is deleted from it.
+  pub delete: String,
+  /// Fires after an indexed column or the rowid changes.
+  pub update: String,
+}
+
+impl Fts5SyncTriggers {
+  /// The three names in the order they are created and dropped.
+  #[must_use]
+  pub fn all(&self) -> [&str; 3] {
+    [&self.insert, &self.delete, &self.update]
+  }
+}
+
+/// The trigger names for `fts_table`.
 ///
 /// ```
 /// use toolu_orm_core::fts5::sync_trigger_names;
 ///
-/// assert_eq!(sync_trigger_names("memory_fts")[0], "toolu_fts5_memory_fts_insert");
+/// assert_eq!(
+///   sync_trigger_names("memory_fts").insert,
+///   "toolu_fts5_memory_fts_insert"
+/// );
 /// ```
 #[must_use]
-pub fn sync_trigger_names(fts_table: &str) -> [String; 3] {
-  [
-    format!("{TRIGGER_PREFIX}{fts_table}_insert"),
-    format!("{TRIGGER_PREFIX}{fts_table}_delete"),
-    format!("{TRIGGER_PREFIX}{fts_table}_update"),
-  ]
+pub fn sync_trigger_names(fts_table: &str) -> Fts5SyncTriggers {
+  Fts5SyncTriggers {
+    insert: format!("{TRIGGER_PREFIX}{fts_table}_insert"),
+    delete: format!("{TRIGGER_PREFIX}{fts_table}_delete"),
+    update: format!("{TRIGGER_PREFIX}{fts_table}_update"),
+  }
 }

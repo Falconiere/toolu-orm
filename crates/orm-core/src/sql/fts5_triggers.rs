@@ -23,6 +23,7 @@ pub(crate) fn drop_sync_triggers_sql(fts_table: &str, dialect: Dialect) -> Strin
     return skipped_comment(fts_table, dialect);
   }
   sync_trigger_names(fts_table)
+    .all()
     .iter()
     .map(|name| format!("DROP TRIGGER IF EXISTS {};", quote_ident(name)))
     .collect::<Vec<_>>()
@@ -39,14 +40,12 @@ pub(crate) fn create_sync_triggers_sql(
   if !matches!(dialect, Dialect::Sqlite) {
     return skipped_comment(fts_table, dialect);
   }
-  let [insert, delete, update] = sync_trigger_names(fts_table);
+  let names = sync_trigger_names(fts_table);
   let fts = quote_ident(fts_table);
   let content = quote_ident(&sync.content_table);
-  let (insert, delete, update) = (
-    quote_ident(&insert),
-    quote_ident(&delete),
-    quote_ident(&update),
-  );
+  let insert = quote_ident(&names.insert);
+  let delete = quote_ident(&names.delete);
+  let update = quote_ident(&names.update);
   [
     format!(
       "CREATE TRIGGER {insert} AFTER INSERT ON {content} BEGIN\n  {};\nEND;",
@@ -93,10 +92,13 @@ fn delete_statement(fts: &str, fts_table: &str, sync: &Fts5Sync) -> String {
   )
 }
 
-/// `"<fts>", "rowid", "<col>"…` — the command column leads when the statement
-/// is a command rather than a plain insert.
-fn column_list(sync: &Fts5Sync, command: Option<&str>) -> String {
-  let mut names: Vec<String> = command.into_iter().map(quote_ident).collect();
+/// `"<fts>", "rowid", "<col>"…`.
+///
+/// `command_column` is the FTS5 table's own hidden column, which leads the list
+/// when the statement is a command like `'delete'`; a plain insert passes
+/// `None` and starts at the rowid.
+fn column_list(sync: &Fts5Sync, command_column: Option<&str>) -> String {
+  let mut names: Vec<String> = command_column.into_iter().map(quote_ident).collect();
   names.push(quote_ident("rowid"));
   names.extend(sync.columns.iter().map(|c| quote_ident(c)));
   names.join(", ")

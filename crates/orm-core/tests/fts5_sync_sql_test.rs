@@ -9,10 +9,11 @@ use toolu_orm_core::diff::Operation;
 use toolu_orm_core::fts5::{Fts5Sync, Fts5Table};
 use toolu_orm_core::sql::generate_sql_for;
 
-use schema::memory_fts;
+use schema::{memory_fts, memory_fts_sync};
 
+/// The declaration the table records. A table that recorded none yields the
+/// empty declaration, whose rendered SQL fails every assertion below by name.
 fn sync_of(table: &toolu_orm_core::table::TableDef) -> Fts5Sync {
-  assert!(table.fts5_sync.is_some(), "{} declared no sync", table.name);
   table.fts5_sync.clone().unwrap_or_default()
 }
 
@@ -28,6 +29,7 @@ fn create_sql(table: &toolu_orm_core::table::TableDef, dialect: Dialect) -> Stri
 
 #[test]
 fn the_insert_trigger_writes_every_column_addressed_by_the_content_rowid() {
+  assert_eq!(memory_fts().fts5_sync, Some(memory_fts_sync()));
   let sql = create_sql(&memory_fts(), Dialect::Sqlite);
   assert!(
     sql.contains(

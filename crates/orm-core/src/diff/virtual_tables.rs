@@ -162,6 +162,10 @@ pub(crate) fn content_table_reason(
     }
   }
 
+  // No `content_rowid` is not an error here: FTS5 then addresses rows by the
+  // content table's own implicit rowid, which always exists. A *synchronization*
+  // declaration does require one, because the update trigger has to name that
+  // column — `super::fts5_sync::validate` rejects its absence.
   let rowid = rowid?;
   if content_cols.contains(rowid) {
     return None;
