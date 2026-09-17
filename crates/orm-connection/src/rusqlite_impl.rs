@@ -112,6 +112,13 @@ fn join_failure(error: &tokio::task::JoinError) -> DbError {
   ))
 }
 
+/// `execute_sql` and `query_map` reuse the connection's bounded statement
+/// cache via `prepare_cached` instead of reparsing `sql` on every call. This
+/// needs no invalidation logic here: SQLite revalidates a cached statement's
+/// schema cookie on every execution and recompiles it against the current
+/// schema before running, at the C-library level -- a schema change surfaces
+/// as an ordinary query error on next use, not stale data (see
+/// `rusqlite_prepared_statement_cache_test`).
 impl DbConnectionBlocking for RusqliteConnection {
   fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
     let guard = self.lock()?;

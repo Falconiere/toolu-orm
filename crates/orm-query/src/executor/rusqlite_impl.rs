@@ -1,4 +1,12 @@
 //! Rusqlite [`Executor`] implementation.
+//!
+//! Both methods reuse the connection's bounded statement cache via
+//! `prepare_cached` instead of reparsing `sql` on every call. This needs no
+//! invalidation logic here: SQLite revalidates a cached statement's schema
+//! cookie on every execution and recompiles it against the current schema
+//! before running, at the C-library level -- a schema change surfaces as an
+//! ordinary query error on next use, not stale data (see
+//! `rusqlite_prepared_statement_cache_test`).
 
 use toolu_orm_connection::{DbConnectionBlocking, DbError, RusqliteConnection};
 use toolu_orm_core::row::FromRow;

@@ -226,7 +226,7 @@ required-features = ["rusqlite"]
 
 [[test]]
 name = "rusqlite_prepared_statement_cache_test"
-path = "tests/rusqlite_prepared_statement_cache_test.rs"
+path = "tests/rusqlite_prepared_statement_cache_test/main.rs"
 required-features = ["rusqlite"]
 
 [[test]]
