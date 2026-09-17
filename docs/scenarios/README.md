@@ -14,7 +14,7 @@ test, update its page.
 | Scenario | What it proves |
 |---|---|
 | [Upsert](upsert.md) | `or_replace` / `or_ignore` on all three drivers (`INSERT OR REPLACE`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`). |
-| [Relational loads](relational-loads.md) | `with_many` / `with_one` fetch parent and children in one statement, including empty and null relations. |
+| [Relational loads](relational-loads.md) | `with_many` / `with_one` fetch parent and children in one statement, including empty and null relations and declared binary (`BLOB` / `bytea`) columns. |
 | [Value round-trip](value-round-trip.md) | Every `Value` variant binds as a parameter and reads back unchanged. |
 | [Fetch semantics](fetch-semantics.md) | `fetch_one` / `fetch_optional` / `count` / `exists` and their empty, single, and multi-row behavior. |
 | [Bounded first-row fetch](bounded-first-row.md) | `fetch_one` / `fetch_optional` ask the database for at most one row, so a 10,000-row match costs one decode and a later undecodable row cannot fail a valid first row. |

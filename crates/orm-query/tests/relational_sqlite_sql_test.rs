@@ -98,6 +98,26 @@ fn sqlite_coalesce_wraps_json_group_array() {
 }
 
 #[test]
+fn sqlite_identifiers_escape_an_embedded_double_quote() {
+  let builder = RelationalSelectBuilder::new("us\"ers", &["i\"d"]).with_many(
+    "posts",
+    "po\"sts",
+    "id",
+    "author_id",
+    &["ti\"tle"],
+  );
+  let sql = builder.to_sql_sqlite();
+  assert!(
+    sql.contains(r#""us""ers"."i""d""#),
+    "an embedded quote must be doubled, not closed, got: {sql}"
+  );
+  assert!(
+    sql.contains(r#""po""sts"."ti""tle""#),
+    "target identifiers must be escaped too, got: {sql}"
+  );
+}
+
+#[test]
 fn sqlite_source_columns_are_qualified() {
   let builder = RelationalSelectBuilder::new("users", &["id", "name"]).with_many(
     "posts",

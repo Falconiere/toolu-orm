@@ -1,5 +1,8 @@
 //! RelationalSelectBuilder and RelationConfig for eager-loaded relation queries.
 
+use super::identifier::push_qualified;
+use super::relation_column::RelationColumn;
+
 /// Configuration for a single relation to be loaded.
 #[derive(Debug, Clone)]
 pub struct RelationConfig {
@@ -12,7 +15,7 @@ pub struct RelationConfig {
   /// The column on the target table (e.g., "author_id").
   pub foreign_key: String,
   /// The columns to select from the target table.
-  pub target_columns: Vec<String>,
+  pub target_columns: Vec<RelationColumn>,
   /// `true` for has-many, `false` for has-one / belongs-to.
   pub is_many: bool,
   /// Nested relations on the target table (reserved).
@@ -25,7 +28,7 @@ impl RelationConfig {
     target_table: &str,
     local_key: &str,
     foreign_key: &str,
-    target_columns: &[&str],
+    target_columns: Vec<RelationColumn>,
     is_many: bool,
   ) -> Self {
     Self {
@@ -33,11 +36,16 @@ impl RelationConfig {
       target_table: target_table.to_owned(),
       local_key: local_key.to_owned(),
       foreign_key: foreign_key.to_owned(),
-      target_columns: target_columns.iter().map(|c| (*c).to_owned()).collect(),
+      target_columns,
       is_many,
       nested: Vec::new(),
     }
   }
+}
+
+/// `&["id", "title"]` → plain, non-binary relation columns.
+fn plain_columns(names: &[&str]) -> Vec<RelationColumn> {
+  names.iter().map(|c| RelationColumn::new(c)).collect()
 }
 
 /// Builder for relational SELECT queries.
@@ -59,42 +67,84 @@ impl RelationalSelectBuilder {
 
   /// Add a has-many relation.
   pub fn with_many(
-    mut self,
+    self,
     field_name: &str,
     target_table: &str,
     local_key: &str,
     foreign_key: &str,
     target_columns: &[&str],
   ) -> Self {
+    self.with_many_columns(
+      field_name,
+      target_table,
+      local_key,
+      foreign_key,
+      &plain_columns(target_columns),
+    )
+  }
+
+  /// Add a has-one / belongs-to relation.
+  pub fn with_one(
+    self,
+    field_name: &str,
+    target_table: &str,
+    local_key: &str,
+    foreign_key: &str,
+    target_columns: &[&str],
+  ) -> Self {
+    self.with_one_columns(
+      field_name,
+      target_table,
+      local_key,
+      foreign_key,
+      &plain_columns(target_columns),
+    )
+  }
+
+  /// Add a has-many relation whose columns declare their transport, so a
+  /// [`RelationColumn::binary`] column survives the JSON round trip.
+  pub fn with_many_columns(
+    mut self,
+    field_name: &str,
+    target_table: &str,
+    local_key: &str,
+    foreign_key: &str,
+    target_columns: &[RelationColumn],
+  ) -> Self {
     self.relations.push(RelationConfig::new(
       field_name,
       target_table,
       local_key,
       foreign_key,
-      target_columns,
+      target_columns.to_vec(),
       true,
     ));
     self
   }
 
-  /// Add a has-one / belongs-to relation.
-  pub fn with_one(
+  /// Add a has-one / belongs-to relation whose columns declare their transport.
+  pub fn with_one_columns(
     mut self,
     field_name: &str,
     target_table: &str,
     local_key: &str,
     foreign_key: &str,
-    target_columns: &[&str],
+    target_columns: &[RelationColumn],
   ) -> Self {
     self.relations.push(RelationConfig::new(
       field_name,
       target_table,
       local_key,
       foreign_key,
-      target_columns,
+      target_columns.to_vec(),
       false,
     ));
     self
+  }
+
+  /// The relation declared under `field_name`, if any.
+  pub(super) fn relation(&self, field_name: &str) -> Option<&RelationConfig> {
+    self.relations.iter().find(|r| r.field_name == field_name)
   }
 
   /// Relation configurations in declaration order.
@@ -124,16 +174,6 @@ impl RelationalSelectBuilder {
     }
   }
 
-  /// Appends `"qualifier"."col1", "qualifier"."col2", ...` for a column list.
-  pub(super) fn push_column_list(sql: &mut String, qualifier: &str, columns: &[String]) {
-    for (i, col) in columns.iter().enumerate() {
-      if i > 0 {
-        sql.push_str(", ");
-      }
-      push_qualified(sql, qualifier, col);
-    }
-  }
-
   /// Appends `WHERE "target"."fk" = "source"."lk"`.
   pub(super) fn push_join_where(
     &self,
@@ -149,13 +189,4 @@ impl RelationalSelectBuilder {
       sql.push_str(" LIMIT 1");
     }
   }
-}
-
-/// Appends `"qualifier"."column"` to the SQL buffer.
-fn push_qualified(sql: &mut String, qualifier: &str, column: &str) {
-  sql.push('"');
-  sql.push_str(qualifier);
-  sql.push_str("\".\"");
-  sql.push_str(column);
-  sql.push('"');
 }

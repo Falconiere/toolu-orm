@@ -1,6 +1,28 @@
 //! Postgres lateral join SQL generation for relational SELECT queries.
 
 use super::config::RelationalSelectBuilder;
+use super::identifier::push_qualified;
+use super::relation_column::RelationColumn;
+
+/// Appends the projected columns of one relation.
+///
+/// A binary column becomes `encode("t"."c", 'hex')`: `json_build_array` would
+/// otherwise render `bytea` through its text output as `"\\x0102"`. `encode` is
+/// strict, so SQL NULL stays NULL.
+fn push_target_columns(sql: &mut String, qualifier: &str, columns: &[RelationColumn]) {
+  for (i, col) in columns.iter().enumerate() {
+    if i > 0 {
+      sql.push_str(", ");
+    }
+    if col.is_binary() {
+      sql.push_str("encode(");
+      push_qualified(sql, qualifier, col.name());
+      sql.push_str(", 'hex')");
+    } else {
+      push_qualified(sql, qualifier, col.name());
+    }
+  }
+}
 
 impl RelationalSelectBuilder {
   /// Postgres: `LEFT JOIN LATERAL` + `json_agg` / `json_build_array`.
@@ -29,11 +51,11 @@ impl RelationalSelectBuilder {
 
       if rel.is_many {
         sql.push_str("coalesce(json_agg(json_build_array(");
-        Self::push_column_list(&mut sql, &target_alias, &rel.target_columns);
+        push_target_columns(&mut sql, &target_alias, &rel.target_columns);
         sql.push_str(")), '[]'::json) AS \"data\"");
       } else {
         sql.push_str("json_build_array(");
-        Self::push_column_list(&mut sql, &target_alias, &rel.target_columns);
+        push_target_columns(&mut sql, &target_alias, &rel.target_columns);
         sql.push_str(") AS \"data\"");
       }
 

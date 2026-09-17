@@ -93,6 +93,19 @@ path = "tests/relational_sqlite_sql_test.rs"
 name = "relational_postgres_sql_test"
 path = "tests/relational_postgres_sql_test.rs"
 
+# Binary relation columns: SQL generation and JSON decoding only, no driver
+# type in either binary, so both belong in the feature-less default lane
+# (`cargo nextest run --workspace`). Declaring `required-features` here would
+# take them OUT of the only lane that runs them. Their live counterparts are
+# `{rusqlite,libsql,postgres}_relational_blob_test` below.
+[[test]]
+name = "relational_binary_sql_test"
+path = "tests/relational_binary_sql_test.rs"
+
+[[test]]
+name = "relational_binary_decode_test"
+path = "tests/relational_binary_decode_test.rs"
+
 [[test]]
 name = "select_test"
 path = "tests/select_test/main.rs"
@@ -156,6 +169,11 @@ path = "tests/libsql_relational_test.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "libsql_relational_blob_test"
+path = "tests/libsql_relational_blob_test.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "fts5_libsql_test"
 path = "tests/fts5_libsql_test.rs"
 required-features = ["libsql"]
@@ -189,6 +207,11 @@ required-features = ["rusqlite"]
 [[test]]
 name = "rusqlite_relational_test"
 path = "tests/rusqlite_relational_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "rusqlite_relational_blob_test"
+path = "tests/rusqlite_relational_blob_test.rs"
 required-features = ["rusqlite"]
 
 [[test]]
@@ -226,6 +249,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_relational_test"
 path = "tests/postgres_relational_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_relational_blob_test"
+path = "tests/postgres_relational_blob_test.rs"
 required-features = ["postgres"]
 
 [[test]]
