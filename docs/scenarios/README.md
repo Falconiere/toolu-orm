@@ -20,7 +20,7 @@ test, update its page.
 | [Bounded first-row fetch](bounded-first-row.md) | `fetch_one` / `fetch_optional` ask the database for at most one row, so a 10,000-row match costs one decode and a later undecodable row cannot fail a valid first row. |
 | [Filters](filters.md) | Every `Expr` operator executed against real rows, parameter numbering across filters, nested AND/OR, empty `in_list`. |
 | [Transactions](transactions.md) | Commit persists; rollback and drop discard; reads inside see own writes (libsql `run_transaction`, orm-query `PgTransaction`, connection `PgTransaction`). |
-| [Postgres connection](postgres-connection.md) | `PgDatabase` pool, `PgConnection`, error mapping with SQLSTATE, unreachable server. |
+| [Postgres connection](postgres-connection.md) | `PgDatabase` pool, `PgConnection`, error mapping with SQLSTATE, unreachable server, and the per-connection prepared-statement cache. |
 | [Blocking connection](blocking-connection.md) | `DbConnectionBlocking` on rusqlite with no runtime: migrate/status/baseline twins, `Executor for RusqliteConnection`, non-`Send` rows, async agreement, contention, poisoning. |
 | [FromRow derive](from-row-derive.md) | `#[derive(FromRow)]` on every driver shape against real rows: NULL to `None`, missing columns, `#[from_row(with)]`. |
 | [Migration loop](migration-loop.md) | generate → migrate → evolve → generate → migrate, asserted through `PRAGMA` / `information_schema`. |

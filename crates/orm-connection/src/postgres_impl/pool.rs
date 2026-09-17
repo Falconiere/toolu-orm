@@ -162,6 +162,18 @@ impl PgDatabase {
     Ok(PgConnection { client })
   }
 
+  /// Clears the prepared-statement cache of every connection this pool has
+  /// handed out, closing those statements on the server.
+  ///
+  /// The caches never evict on their own, so long-lived pools running many
+  /// distinct SQL texts grow without bound; this is the release valve, and the
+  /// way to drop plans that DDL has invalidated in one go instead of one
+  /// failed call per statement. In-flight statements stay valid — only the
+  /// cache entries go, so the next call re-prepares.
+  pub fn clear_statement_caches(&self) {
+    self.pool.manager().statement_caches.clear();
+  }
+
   fn checkout_error(&self, e: &PoolError) -> DbError {
     let PoolError::Timeout(timeout_type) = e else {
       return DbError::Pool(format!("pool checkout failed: {e}"));
