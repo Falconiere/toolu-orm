@@ -90,6 +90,11 @@ path = "tests/migrate_history_test.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "migrate_history_limits_test"
+path = "tests/migrate_history_limits_test.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "migrate_history_embedded_test"
 path = "tests/migrate_history_embedded_test.rs"
 required-features = ["libsql"]

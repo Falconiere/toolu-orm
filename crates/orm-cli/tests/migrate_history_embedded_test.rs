@@ -99,7 +99,17 @@ async fn a_tampered_entry_blocks_a_pending_embedded_entry() -> TestResult {
   let Err(err) = run_migrate_embedded(&conn, &list(&next), Dialect::Sqlite).await else {
     return Err("a tampered history let a pending entry through".into());
   };
-  assert!(matches!(err, MigrateError::HashMismatch { .. }), "{err:?}");
+  let MigrateError::HashMismatch {
+    file,
+    expected,
+    actual,
+  } = &err
+  else {
+    return Err(format!("expected HashMismatch, got {err:?}").into());
+  };
+  assert_eq!(file, LEDGER);
+  assert_eq!(expected, &compute_hash(LEDGER_SQL));
+  assert_eq!(actual, &compute_hash(EDITED_LEDGER_SQL));
   assert_eq!(
     scalar(&conn, "SELECT count(*) FROM _migrations").await?,
     1,

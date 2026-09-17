@@ -116,7 +116,17 @@ fn an_edited_embedded_body_fails_the_next_blocking_run() -> TestResult {
   let Err(err) = run_migrate_embedded_blocking(&conn, &list(&edited), Dialect::Sqlite) else {
     return Err("an edited applied body was accepted".into());
   };
-  assert!(matches!(err, MigrateError::HashMismatch { .. }), "{err:?}");
+  let MigrateError::HashMismatch {
+    file,
+    expected,
+    actual,
+  } = &err
+  else {
+    return Err(format!("expected HashMismatch, got {err:?}").into());
+  };
+  assert_eq!(file, LEDGER);
+  assert_eq!(expected, &compute_hash(LEDGER_SQL));
+  assert_eq!(actual, &compute_hash(EDITED_LEDGER_SQL));
   Ok(())
 }
 

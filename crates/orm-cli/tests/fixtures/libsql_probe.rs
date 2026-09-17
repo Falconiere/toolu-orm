@@ -2,7 +2,8 @@
 //!
 //! The rebuild tests assert on the live database rather than on the generated
 //! SQL, so they need `PRAGMA` and `sqlite_master` reads that the `DbConnection`
-//! trait does not model. Shared by the `sqlite_rebuild_*_libsql_test` binaries.
+//! trait does not model. Shared by the `sqlite_rebuild_*_libsql_test` and
+//! `migrate_history_*_test` binaries.
 
 use toolu_orm_connection::{Database, LibsqlConnection};
 
@@ -50,6 +51,26 @@ pub async fn text(
     Some(row) => Ok(Some(row.get::<String>(0)?)),
     None => Ok(None),
   }
+}
+
+/// Whether a table of this name exists. The name is bound, never interpolated.
+///
+/// # Errors
+///
+/// Returns the driver's query error, or a message when the query is empty.
+pub async fn has_table(
+  conn: &LibsqlConnection,
+  name: &str,
+) -> Result<i64, Box<dyn std::error::Error>> {
+  let mut rows = conn
+    .inner_conn()
+    .query(
+      "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+      libsql::params![name],
+    )
+    .await?;
+  let row = rows.next().await?.ok_or("table query returned no row")?;
+  Ok(row.get::<i64>(0)?)
 }
 
 /// Column names of `table`, in declaration order.

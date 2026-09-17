@@ -31,7 +31,7 @@ legitimately no longer have every `.sql` on disk.
 ## How to run
 
 ```sh
-cargo nextest run -p toolu-orm-cli -E 'binary(migrate_history_test) + binary(migrate_history_embedded_test)'
+cargo nextest run -p toolu-orm-cli -E 'binary(migrate_history_test) + binary(migrate_history_limits_test) + binary(migrate_history_embedded_test)'
 cargo nextest run -p toolu-orm-cli --no-default-features --features rusqlite -E 'binary(migrate_history_blocking_test)'
 ```
 
@@ -42,13 +42,13 @@ cargo nextest run -p toolu-orm-cli --no-default-features --features rusqlite -E 
 | default | migrate_history_test | editing_an_applied_file_fails_the_next_run |
 | default | migrate_history_test | a_tampered_entry_blocks_a_pending_migration |
 | default | migrate_history_test | rewriting_an_applied_journal_hash_is_a_history_mismatch |
-| default | migrate_history_test | a_row_recorded_without_a_hash_is_skipped_unverified |
-| default | migrate_history_test | a_journal_entry_dropped_from_a_pruned_history_is_not_validated |
-| default | migrate_history_test | an_applied_file_pruned_from_disk_passes_on_the_recorded_hash |
-| default | migrate_history_test | a_pruned_file_whose_journal_hash_changed_still_fails |
-| default | migrate_history_test | an_unreadable_applied_file_is_a_read_file_error |
+| default | migrate_history_limits_test | a_row_recorded_without_a_hash_is_skipped_unverified |
+| default | migrate_history_limits_test | a_journal_entry_dropped_from_a_pruned_history_is_not_validated |
+| default | migrate_history_limits_test | an_applied_file_pruned_from_disk_passes_on_the_recorded_hash |
+| default | migrate_history_limits_test | a_pruned_file_whose_journal_hash_changed_still_fails |
+| default | migrate_history_limits_test | an_unreadable_applied_file_is_a_read_file_error |
 | default | migrate_history_test | a_baselined_migration_is_still_tamper_evident |
-| default | migrate_history_test | an_unchanged_history_stays_idempotent |
+| default | migrate_history_limits_test | an_unchanged_history_stays_idempotent |
 | default | migrate_history_embedded_test | an_edited_body_for_an_applied_name_fails |
 | default | migrate_history_embedded_test | a_rehashed_entry_for_an_applied_name_is_a_history_mismatch |
 | default | migrate_history_embedded_test | a_tampered_entry_blocks_a_pending_embedded_entry |
