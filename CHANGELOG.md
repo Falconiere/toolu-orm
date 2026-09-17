@@ -13,7 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Added
 - *(core,macros)* manage FTS5 external-content synchronization triggers ([#84](https://github.com/Falconiere/toolu-orm/pull/84)) ([#104](https://github.com/Falconiere/toolu-orm/pull/104))
-- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
 
 #### Fixed
 - *(cli)* validate applied migration history before skipping entries ([#86](https://github.com/Falconiere/toolu-orm/pull/86)) ([#99](https://github.com/Falconiere/toolu-orm/pull/99))
@@ -21,19 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `toolu-orm`
 
-#### Added
-- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
-
-#### Fixed
-- *(cli)* validate applied migration history before skipping entries ([#86](https://github.com/Falconiere/toolu-orm/pull/86)) ([#99](https://github.com/Falconiere/toolu-orm/pull/99))
+#### Other
+- no facade-level changes; this release re-exports `toolu-orm-core`, `toolu-orm-macros`, `toolu-orm-query` and `toolu-orm-connection` 0.7.0
 
 ### `toolu-orm-query`
 
-#### Added
-- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
-
 #### Fixed
-- *(cli)* validate applied migration history before skipping entries ([#86](https://github.com/Falconiere/toolu-orm/pull/86)) ([#99](https://github.com/Falconiere/toolu-orm/pull/99))
 - *(query)* emit valid SQLite SQL for offset without limit ([#92](https://github.com/Falconiere/toolu-orm/pull/92)) ([#100](https://github.com/Falconiere/toolu-orm/pull/100))
 - *(query)* support binary columns in relational projections ([#93](https://github.com/Falconiere/toolu-orm/pull/93)) ([#95](https://github.com/Falconiere/toolu-orm/pull/95))
 - *(query)* bound fetch_one and fetch_optional to one row ([#87](https://github.com/Falconiere/toolu-orm/pull/87)) ([#94](https://github.com/Falconiere/toolu-orm/pull/94))
@@ -45,10 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Added
 - *(core,macros)* manage FTS5 external-content synchronization triggers ([#84](https://github.com/Falconiere/toolu-orm/pull/84)) ([#104](https://github.com/Falconiere/toolu-orm/pull/104))
-- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
-
-#### Fixed
-- *(cli)* validate applied migration history before skipping entries ([#86](https://github.com/Falconiere/toolu-orm/pull/86)) ([#99](https://github.com/Falconiere/toolu-orm/pull/99))
 
 ### `toolu-orm-connection`
 
@@ -58,7 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Fixed
 - *(connection)* admit one rusqlite async operation at a time ([#90](https://github.com/Falconiere/toolu-orm/pull/90)) ([#105](https://github.com/Falconiere/toolu-orm/pull/105))
-- *(cli)* validate applied migration history before skipping entries ([#86](https://github.com/Falconiere/toolu-orm/pull/86)) ([#99](https://github.com/Falconiere/toolu-orm/pull/99))
 
 #### Other
 - *(query,connection)* reuse prepared statements in rusqlite adapters ([#88](https://github.com/Falconiere/toolu-orm/pull/88)) ([#102](https://github.com/Falconiere/toolu-orm/pull/102))
@@ -66,20 +53,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `toolu-orm-sqlite-vec-register`
 
-#### Added
-- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
-
-#### Fixed
-- *(cli)* validate applied migration history before skipping entries ([#86](https://github.com/Falconiere/toolu-orm/pull/86)) ([#99](https://github.com/Falconiere/toolu-orm/pull/99))
+#### Other
+- no changes to this crate; the workspace releases every crate in lockstep on one version
 
 ### `toolu-orm-core`
 
 #### Added
 - *(core,macros)* manage FTS5 external-content synchronization triggers ([#84](https://github.com/Falconiere/toolu-orm/pull/84)) ([#104](https://github.com/Falconiere/toolu-orm/pull/104))
-- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
 
 #### Fixed
-- *(cli)* validate applied migration history before skipping entries ([#86](https://github.com/Falconiere/toolu-orm/pull/86)) ([#99](https://github.com/Falconiere/toolu-orm/pull/99))
 - *(core,cli)* rebuild SQLite tables without cascade-deleting child rows ([#85](https://github.com/Falconiere/toolu-orm/pull/85)) ([#97](https://github.com/Falconiere/toolu-orm/pull/97))
 
 ## [0.6.0](https://github.com/Falconiere/toolu-orm/compare/v0.5.0...v0.6.0) - 2026-09-12
