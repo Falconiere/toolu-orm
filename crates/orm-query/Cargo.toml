@@ -115,6 +115,10 @@ name = "first_row_sql_test"
 path = "tests/first_row_sql_test.rs"
 
 [[test]]
+name = "offset_without_limit_sql_test"
+path = "tests/offset_without_limit_sql_test.rs"
+
+[[test]]
 name = "fts5_select_sql_test"
 path = "tests/fts5_select_sql_test.rs"
 
@@ -151,6 +155,11 @@ required-features = ["libsql"]
 [[test]]
 name = "libsql_first_row_test"
 path = "tests/libsql_first_row_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "libsql_offset_without_limit_test"
+path = "tests/libsql_offset_without_limit_test.rs"
 required-features = ["libsql"]
 
 [[test]]
@@ -195,6 +204,11 @@ path = "tests/rusqlite_first_row_test.rs"
 required-features = ["rusqlite"]
 
 [[test]]
+name = "rusqlite_offset_without_limit_test"
+path = "tests/rusqlite_offset_without_limit_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "rusqlite_mutations_test"
 path = "tests/rusqlite_mutations_test.rs"
 required-features = ["rusqlite"]
@@ -234,6 +248,11 @@ required-features = ["sqlite-vec"]
 [[test]]
 name = "postgres_first_row_test"
 path = "tests/postgres_first_row_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_offset_without_limit_test"
+path = "tests/postgres_offset_without_limit_test.rs"
 required-features = ["postgres"]
 
 [[test]]
