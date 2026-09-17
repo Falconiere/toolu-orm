@@ -43,7 +43,10 @@ impl SelectBuilder {
   /// Appends `LIMIT`/`OFFSET`, binding each as a parameter.
   ///
   /// `limit` is passed in rather than read off the builder so the first-row
-  /// form can substitute its own bound.
+  /// form can substitute its own bound. SQLite rejects a bare `OFFSET`, so an
+  /// absent `limit` with an offset set renders a literal (unbound) `LIMIT -1`
+  /// first — SQLite's "no limit" — leaving Postgres's standalone `OFFSET`
+  /// untouched.
   pub(super) fn append_limit_offset_for(
     &self,
     sql: &mut String,
@@ -55,6 +58,8 @@ impl SelectBuilder {
       let idx = params.len() + 1;
       params.push(Value::Integer(limit));
       sql.push_str(&format!(" LIMIT {}", dialect.param(idx)));
+    } else if dialect == Dialect::Sqlite && self.offset_val.is_some() {
+      sql.push_str(" LIMIT -1");
     }
     if let Some(offset) = self.offset_val {
       let idx = params.len() + 1;
