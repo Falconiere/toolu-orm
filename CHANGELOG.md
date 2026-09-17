@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0](https://github.com/Falconiere/toolu-orm/compare/v0.6.0...v0.7.0) - 2026-09-17
+
+### `toolu-orm-cli`
+
+#### Added
+- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
+
+#### Fixed
+- *(core,cli)* rebuild SQLite tables without cascade-deleting child rows ([#85](https://github.com/Falconiere/toolu-orm/pull/85)) ([#97](https://github.com/Falconiere/toolu-orm/pull/97))
+
+### `toolu-orm`
+
+#### Added
+- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
+
+### `toolu-orm-query`
+
+#### Added
+- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
+
+#### Fixed
+- *(query)* support binary columns in relational projections ([#93](https://github.com/Falconiere/toolu-orm/pull/93)) ([#95](https://github.com/Falconiere/toolu-orm/pull/95))
+- *(query)* bound fetch_one and fetch_optional to one row ([#87](https://github.com/Falconiere/toolu-orm/pull/87)) ([#94](https://github.com/Falconiere/toolu-orm/pull/94))
+
+### `toolu-orm-macros`
+
+#### Added
+- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
+
+### `toolu-orm-connection`
+
+#### Added
+- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
+
+### `toolu-orm-sqlite-vec-register`
+
+#### Added
+- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
+
+### `toolu-orm-core`
+
+#### Added
+- *(connection)* add configurable Postgres pool checkout timeout ([#91](https://github.com/Falconiere/toolu-orm/pull/91)) ([#96](https://github.com/Falconiere/toolu-orm/pull/96))
+
+#### Fixed
+- *(core,cli)* rebuild SQLite tables without cascade-deleting child rows ([#85](https://github.com/Falconiere/toolu-orm/pull/85)) ([#97](https://github.com/Falconiere/toolu-orm/pull/97))
+
 ## [0.6.0](https://github.com/Falconiere/toolu-orm/compare/v0.5.0...v0.6.0) - 2026-09-12
 
 ### `toolu-orm-cli`
