@@ -12,9 +12,11 @@ toolu-orm-core = { path = "../orm-core", version = "0.6.0", default-features = f
 async-trait.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-# `rt` for spawn_blocking / JoinError (rusqlite_impl.rs), `time` for the
-# libsql retry backoff (libsql_impl.rs). Test-only features are in dev-deps.
-tokio = { workspace = true, features = ["rt", "time"] }
+# `rt` for spawn_blocking / JoinError (rusqlite_impl/), `time` for the libsql
+# retry backoff (libsql_impl.rs), `sync` for the rusqlite connection's
+# `Semaphore` admission gate (rusqlite_impl/connection.rs). Test-only features
+# are in dev-deps.
+tokio = { workspace = true, features = ["rt", "time", "sync"] }
 
 # Adds to the workspace entry's `core`; these four gate `build_synced_db`'s
 # `Builder::new_synced_database` and `Database::sync`. No other crate needs them.
@@ -59,6 +61,13 @@ toolu-orm-macros = { path = "../orm-macros", default-features = false }
 [[example]]
 name = "rusqlite_prepared_statement_bench"
 path = "examples/rusqlite_prepared_statement_bench.rs"
+required-features = ["rusqlite"]
+
+# Release benchmark for issue #90: contended throughput and blocking-thread
+# usage, gated async path vs the pre-change spawn_blocking-first shape.
+[[example]]
+name = "rusqlite_async_backpressure_bench"
+path = "examples/rusqlite_async_backpressure_bench.rs"
 required-features = ["rusqlite"]
 
 [lints]

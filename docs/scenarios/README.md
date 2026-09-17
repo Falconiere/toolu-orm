@@ -48,3 +48,4 @@ test, update its page.
 | [Facade crate](facade.md) | `toolu-orm` re-exports the stack; `#[table]` and the builders work with it as the only dependency. |
 | [Lanes and revived suites](lanes.md) | Which CI lane compiles which suite, and the executor/transaction suites brought back from bit-rot. |
 | [Prepared-statement cache](prepared-statement-cache.md) | Both rusqlite adapters reuse `Connection::prepare_cached` across changed parameters, a schema change, an error followed by reuse, and a row-mapping failure. |
+| [rusqlite async backpressure](rusqlite-async-backpressure.md) | The async rusqlite path admits one operation at a time before `spawn_blocking`, so a contended connection cannot starve tokio's blocking pool, and cancellation on either side of admission is bounded. |
