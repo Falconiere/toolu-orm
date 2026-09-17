@@ -11,7 +11,7 @@ Migration tooling for toolu-orm — generates, applies, and checks migration sta
 - Journal (`_journal.json`) tracks migration order and SHA256 hashes
 - Snapshots (`.snapshot.json`) serialize schema state for diffing
 - `run_migrate()` falls back to directory scanning if no journal exists
-- Hash verification prevents applying tampered migrations
+- Hash verification prevents applying tampered migrations, and every run re-checks already-applied history (`migrate/history.rs`) before skipping an entry
 
 ## Key Modules
 - `generate.rs` — `run_generate()`: diff current schema vs latest snapshot, produce .sql migration

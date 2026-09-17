@@ -22,6 +22,24 @@ pub enum MigrateError {
     actual: String,
   },
 
+  /// A migration the database already applied is declared with a different
+  /// hash than the one recorded when it ran: the journal entry (or the embedded
+  /// entry) was rewritten after the fact, so the history the source describes is
+  /// not the history this database has.
+  ///
+  /// Distinct from [`MigrateError::HashMismatch`], which reports a migration
+  /// whose bytes no longer match the hash declared for them. The repairs
+  /// differ: restore the journal entry here, restore the `.sql` file there.
+  #[error(
+    "migration {file} was applied with hash {recorded}, but the migration \
+     source now declares {declared}"
+  )]
+  HistoryMismatch {
+    file: String,
+    recorded: String,
+    declared: String,
+  },
+
   /// A baseline named a migration the journal does not list, so there is no
   /// hash to record for it.
   #[error("no journal entry for migration(s): {0}")]

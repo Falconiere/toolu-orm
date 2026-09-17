@@ -11,8 +11,10 @@ pub(super) fn insert_migration_sql(dialect: Dialect) -> &'static str {
   }
 }
 
-/// SELECT used by [`super::store::get_applied_migrations`] and its blocking twin.
-pub(super) const SELECT_APPLIED_MIGRATIONS: &str = "SELECT name FROM _migrations ORDER BY id";
+/// SELECT used by [`super::store::get_applied_migrations`] and its blocking
+/// twin. It carries `hash` as well as `name` because a runner validates the
+/// history it is about to skip, and one statement serves both readings.
+pub(super) const SELECT_APPLIED_MIGRATIONS: &str = "SELECT name, hash FROM _migrations ORDER BY id";
 
 pub(super) const BEGIN: &str = "BEGIN";
 pub(super) const COMMIT: &str = "COMMIT";

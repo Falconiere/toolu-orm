@@ -6,6 +6,7 @@ mod ddl;
 pub(crate) mod embedded;
 mod embedded_blocking;
 mod error;
+mod history;
 mod missing_extension;
 mod pending;
 mod pragma_guard;

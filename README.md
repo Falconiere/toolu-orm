@@ -56,7 +56,7 @@ Cargo feature; the application code does not change.
 |---|---|
 | 🧱 **Schema as code** | `#[table]` turns a struct into a `TableDef` with primary keys, defaults, foreign keys with `on_delete` / `on_update`, `strict` tables, and `#[index]` / `#[unique_index]`. |
 | 🔁 **Diff-driven migrations** | `run_generate` diffs your registry against the last `*.snapshot.json` and writes numbered SQL with a `--> statement-breakpoint` separator. `run_migrate` / `run_migrate_blocking` apply pending files in one transaction each; `get_status` / `get_status_blocking` list applied and pending. |
-| 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration. A file that changed after it was recorded stops the run with `MigrateError::HashMismatch`. |
+| 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration, and `_migrations` keeps the hash each applied migration ran with. Every run re-checks the whole applied history before it skips anything: an edited file stops the run with `MigrateError::HashMismatch`, a rewritten journal entry with `MigrateError::HistoryMismatch`. |
 | 🧮 **Typed columns, typed expressions** | Generated `Column<T>` constants (`users::email`) build `Expr` trees: `eq` / `ne` / `in_list` / `not_in` / `is_null` on every column, `like` on text, `gt` / `lt` / `gte` / `lte` / `between` on numbers, combined with `.and()` / `.or()`. Table-qualified, always quoted. |
 | 🏗️ **Four builders, one executor** | `SelectBuilder`, `InsertBuilder` (with `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
 | 🌐 **Dialect-aware SQL** | `to_sql_for(Dialect::Sqlite)` emits `?N` placeholders; `Dialect::Postgres` emits `$N`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`, and `LEFT JOIN LATERAL` + `json_agg` for relations. |
@@ -579,6 +579,17 @@ migrations/
   `--> statement-breakpoint`. Each file runs inside `BEGIN` / `COMMIT`.
 - The journal hash is verified before a file runs. Edit a shipped migration
   and `run_migrate` stops with `MigrateError::HashMismatch`.
+- Migrations that are already applied are re-checked too, before any pending one
+  runs: `_migrations` keeps the hash each was applied with, and every run
+  compares it with the journal's hash (`MigrateError::HistoryMismatch` when the
+  journal entry was rewritten) and the journal's hash with the file's current
+  bytes (`MigrateError::HashMismatch`). The same holds for the embedded list and
+  for both blocking runners. Two cases cannot be checked and are accepted rather
+  than reported as verified: a row recorded before hashes existed or by the
+  journal-free path (its `hash` is empty), and an applied migration whose `.sql`
+  file was pruned from disk — that one still has to match the hash recorded in
+  the database. An applied name the journal no longer lists (a squashed history)
+  declares nothing to compare and is left alone.
 - Shipping a single binary with no migrations directory on the target machine?
   Bake the SQL in with `include_str!` and apply it with
   `run_migrate_embedded(&conn, MIGRATIONS, dialect)`, where `MIGRATIONS` is a

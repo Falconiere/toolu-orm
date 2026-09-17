@@ -8,27 +8,30 @@ use toolu_orm_core::journal::{Journal, JournalEntry};
 
 use super::apply_blocking::apply_migration;
 use super::error::MigrateError;
+use super::history::validate_directory_history;
 use super::missing_extension::map_statement_error;
 use super::pending::get_pending_migrations;
 use super::pragma_guard::PragmaGuard;
 use super::pragma_guard_blocking::{arm_pragmas, check_foreign_keys, restore_pragmas};
 use super::store::{
-  ensure_migrations_table_blocking, get_applied_migrations_blocking, record_migration_blocking,
+  ensure_migrations_table_blocking, get_applied_history_blocking, record_migration_blocking,
 };
 use super::transaction_blocking::{begin, commit, rollback_after};
 
-/// Blocking twin of [`super::run_migrate`].
+/// Blocking twin of [`super::run_migrate`], including its validation of the
+/// history already in `_migrations`.
 ///
 /// # Errors
 ///
-/// Returns `MigrateError` on database, I/O, or hash mismatch failures.
+/// Same as [`super::run_migrate`]: [`MigrateError::HistoryMismatch`],
+/// [`MigrateError::HashMismatch`], or a database or I/O failure.
 pub fn run_migrate_blocking(
   conn: &impl DbConnectionBlocking,
   migrations_dir: &str,
   dialect: Dialect,
 ) -> Result<u32, MigrateError> {
   ensure_migrations_table_blocking(conn, dialect)?;
-  let applied = get_applied_migrations_blocking(conn)?;
+  let applied = get_applied_history_blocking(conn)?;
 
   let journal_path = Path::new(migrations_dir).join("_journal.json");
   let journal_path_str = journal_path.to_str().ok_or_else(|| {
@@ -39,7 +42,10 @@ pub fn run_migrate_blocking(
     .map_err(|e| MigrateError::ReadFile(format!("{e}")))?;
 
   if journal.entries.is_empty() {
-    let pending = get_pending_migrations(migrations_dir, &applied)?;
+    // This branch returns, so consuming `applied` here costs the journaled path
+    // below nothing: it still owns the records it validates against.
+    let names: Vec<String> = applied.into_iter().map(|record| record.name).collect();
+    let pending = get_pending_migrations(migrations_dir, &names)?;
     let mut count: u32 = 0;
     for migration_file in &pending {
       apply_migration_legacy(conn, migrations_dir, migration_file, dialect)?;
@@ -48,9 +54,11 @@ pub fn run_migrate_blocking(
     return Ok(count);
   }
 
+  validate_directory_history(migrations_dir, &journal.entries, &applied)?;
+
   let mut count: u32 = 0;
   for entry in &journal.entries {
-    if applied.contains(&entry.name) {
+    if applied.iter().any(|record| record.name == entry.name) {
       continue;
     }
     apply_journal_entry(conn, migrations_dir, entry, dialect)?;
