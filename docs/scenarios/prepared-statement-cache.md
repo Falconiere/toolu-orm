@@ -1,6 +1,6 @@
 # Prepared-statement cache
 
-**Feature:** Both rusqlite adapters -- `Executor for rusqlite::Connection` (`crates/orm-query/src/executor/rusqlite_impl.rs`) and `DbConnectionBlocking for RusqliteConnection` (`crates/orm-connection/src/rusqlite_impl.rs`) -- reuse the connection's bounded statement cache via `Connection::prepare_cached` instead of re-parsing SQL text with `prepare`/`execute` on every call.
+**Feature:** Both rusqlite adapters -- `Executor for rusqlite::Connection` (`crates/orm-query/src/executor/rusqlite_impl.rs`) and `DbConnectionBlocking for RusqliteConnection` (`crates/orm-connection/src/rusqlite_impl/blocking.rs`) -- reuse the connection's bounded statement cache via `Connection::prepare_cached` instead of re-parsing SQL text with `prepare`/`execute` on every call.
 **Drivers:** rusqlite only.
 **Spec:** `docs/toolu/specs/2026-09-16-rusqlite-prepared-statement-cache-design.md`, AC-1 through AC-6.
 
@@ -32,7 +32,7 @@ cached statement's result unchanged (`ADD COLUMN`, an untouched column) or
 surfaces as an ordinary query error on next use (`RENAME COLUMN`, a
 referenced column), never stale or silently wrong data. See the doc comments
 on `Executor for rusqlite::Connection` (`crates/orm-query/src/executor/rusqlite_impl.rs`)
-and `DbConnectionBlocking for RusqliteConnection` (`crates/orm-connection/src/rusqlite_impl.rs`).
+and `DbConnectionBlocking for RusqliteConnection` (`crates/orm-connection/src/rusqlite_impl/blocking.rs`).
 
 A release-mode benchmark, `crates/orm-connection/examples/rusqlite_prepared_statement_bench.rs`
 (`cargo run --release --example rusqlite_prepared_statement_bench -p toolu-orm-connection --features rusqlite`),
