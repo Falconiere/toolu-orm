@@ -10,6 +10,8 @@ use super::apply_blocking::apply_migration;
 use super::error::MigrateError;
 use super::missing_extension::map_statement_error;
 use super::pending::get_pending_migrations;
+use super::pragma_guard::PragmaGuard;
+use super::pragma_guard_blocking::{arm_pragmas, check_foreign_keys, restore_pragmas};
 use super::store::{
   ensure_migrations_table_blocking, get_applied_migrations_blocking, record_migration_blocking,
 };
@@ -81,13 +83,28 @@ fn apply_migration_legacy(
   let sql = std::fs::read_to_string(&path)
     .map_err(|e| MigrateError::ReadFile(format!("{}: {e}", path.display())))?;
 
+  let guard = arm_pragmas(conn, &sql, dialect)?;
+  let outcome = legacy_in_transaction(conn, &sql, migration_file, dialect, guard);
+  restore_pragmas(conn, guard, outcome)
+}
+
+/// A plain (journal-free) file is executed as one batch, so its statements are
+/// not split; the foreign-key handling is the same as for a journal entry.
+fn legacy_in_transaction(
+  conn: &impl DbConnectionBlocking,
+  sql: &str,
+  migration_file: &str,
+  dialect: Dialect,
+  guard: PragmaGuard,
+) -> Result<(), MigrateError> {
   begin(conn)?;
 
   let result = (|| {
     conn
-      .execute_batch(&sql)
+      .execute_batch(sql)
       .map_err(|e| map_statement_error(migration_file, &e))?;
-    record_migration_blocking(conn, migration_file, "", dialect)
+    record_migration_blocking(conn, migration_file, "", dialect)?;
+    check_foreign_keys(conn, guard, migration_file)
   })();
 
   if let Err(e) = result {

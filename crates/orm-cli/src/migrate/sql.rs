@@ -17,3 +17,14 @@ pub(super) const SELECT_APPLIED_MIGRATIONS: &str = "SELECT name FROM _migrations
 pub(super) const BEGIN: &str = "BEGIN";
 pub(super) const COMMIT: &str = "COMMIT";
 pub(super) const ROLLBACK: &str = "ROLLBACK";
+
+/// Reads SQLite's current foreign-key enforcement as a single `0`/`1` row.
+pub(super) const READ_FOREIGN_KEYS: &str = "PRAGMA foreign_keys";
+/// Suspends foreign keys. Only has an effect outside a transaction.
+pub(super) const DISABLE_FOREIGN_KEYS: &str = "PRAGMA foreign_keys = OFF";
+/// Reads the caller's `legacy_alter_table` setting, which a rebuild flips
+/// across its final rename and the runner puts back.
+pub(super) const READ_LEGACY_ALTER_TABLE: &str = "PRAGMA legacy_alter_table";
+/// Counts the rows that violate a foreign key, database-wide.
+pub(super) const COUNT_FOREIGN_KEY_VIOLATIONS: &str =
+  "SELECT count(*) FROM pragma_foreign_key_check";

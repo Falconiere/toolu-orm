@@ -2,7 +2,9 @@
 
 mod ddl;
 mod gen;
+mod operation_sql;
 mod postgres;
+mod rebuild;
 mod translate;
 mod virtual_table;
 

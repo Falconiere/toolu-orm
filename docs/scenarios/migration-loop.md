@@ -35,6 +35,13 @@ The loop `generate(v1) → migrate → generate(v2) → migrate` is asserted on 
 
 Adding a CHECK (an enum column) to an **existing** table is still a no-op comment on SQLite; a table rebuild carrying the new `TableDef` is needed. That is why the enum column lives on the new `posts` table in this scenario. Tracked as spec Q7.
 
+### Column changes SQLite cannot make in place
+
+A nullability, type, default, uniqueness or primary-key change rebuilds the
+table instead of altering it, and the runner manages the foreign-key pragma
+around the transaction so the rebuild cannot cascade-delete child rows. See
+[SQLite table rebuild](sqlite-table-rebuild.md).
+
 ## How to run
 
 ```sh

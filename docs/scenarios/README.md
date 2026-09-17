@@ -23,6 +23,7 @@ test, update its page.
 | [Blocking connection](blocking-connection.md) | `DbConnectionBlocking` on rusqlite with no runtime: migrate/status/baseline twins, `Executor for RusqliteConnection`, non-`Send` rows, async agreement, contention, poisoning. |
 | [FromRow derive](from-row-derive.md) | `#[derive(FromRow)]` on every driver shape against real rows: NULL to `None`, missing columns, `#[from_row(with)]`. |
 | [Migration loop](migration-loop.md) | generate → migrate → evolve → generate → migrate, asserted through `PRAGMA` / `information_schema`. |
+| [SQLite table rebuild](sqlite-table-rebuild.md) | A column change SQLite cannot make in place rebuilds the table without cascade-deleting child rows, corrupting their foreign keys, or losing indexes. |
 | [Migration baseline](migration-baseline.md) | `mark_applied` / `mark_applied_through` adopt an existing database by recording journal entries without running their SQL. |
 | [Embedded migrations](embedded-migrations.md) | `run_migrate_embedded` applies an `include_str!`'d list with the same hashes and transactions as the directory runner, and the two sources interchange. |
 | [Migration failures](migration-failures.md) | Rollback after a failing statement, unreadable inputs, malformed journal, absent directory, comment-only chunks. |

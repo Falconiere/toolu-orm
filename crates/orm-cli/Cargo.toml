@@ -118,6 +118,26 @@ path = "tests/migrate_embedded_baseline_postgres_test.rs"
 required-features = ["libsql", "postgres"]
 
 [[test]]
+name = "sqlite_rebuild_libsql_test"
+path = "tests/sqlite_rebuild_libsql_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "sqlite_rebuild_column_sets_libsql_test"
+path = "tests/sqlite_rebuild_column_sets_libsql_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "sqlite_rebuild_rollback_libsql_test"
+path = "tests/sqlite_rebuild_rollback_libsql_test.rs"
+required-features = ["libsql"]
+
+[[test]]
+name = "sqlite_rebuild_blocking_test"
+path = "tests/sqlite_rebuild_blocking_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "migrate_blocking_test"
 path = "tests/migrate_blocking_test.rs"
 required-features = ["rusqlite"]
