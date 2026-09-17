@@ -207,7 +207,7 @@ fn measure(
     Ok::<(i64, Option<Duration>), DbError>((sum, probe))
   })?;
   let elapsed = started.elapsed();
-  let calls = u128::try_from(TASKS * workload.calls_per_task).unwrap_or(0);
+  let calls = u128::try_from(TASKS * workload.calls_per_task)?;
   println!(
     "{:<7} {:<8} elapsed={elapsed:?} calls/s={} blocking_threads={} unrelated_probe={}",
     workload.name,
