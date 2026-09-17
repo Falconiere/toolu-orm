@@ -1,9 +1,19 @@
 //! PgConnection and PgTransaction implementing DbConnection for Postgres.
+//!
+//! `execute_sql` and `query_map` prepare through deadpool's per-connection
+//! `StatementCache`, shared with that connection's transactions and dropped
+//! with it. Nothing bounds its size — see
+//! [`crate::PgDatabase::clear_statement_caches`]. A statement the server
+//! rejects is dropped from the cache and its error returned
+//! unchanged, never retried, so DDL that invalidates a cached plan cannot
+//! poison the connection. Statements are session state: a transaction-pooling
+//! proxy must track them (PgBouncer >= 1.21) or answer `26000`.
 
 use crate::error::DbError;
 use crate::trait_def::DbConnection;
-use deadpool_postgres::GenericClient;
+use deadpool_postgres::{GenericClient, StatementCache};
 use postgres_types::ToSql;
+use tokio_postgres::Statement;
 use toolu_orm_core::row::{FromRow, from_postgres_row};
 use toolu_orm_core::value::{Value, to_pg_params};
 
@@ -59,6 +69,51 @@ impl PgTransaction<'_> {
   }
 }
 
+/// A deadpool client or transaction, plus the statement cache of the
+/// connection behind it.
+///
+/// `deadpool_postgres::GenericClient` already offers `prepare_cached`, but not
+/// the cache itself, which the helpers below need to drop a rejected entry.
+/// `deadpool_postgres::Transaction` holds a clone of the `Arc<StatementCache>`
+/// of the client it was started on, so both impls name one cache per physical
+/// connection.
+trait CachedClient: GenericClient + Send {
+  fn statement_cache(&self) -> &StatementCache;
+}
+
+impl CachedClient for deadpool_postgres::Client {
+  fn statement_cache(&self) -> &StatementCache {
+    &self.statement_cache
+  }
+}
+
+impl CachedClient for deadpool_postgres::Transaction<'_> {
+  fn statement_cache(&self) -> &StatementCache {
+    &self.statement_cache
+  }
+}
+
+/// Prepares `sql` through the connection's cache, reusing the statement when
+/// the same text was already prepared on this connection.
+async fn pg_prepare(client: &impl CachedClient, sql: &str) -> Result<Statement, DbError> {
+  client
+    .prepare_cached(sql)
+    .await
+    .map_err(|e| DbError::Query(pg_error_msg(&e)))
+}
+
+/// Maps a failed execution to `DbError::Query` and drops `sql` from the
+/// connection's cache, so the next call re-prepares it.
+///
+/// Nothing is retried here: the caller sees the original error, and a
+/// non-idempotent write is never replayed after an uncertain outcome.
+fn pg_failed(client: &impl CachedClient, sql: &str, e: &tokio_postgres::Error) -> DbError {
+  // `remove` hands back the evicted `Statement`; dropping the last handle to it
+  // is what closes it on the server, and `Option` is `#[must_use]`.
+  drop(client.statement_cache().remove(sql, &[]));
+  DbError::Query(pg_error_msg(e))
+}
+
 fn pg_param_refs(boxed: &[Box<dyn ToSql + Sync + Send>]) -> Vec<&(dyn ToSql + Sync)> {
   boxed
     .iter()
@@ -80,30 +135,32 @@ fn pg_error_msg(e: &tokio_postgres::Error) -> String {
 }
 
 async fn pg_execute_sql(
-  client: &(impl GenericClient + Send),
+  client: &impl CachedClient,
   sql: &str,
   params: Vec<Value>,
 ) -> Result<u64, DbError> {
   let boxed = to_pg_params(&params);
   let refs = pg_param_refs(&boxed);
+  let stmt = pg_prepare(client, sql).await?;
   let affected = client
-    .execute(sql, &refs)
+    .execute(&stmt, &refs)
     .await
-    .map_err(|e| DbError::Query(pg_error_msg(&e)))?;
+    .map_err(|e| pg_failed(client, sql, &e))?;
   Ok(affected)
 }
 
 async fn pg_query_map<T: FromRow + Send + 'static>(
-  client: &(impl GenericClient + Send),
+  client: &impl CachedClient,
   sql: &str,
   params: Vec<Value>,
 ) -> Result<Vec<T>, DbError> {
   let boxed = to_pg_params(&params);
   let refs = pg_param_refs(&boxed);
+  let stmt = pg_prepare(client, sql).await?;
   let rows = client
-    .query(sql, &refs)
+    .query(&stmt, &refs)
     .await
-    .map_err(|e| DbError::Query(pg_error_msg(&e)))?;
+    .map_err(|e| pg_failed(client, sql, &e))?;
   let mut results = Vec::with_capacity(rows.len());
   for row in &rows {
     results.push(from_postgres_row(row).map_err(DbError::from)?);
