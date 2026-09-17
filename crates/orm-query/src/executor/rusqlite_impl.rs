@@ -24,7 +24,11 @@ impl Executor for rusqlite::Connection {
       .iter()
       .map(|v| v as &dyn rusqlite::types::ToSql)
       .collect();
-    let affected = self.execute(sql, param_refs.as_slice())?;
+    // `prepare_cached` reuses this connection's bounded statement cache instead
+    // of re-parsing `sql` on every call; the returned `CachedStatement` is
+    // dropped (and thus returned to the cache) at the end of this call.
+    let mut stmt = self.prepare_cached(sql)?;
+    let affected = stmt.execute(param_refs.as_slice())?;
     Ok(affected as u64)
   }
 
@@ -33,7 +37,7 @@ impl Executor for rusqlite::Connection {
       .iter()
       .map(|v| v as &dyn rusqlite::types::ToSql)
       .collect();
-    let mut stmt = self.prepare(sql)?;
+    let mut stmt = self.prepare_cached(sql)?;
     let mut rows = stmt.query(param_refs.as_slice())?;
     let mut results = Vec::new();
     while let Some(row) = rows.next()? {

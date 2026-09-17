@@ -115,8 +115,15 @@ fn join_failure(error: &tokio::task::JoinError) -> DbError {
 impl DbConnectionBlocking for RusqliteConnection {
   fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
     let guard = self.lock()?;
-    let affected = guard
-      .execute(sql, to_sql_params(&params).as_slice())
+    // `prepare_cached` reuses this connection's bounded statement cache instead
+    // of re-parsing `sql` on every call; the returned `CachedStatement` is
+    // dropped (and thus returned to the cache) before the guard is released,
+    // since it does not outlive this function body.
+    let mut stmt = guard
+      .prepare_cached(sql)
+      .map_err(|e| DbError::Query(e.to_string()))?;
+    let affected = stmt
+      .execute(to_sql_params(&params).as_slice())
       .map_err(|e| DbError::Query(e.to_string()))?;
     Ok(affected as u64)
   }
@@ -124,7 +131,7 @@ impl DbConnectionBlocking for RusqliteConnection {
   fn query_map<T: FromRow>(&self, sql: &str, params: Vec<Value>) -> Result<Vec<T>, DbError> {
     let guard = self.lock()?;
     let mut stmt = guard
-      .prepare(sql)
+      .prepare_cached(sql)
       .map_err(|e| DbError::Query(e.to_string()))?;
     let mut rows = stmt
       .query(to_sql_params(&params).as_slice())

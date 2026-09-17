@@ -225,6 +225,11 @@ path = "tests/rusqlite_connection_executor_test.rs"
 required-features = ["rusqlite"]
 
 [[test]]
+name = "rusqlite_prepared_statement_cache_test"
+path = "tests/rusqlite_prepared_statement_cache_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "vec0_sqlite_vec_live_test"
 path = "tests/vec0_sqlite_vec_live_test.rs"
 required-features = ["sqlite-vec"]
