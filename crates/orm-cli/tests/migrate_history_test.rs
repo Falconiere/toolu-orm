@@ -39,11 +39,15 @@ async fn recorded(conn: &LibsqlConnection) -> Result<i64, Box<dyn std::error::Er
 }
 
 async fn has_table(conn: &LibsqlConnection, name: &str) -> Result<i64, Box<dyn std::error::Error>> {
-  scalar(
-    conn,
-    &format!("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '{name}'"),
-  )
-  .await
+  let mut rows = conn
+    .inner_conn()
+    .query(
+      "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+      libsql::params![name],
+    )
+    .await?;
+  let row = rows.next().await?.ok_or("table query returned no row")?;
+  Ok(row.get::<i64>(0)?)
 }
 
 /// A database with `0001_ledger.sql` applied from a journaled directory — the

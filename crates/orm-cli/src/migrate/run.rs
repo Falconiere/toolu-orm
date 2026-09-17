@@ -16,21 +16,16 @@ use super::transaction::{begin, commit, rollback_after};
 
 /// Applies pending migrations from the given directory to the database.
 ///
-/// Migrations without a directory on the target machine — a single-binary
-/// distribution — use [`run_migrate_embedded`](super::run_migrate_embedded)
-/// instead; both share the same apply path.
-///
-/// The history already in `_migrations` is validated before anything is
-/// skipped or applied, so an edit to a migration that already ran is caught
-/// with the database untouched.
+/// A single-binary distribution with no migrations directory uses
+/// [`run_migrate_embedded`](super::run_migrate_embedded) instead; both share
+/// the same apply path. The history already in `_migrations` is validated
+/// first, so an edit to a migration that already ran fails the run.
 ///
 /// # Errors
 ///
-/// Returns [`MigrateError::HistoryMismatch`] when an applied migration's
-/// journal entry no longer carries the hash it was applied with,
-/// [`MigrateError::HashMismatch`] when a migration's bytes no longer match the
-/// hash the journal declares — for an applied migration as well as a pending
-/// one — or `MigrateError` on database and I/O failures.
+/// [`MigrateError::HistoryMismatch`] when an applied entry's declared hash
+/// changed, [`MigrateError::HashMismatch`] when a migration's bytes no longer
+/// match their declared hash, or `MigrateError` on database and I/O failures.
 pub async fn run_migrate(
   conn: &impl DbConnection,
   migrations_dir: &str,
@@ -46,6 +41,8 @@ pub async fn run_migrate(
     .map_err(|e| MigrateError::ReadFile(format!("{e}")))?;
 
   if journal.entries.is_empty() {
+    // This branch returns, so consuming `applied` here costs the journaled path
+    // below nothing: it still owns the records it validates against.
     let names: Vec<String> = applied.into_iter().map(|record| record.name).collect();
     let pending = get_pending_migrations(migrations_dir, &names)?;
     let mut count: u32 = 0;

@@ -42,6 +42,8 @@ pub fn run_migrate_blocking(
     .map_err(|e| MigrateError::ReadFile(format!("{e}")))?;
 
   if journal.entries.is_empty() {
+    // This branch returns, so consuming `applied` here costs the journaled path
+    // below nothing: it still owns the records it validates against.
     let names: Vec<String> = applied.into_iter().map(|record| record.name).collect();
     let pending = get_pending_migrations(migrations_dir, &names)?;
     let mut count: u32 = 0;
