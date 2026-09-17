@@ -6,9 +6,11 @@ use toolu_orm_core::dialect::Dialect;
 use super::apply_blocking::apply_migration;
 use super::embedded::{reject_duplicate_names, EmbeddedMigration};
 use super::error::MigrateError;
-use super::store::{ensure_migrations_table_blocking, get_applied_migrations_blocking};
+use super::history::validate_embedded_history;
+use super::store::{ensure_migrations_table_blocking, get_applied_history_blocking};
 
-/// Blocking twin of [`super::run_migrate_embedded`].
+/// Blocking twin of [`super::run_migrate_embedded`], including its validation
+/// of the entries the database has already applied.
 ///
 /// # Errors
 ///
@@ -21,11 +23,12 @@ pub fn run_migrate_embedded_blocking(
   reject_duplicate_names(migrations)?;
 
   ensure_migrations_table_blocking(conn, dialect)?;
-  let applied = get_applied_migrations_blocking(conn)?;
+  let applied = get_applied_history_blocking(conn)?;
+  validate_embedded_history(migrations, &applied)?;
 
   let mut count: u32 = 0;
   for migration in migrations {
-    if applied.iter().any(|name| name == migration.name) {
+    if applied.iter().any(|record| record.name == migration.name) {
       continue;
     }
     apply_migration(conn, migration.name, migration.sql, migration.hash, dialect)?;

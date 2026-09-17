@@ -15,7 +15,7 @@
 | `_journal.json` contains `{not json` | `MigrateError::ReadFile` naming the journal |
 | `migrations_dir` does not exist | `Ok(0)`, `_migrations` empty |
 | a breakpoint chunk that is only a `--` comment | skipped; the surrounding statements apply and the file is recorded once |
-| a file whose content no longer matches its journal `sha256:` hash | `MigrateError::HashMismatch { file, expected, actual }`, nothing applied (`migrate_test`) |
+| a file whose content no longer matches its journal `sha256:` hash | `MigrateError::HashMismatch { file, expected, actual }`, nothing applied (`migrate_test`) — for a file that was **already applied**, see [Migration history integrity](migration-history-integrity.md) |
 | the same directory migrated twice | second run applies 0 |
 | `_migrations` DDL per dialect | `ensure_migrations_table` creates the dialect-appropriate table |
 

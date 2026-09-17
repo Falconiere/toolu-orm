@@ -5,7 +5,8 @@ use toolu_orm_core::dialect::Dialect;
 
 use super::apply::{apply_migration, verify_hash};
 use super::error::MigrateError;
-use super::store::{ensure_migrations_table, get_applied_migrations};
+use super::history::validate_embedded_history;
+use super::store::{ensure_migrations_table, get_applied_history};
 
 /// One migration whose SQL is resolved at compile time, usually by
 /// `include_str!`.
@@ -61,16 +62,18 @@ impl EmbeddedMigration<'_> {
 ///
 /// Migrations apply in slice order, which is the caller's declaration of order
 /// just as `_journal.json` is on disk — they are not sorted by name. Entries
-/// already in `_migrations` are skipped, so the count is how many were newly
-/// applied.
+/// already in `_migrations` are validated against the hash they were applied
+/// with and then skipped, so the count is how many were newly applied.
 ///
 /// # Errors
 ///
 /// Returns [`MigrateError::DuplicateMigration`] when two entries share a name,
-/// before anything is written; [`MigrateError::HashMismatch`] when an entry's
-/// SQL no longer matches its declared hash, leaving earlier entries applied;
-/// or [`MigrateError::Database`] when a statement fails, rolling that migration
-/// back whole.
+/// before anything is written; [`MigrateError::HistoryMismatch`] when an entry
+/// the database already applied is now declared with a different hash;
+/// [`MigrateError::HashMismatch`] when an entry's SQL no longer matches its
+/// declared hash — checked for applied entries before anything runs, and for a
+/// pending entry as it is applied; or [`MigrateError::Database`] when a
+/// statement fails, rolling that migration back whole.
 pub async fn run_migrate_embedded(
   conn: &impl DbConnection,
   migrations: &[EmbeddedMigration<'_>],
@@ -79,11 +82,12 @@ pub async fn run_migrate_embedded(
   reject_duplicate_names(migrations)?;
 
   ensure_migrations_table(conn, dialect).await?;
-  let applied = get_applied_migrations(conn).await?;
+  let applied = get_applied_history(conn).await?;
+  validate_embedded_history(migrations, &applied)?;
 
   let mut count: u32 = 0;
   for migration in migrations {
-    if applied.iter().any(|name| name == migration.name) {
+    if applied.iter().any(|record| record.name == migration.name) {
       continue;
     }
     apply_migration(conn, migration.name, migration.sql, migration.hash, dialect).await?;

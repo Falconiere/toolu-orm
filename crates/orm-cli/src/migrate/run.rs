@@ -8,9 +8,10 @@ use toolu_orm_core::journal::{Journal, JournalEntry};
 
 use super::apply::apply_migration;
 use super::error::MigrateError;
+use super::history::validate_directory_history;
 use super::pending::get_pending_migrations;
 use super::pragma_guard::{arm_pragmas, check_foreign_keys, restore_pragmas, PragmaGuard};
-use super::store::{ensure_migrations_table, get_applied_migrations, record_migration};
+use super::store::{ensure_migrations_table, get_applied_history, record_migration};
 use super::transaction::{begin, commit, rollback_after};
 
 /// Applies pending migrations from the given directory to the database.
@@ -19,16 +20,24 @@ use super::transaction::{begin, commit, rollback_after};
 /// distribution — use [`run_migrate_embedded`](super::run_migrate_embedded)
 /// instead; both share the same apply path.
 ///
+/// The history already in `_migrations` is validated before anything is
+/// skipped or applied, so an edit to a migration that already ran is caught
+/// with the database untouched.
+///
 /// # Errors
 ///
-/// Returns `MigrateError` on database, I/O, or hash mismatch failures.
+/// Returns [`MigrateError::HistoryMismatch`] when an applied migration's
+/// journal entry no longer carries the hash it was applied with,
+/// [`MigrateError::HashMismatch`] when a migration's bytes no longer match the
+/// hash the journal declares — for an applied migration as well as a pending
+/// one — or `MigrateError` on database and I/O failures.
 pub async fn run_migrate(
   conn: &impl DbConnection,
   migrations_dir: &str,
   dialect: Dialect,
 ) -> Result<u32, MigrateError> {
   ensure_migrations_table(conn, dialect).await?;
-  let applied = get_applied_migrations(conn).await?;
+  let applied = get_applied_history(conn).await?;
 
   let journal_path = Path::new(migrations_dir).join("_journal.json");
   let journal_path_str = journal_path.to_str().unwrap_or("");
@@ -37,7 +46,8 @@ pub async fn run_migrate(
     .map_err(|e| MigrateError::ReadFile(format!("{e}")))?;
 
   if journal.entries.is_empty() {
-    let pending = get_pending_migrations(migrations_dir, &applied)?;
+    let names: Vec<String> = applied.into_iter().map(|record| record.name).collect();
+    let pending = get_pending_migrations(migrations_dir, &names)?;
     let mut count: u32 = 0;
     for migration_file in &pending {
       apply_migration_legacy(conn, migrations_dir, migration_file, dialect).await?;
@@ -46,9 +56,11 @@ pub async fn run_migrate(
     return Ok(count);
   }
 
+  validate_directory_history(migrations_dir, &journal.entries, &applied)?;
+
   let mut count: u32 = 0;
   for entry in &journal.entries {
-    if applied.contains(&entry.name) {
+    if applied.iter().any(|record| record.name == entry.name) {
       continue;
     }
     apply_journal_entry(conn, migrations_dir, entry, dialect).await?;
