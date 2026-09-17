@@ -1,4 +1,12 @@
 //! Rusqlite [`Executor`] implementation.
+//!
+//! Both methods reuse the connection's bounded statement cache via
+//! `prepare_cached` instead of reparsing `sql` on every call. This needs no
+//! invalidation logic here: SQLite revalidates a cached statement's schema
+//! cookie on every execution and recompiles it against the current schema
+//! before running, at the C-library level -- a schema change surfaces as an
+//! ordinary query error on next use, not stale data (see
+//! `rusqlite_prepared_statement_cache_test`).
 
 use toolu_orm_connection::{DbConnectionBlocking, DbError, RusqliteConnection};
 use toolu_orm_core::row::FromRow;
@@ -24,7 +32,11 @@ impl Executor for rusqlite::Connection {
       .iter()
       .map(|v| v as &dyn rusqlite::types::ToSql)
       .collect();
-    let affected = self.execute(sql, param_refs.as_slice())?;
+    // `prepare_cached` reuses this connection's bounded statement cache instead
+    // of re-parsing `sql` on every call; the returned `CachedStatement` is
+    // dropped (and thus returned to the cache) at the end of this call.
+    let mut stmt = self.prepare_cached(sql)?;
+    let affected = stmt.execute(param_refs.as_slice())?;
     Ok(affected as u64)
   }
 
@@ -33,7 +45,7 @@ impl Executor for rusqlite::Connection {
       .iter()
       .map(|v| v as &dyn rusqlite::types::ToSql)
       .collect();
-    let mut stmt = self.prepare(sql)?;
+    let mut stmt = self.prepare_cached(sql)?;
     let mut rows = stmt.query(param_refs.as_slice())?;
     let mut results = Vec::new();
     while let Some(row) = rows.next()? {

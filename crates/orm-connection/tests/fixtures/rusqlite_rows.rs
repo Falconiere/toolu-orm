@@ -28,6 +28,7 @@ impl FromRow for ScalarRow {
 }
 
 /// A one-column text result, for asserting on what was actually stored.
+#[derive(Debug)]
 pub struct LabelRow {
   pub label: String,
 }

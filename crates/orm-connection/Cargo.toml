@@ -47,11 +47,19 @@ sqlite-vec = ["dep:toolu-orm-sqlite-vec-register"]
 
 [dev-dependencies]
 # `macros` for #[tokio::test]; `rt-multi-thread` for the multi_thread-flavor
-# test in tests/rusqlite_blocking_concurrency_test.rs.
+# test in tests/rusqlite_blocking_concurrency_test.rs and for the
+# examples/rusqlite_prepared_statement_bench.rs runtime.
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-postgres = { workspace = true }
 libsql = { workspace = true }
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
+
+# Release benchmark for issue #88: compares uncached/cached rusqlite
+# statement preparation, and the blocking vs async RusqliteConnection paths.
+[[example]]
+name = "rusqlite_prepared_statement_bench"
+path = "examples/rusqlite_prepared_statement_bench.rs"
+required-features = ["rusqlite"]
 
 [lints]
 workspace = true
