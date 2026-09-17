@@ -41,6 +41,7 @@ fn from_registry_extracts_foreign_keys() -> Result<(), Box<dyn std::error::Error
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
 
   let registry = SchemaRegistry::from_tables(vec![table]);
@@ -94,6 +95,7 @@ fn from_registry_columns_are_btreemap_keyed_by_name() -> Result<(), Box<dyn std:
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
 
   let registry = SchemaRegistry::from_tables(vec![table]);
@@ -135,6 +137,7 @@ fn from_registry_extracts_check_constraints() -> Result<(), Box<dyn std::error::
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
 
   let registry = SchemaRegistry::from_tables(vec![table]);

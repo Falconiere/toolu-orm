@@ -28,6 +28,7 @@ fn snapshot_with_fks(
       primary_key: vec![],
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
+      fts5_sync: None,
     },
   );
   Snapshot {

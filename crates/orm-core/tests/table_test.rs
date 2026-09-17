@@ -57,6 +57,7 @@ fn test_table_def_creation() {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   assert_eq!(table.name, "conversations");
   assert_eq!(table.columns.len(), 2);
@@ -84,6 +85,7 @@ fn test_table_def_find_column() {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   assert!(table.find_column("id").is_some());
   assert!(table.find_column("nonexistent").is_none());
@@ -103,6 +105,7 @@ fn test_table_def_with_indexes_and_strict() -> Result<(), Box<dyn std::error::Er
     primary_key: vec![],
     strict: true,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   assert!(t.strict);
   assert_eq!(t.indexes.len(), 1);
@@ -120,6 +123,7 @@ fn test_table_def_defaults_no_strict_no_indexes() {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   assert!(!t.strict);
   assert!(t.indexes.is_empty());

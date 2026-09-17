@@ -81,10 +81,15 @@ references `users(id)`. Every assertion is made on the live database through
 
 ## Limitations
 
-- **Triggers attached to the rebuilt table are dropped** with it. `SchemaRegistry`
-  does not model triggers, so there is nothing to replay. Triggers on *other*
-  tables and views over the rebuilt table are unaffected, because the table
-  keeps its name throughout.
+- **Triggers attached to the rebuilt table are dropped** with it, and only the
+  ones the schema models are replayed. The single modelled kind is FTS5
+  synchronization: when a rebuilt table is the content table of an index that
+  declared `sync_content()`, the migration drops those triggers before the
+  rebuild, recreates them after it, and re-runs `rebuild` — see
+  [FTS5 synchronization triggers](fts5-sync-triggers.md). Hand-written triggers
+  on the rebuilt table are still lost, because there is nothing to replay them
+  from. Triggers on *other* tables and views over the rebuilt table are
+  unaffected, because the table keeps its name throughout.
 - **Indexes that are not declared on the `#[table]` struct are lost**, for the
   same reason. This was already true of every generated migration.
 - **Migrations generated before this fix are not rewritten** — their journal

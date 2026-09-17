@@ -32,6 +32,7 @@ test, update its page.
 | [Migration failures](migration-failures.md) | Rollback after a failing statement, unreadable inputs, malformed journal, absent directory, comment-only chunks. |
 | [Expression fragments](expr-fragments.md) | `Expr` SQL fragments with parameter offsets per dialect, nesting, and the empty-list constant. |
 | [Virtual tables (FTS5)](virtual-tables.md) | `TableKind::Virtual` DDL, `#[fts5_table]`, real `MATCH` queries, and the refusal to alter one in place. |
+| [FTS5 synchronization triggers](fts5-sync-triggers.md) | `sync_content()` puts the three triggers an external-content FTS5 index needs into the schema, so writes to the content table stay indexed and the triggers survive every recreation. |
 | [FTS5 queries](fts5-queries.md) | `MATCH` in `Expr`, `bm25` / `rank` / `snippet` / `highlight` as selectable and orderable expressions, validated weights, and the Postgres refusal. |
 | [Postgres FTS queries](postgres-fts-queries.md) | `@@` / `to_tsquery` / `ts_rank` as a Postgres-only builder surface, positive scores / `DESC`, and the SQLite refusal. |
 | [vec0 virtual tables](vec0-virtual-tables.md) | `ColumnType::Vector`, `#[vec0_table]`, `Value::vector`, and `MigrateError::MissingExtension` when `sqlite-vec` is not loaded. |

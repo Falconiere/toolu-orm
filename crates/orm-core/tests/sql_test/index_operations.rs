@@ -85,6 +85,7 @@ fn test_varchar_column_sql() {
       primary_key: vec![],
       strict: true,
       kind: toolu_orm_core::table::TableKind::Ordinary,
+      fts5_sync: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);

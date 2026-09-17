@@ -34,6 +34,7 @@ fn sample_registry() -> SchemaRegistry {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }])
 }
 
@@ -64,6 +65,7 @@ fn test_generate_creates_journal_and_snapshot() -> TestResult {
     primary_key: vec![],
     strict: true,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }]);
 
   let result =
@@ -101,6 +103,7 @@ fn test_generate_incremental_migration() -> TestResult {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }]);
   toolu_orm_cli::generate::run_generate(&initial, mig_path, "initial", Dialect::Sqlite)?;
 
@@ -164,6 +167,7 @@ fn generate_creates_postgres_migration() -> TestResult {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }]);
 
   let result =
@@ -206,6 +210,7 @@ fn generate_creates_sqlite_migration() -> TestResult {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }]);
 
   let result = toolu_orm_cli::generate::run_generate(&registry, mig_path, "init", Dialect::Sqlite)?;
@@ -246,6 +251,7 @@ fn generate_sets_dialect_in_snapshot() -> TestResult {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }]);
 
   toolu_orm_cli::generate::run_generate(&registry, mig_path, "init", Dialect::Postgres)?;

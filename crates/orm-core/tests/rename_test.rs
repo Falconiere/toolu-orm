@@ -66,6 +66,7 @@ fn registry_with_table(table_name: &str, column_names: &[&str]) -> SchemaRegistr
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   }])
 }
 

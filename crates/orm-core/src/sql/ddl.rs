@@ -5,6 +5,7 @@ use crate::dialect::Dialect;
 use crate::index::IndexDef;
 use crate::table::{TableDef, TableKind};
 
+use super::fts5_triggers::rebuild_sql;
 use super::translate::translate_default;
 use super::virtual_table::{create_virtual_table_sql, unsupported_dialect_comment};
 
@@ -145,17 +146,29 @@ pub(crate) fn add_column_sql(table: &str, column: &ColumnDef, dialect: Dialect) 
 }
 
 /// Drop + recreate an FTS5 table, then rebuild from its external content table.
+///
+/// A table that declares [`Fts5Sync`](crate::fts5::Fts5Sync) leaves the rebuild
+/// out: its `CreateFts5SyncTriggers` operation runs later and ends with one, so
+/// emitting it here would index the table twice and would do it before the
+/// triggers exist.
 pub(crate) fn recreate_fts5_from_content_sql(table: &TableDef, dialect: Dialect) -> String {
   match dialect {
     Dialect::Sqlite => {
       let create = create_table_sql(table, dialect);
       let name = &table.name;
-      format!(
+      let head = format!(
         "DROP TABLE IF EXISTS \"{name}\";\n\
          --> statement-breakpoint\n\
-         {create}\n\
+         {create}"
+      );
+      if table.fts5_sync.is_some() {
+        return head;
+      }
+      format!(
+        "{head}\n\
          --> statement-breakpoint\n\
-         INSERT INTO \"{name}\"(\"{name}\") VALUES('rebuild');"
+         {}",
+        rebuild_sql(name)
       )
     },
     Dialect::Postgres => match table.kind.module() {

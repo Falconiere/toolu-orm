@@ -3,6 +3,7 @@
 
 use toolu_orm_core::column::Text;
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::fts5::Fts5Sync;
 use toolu_orm_core::table::TableSchema;
 use toolu_orm_core::value::Value;
 use toolu_orm_macros::fts5_table;
@@ -31,6 +32,29 @@ pub struct CodeFts {
   pub symbol_id: Text,
   pub symbol: Text,
   pub snippet: Text,
+}
+
+#[fts5_table(
+  name = "memory_substring",
+  tokenize = "trigram",
+  content = "memories",
+  content_rowid = "id",
+  sync_content = true
+)]
+pub struct MemorySubstring {
+  pub body: Text,
+  #[column(unindexed)]
+  pub note: Text,
+}
+
+#[fts5_table(
+  name = "memory_plain",
+  content = "memories",
+  content_rowid = "id",
+  sync_content = false
+)]
+pub struct MemoryPlain {
+  pub body: Text,
 }
 
 #[test]
@@ -119,5 +143,43 @@ fn the_builder_factories_are_generated() {
   assert_eq!(
     MemoryFts::delete().to_sql_for(Dialect::Sqlite).0,
     "DELETE FROM \"memory_fts\""
+  );
+}
+
+#[test]
+fn sync_content_records_the_declaration() -> TestResult {
+  let sync = MemorySubstring::table_def()
+    .fts5_sync
+    .ok_or("sync_content = true recorded nothing")?;
+  // The whole struct, so a field added later cannot default its way past this.
+  assert_eq!(
+    sync,
+    Fts5Sync {
+      content_table: "memories".to_owned(),
+      content_rowid: "id".to_owned(),
+      columns: vec!["body".to_owned(), "note".to_owned()],
+      indexed_columns: vec!["body".to_owned()],
+    }
+  );
+  Ok(())
+}
+
+#[test]
+fn sync_content_false_and_an_absent_attribute_record_nothing() {
+  assert_eq!(MemoryPlain::table_def().fts5_sync, None);
+  assert_eq!(CodeFts::table_def().fts5_sync, None);
+}
+
+#[test]
+fn the_declaration_does_not_reach_the_module_arguments() {
+  assert_eq!(
+    MemorySubstring::table_def().kind.args(),
+    [
+      "\"body\"",
+      "\"note\" UNINDEXED",
+      "tokenize = 'trigram'",
+      "content = 'memories'",
+      "content_rowid = 'id'",
+    ]
   );
 }

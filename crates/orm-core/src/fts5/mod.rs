@@ -16,6 +16,7 @@ mod aux_fn;
 mod builder;
 pub(crate) mod literal;
 mod options;
+mod sync;
 
 pub use aux_fn::{
   bm25, bm25_for, column_index, highlight, highlight_for, rank, rank_for, snippet, snippet_for,
@@ -23,3 +24,4 @@ pub use aux_fn::{
 };
 pub use builder::{Fts5Table, FTS5_MODULE};
 pub use options::Fts5Options;
+pub use sync::{sync_trigger_names, Fts5Sync, Fts5SyncTriggers};

@@ -7,6 +7,7 @@ use serde::ser::Serializer;
 use serde::{Deserialize, Serialize};
 
 use crate::column::ColumnDef;
+use crate::fts5::Fts5Sync;
 use crate::index::IndexDef;
 use crate::table::TableKind;
 
@@ -31,6 +32,8 @@ where
     strict: bool,
     #[serde(skip_serializing_if = "TableKind::is_ordinary")]
     kind: &'a TableKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fts5_sync: Option<&'a Fts5Sync>,
   }
   SnapshotTableSer {
     column_order: &table.column_order,
@@ -41,6 +44,7 @@ where
     primary_key: &table.primary_key,
     strict: table.strict,
     kind: &table.kind,
+    fts5_sync: table.fts5_sync.as_ref(),
   }
   .serialize(serializer)
 }
@@ -66,6 +70,8 @@ where
     strict: bool,
     #[serde(default)]
     kind: TableKind,
+    #[serde(default)]
+    fts5_sync: Option<Fts5Sync>,
   }
   let w = Wire::deserialize(deserializer)?;
   let (columns, inferred_order) =
@@ -89,6 +95,7 @@ where
     primary_key: w.primary_key,
     strict: w.strict,
     kind: w.kind,
+    fts5_sync: w.fts5_sync,
   })
 }
 

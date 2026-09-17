@@ -12,6 +12,7 @@ use crate::table::TableDef;
 use super::column::compute_column_changes;
 use super::enums::diff_enums;
 use super::fk::{diff_check_constraints_inner, diff_foreign_keys_inner};
+use super::fts5_sync::{trigger_operations, validate as validate_fts5_sync};
 use super::indexes::diff_indexes_inner;
 use super::operation::{ColumnChange, Operation};
 use super::virtual_tables::{check_new_virtual_table, check_virtual_pair, VirtualPairCheck};
@@ -36,6 +37,7 @@ pub fn diff_with_resolver(
   new_schema: &SchemaRegistry,
   resolver: &impl RenameResolver,
 ) -> Result<Vec<Operation>, DbCoreError> {
+  validate_fts5_sync(new_schema)?;
   let new_snap = Snapshot::from_registry(new_schema);
   let mut ops = diff_enums(old_snapshot, &new_snap);
   ops.extend(diff_tables(old_snapshot, &new_snap, new_schema, resolver)?);
@@ -115,7 +117,7 @@ fn diff_tables(
     )? {
       VirtualPairCheck::Unchanged => continue,
       VirtualPairCheck::Recreate(op) => {
-        ops.push(op);
+        ops.push(*op);
         continue;
       },
       VirtualPairCheck::Ordinary => {},
@@ -154,6 +156,8 @@ fn diff_tables(
     );
   }
 
+  let triggers = trigger_operations(old_snapshot, new_schema, &renames, &ops, &pure_added);
+  ops.extend(triggers);
   Ok(ops)
 }
 

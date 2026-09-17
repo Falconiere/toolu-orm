@@ -1,5 +1,6 @@
 use toolu_orm_core::column::{ColumnDef, ColumnType};
 use toolu_orm_core::diff::{ColumnChange, Operation};
+use toolu_orm_core::fts5::Fts5Sync;
 use toolu_orm_core::ordering::order_operations;
 use toolu_orm_core::table::TableDef;
 
@@ -52,6 +53,7 @@ fn full_ordering_13_tiers() {
         primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
+        fts5_sync: None,
       },
     },
     Operation::DropCheckConstraint {
@@ -75,6 +77,7 @@ fn full_ordering_13_tiers() {
         primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
+        fts5_sync: None,
       },
     },
     Operation::AlterEnum {
@@ -91,6 +94,18 @@ fn full_ordering_13_tiers() {
       added: vec![],
       removed: vec!["old_v".to_owned()],
     },
+    Operation::CreateFts5SyncTriggers {
+      table: "memory_fts".to_owned(),
+      sync: Fts5Sync {
+        content_table: "memories".to_owned(),
+        content_rowid: "id".to_owned(),
+        columns: vec!["body".to_owned()],
+        indexed_columns: vec!["body".to_owned()],
+      },
+    },
+    Operation::DropFts5SyncTriggers {
+      table: "memory_fts".to_owned(),
+    },
   ];
 
   let ordered = order_operations(ops);
@@ -104,12 +119,14 @@ fn full_ordering_13_tiers() {
       Operation::RenameColumn { .. } => 5,
       Operation::DropForeignKey { .. }
       | Operation::DropIndex { .. }
-      | Operation::DropCheckConstraint { .. } => 6,
+      | Operation::DropCheckConstraint { .. }
+      | Operation::DropFts5SyncTriggers { .. } => 6,
       Operation::AlterColumn { .. } | Operation::RecreateFts5FromContent { .. } => 7,
       Operation::AddColumn { .. } => 8,
       Operation::AddForeignKey { .. }
       | Operation::CreateIndex { .. }
-      | Operation::AddCheckConstraint { .. } => 9,
+      | Operation::AddCheckConstraint { .. }
+      | Operation::CreateFts5SyncTriggers { .. } => 9,
       Operation::DropColumn { .. } => 10,
       Operation::DropTable { .. } => 11,
       Operation::DropEnum { .. } => 12,

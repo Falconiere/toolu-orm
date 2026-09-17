@@ -22,11 +22,12 @@ pub struct Fts5Attrs {
   content_rowid: Option<String>,
   columnsize: Option<u8>,
   detail: Option<String>,
+  sync_content: bool,
 }
 
 const KNOWN_KEYS: &str =
   "unknown attribute, expected `name`, `tokenize`, `prefix`, `content`, `content_rowid`, \
-   `columnsize` or `detail`";
+   `columnsize`, `detail` or `sync_content`";
 
 pub fn parse_attrs(metas: &[Meta]) -> syn::Result<Fts5Attrs> {
   let mut attrs = Fts5Attrs::default();
@@ -50,6 +51,7 @@ pub fn parse_attrs(metas: &[Meta]) -> syn::Result<Fts5Attrs> {
       "content_rowid" => attrs.content_rowid = Some(string_value(&nv.value)?),
       "detail" => attrs.detail = Some(string_value(&nv.value)?),
       "columnsize" => attrs.columnsize = Some(columnsize_value(&nv.value)?),
+      "sync_content" => attrs.sync_content = bool_value(&nv.value)?,
       _ => return Err(syn::Error::new_spanned(&nv.path, KNOWN_KEYS)),
     }
   }
@@ -113,6 +115,19 @@ fn string_value(expr: &Expr) -> syn::Result<String> {
   Ok(s.value())
 }
 
+fn bool_value(expr: &Expr) -> syn::Result<bool> {
+  let Expr::Lit(expr_lit) = expr else {
+    return Err(syn::Error::new_spanned(expr, "expected true or false"));
+  };
+  let Lit::Bool(bool_lit) = &expr_lit.lit else {
+    return Err(syn::Error::new_spanned(
+      &expr_lit.lit,
+      "expected true or false",
+    ));
+  };
+  Ok(bool_lit.value)
+}
+
 fn columnsize_value(expr: &Expr) -> syn::Result<u8> {
   let Expr::Lit(expr_lit) = expr else {
     return Err(syn::Error::new_spanned(expr, "expected 0 or 1"));
@@ -170,6 +185,10 @@ fn option_calls(attrs: &Fts5Attrs) -> Vec<TokenStream> {
   push_text_call(&mut calls, "detail", attrs.detail.as_deref());
   if let Some(columnsize) = attrs.columnsize {
     calls.push(quote! { .columnsize(#columnsize) });
+  }
+  // Last, so the recorded declaration sees every option the attribute set.
+  if attrs.sync_content {
+    calls.push(quote! { .sync_content() });
   }
   calls
 }

@@ -8,6 +8,7 @@ use crate::table::TableDef;
 use super::ddl::{
   add_column_sql, create_index_sql, create_table_sql, recreate_fts5_from_content_sql,
 };
+use super::fts5_triggers::{create_sync_triggers_sql, drop_sync_triggers_sql};
 use super::postgres::alter_column_statements_postgres;
 
 /// Separator between several statements rendered for one operation.
@@ -49,6 +50,10 @@ pub(super) fn operation_sql(op: &Operation, dialect: Dialect) -> String {
       drop_check_constraint_sql(table, name, dialect)
     },
     Operation::RecreateFts5FromContent { table } => recreate_fts5_from_content_sql(table, dialect),
+    Operation::DropFts5SyncTriggers { table } => drop_sync_triggers_sql(table, dialect),
+    Operation::CreateFts5SyncTriggers { table, sync } => {
+      create_sync_triggers_sql(table, sync, dialect)
+    },
   }
 }
 
