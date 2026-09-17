@@ -143,6 +143,21 @@ async fn run_async(conn: &RusqliteConnection) -> Result<i64, DbError> {
   Ok(total)
 }
 
+/// Returns an error rather than panicking (`assert_eq!`) so the benchmark, an
+/// `examples/` binary rather than a `tests/` one, propagates a mismatch
+/// through its `Result` return the same way the rest of this file does.
+fn check_checksum(
+  label: &str,
+  actual: i64,
+  expected: i64,
+) -> Result<(), Box<dyn std::error::Error>> {
+  if actual == expected {
+    Ok(())
+  } else {
+    Err(format!("{label} checksum mismatch: got {actual}, expected {expected}").into())
+  }
+}
+
 fn report(label: &str, elapsed: Duration, checksum: Option<i64>) {
   match checksum {
     Some(sum) => println!("{label:<13} lookups={LOOKUPS} elapsed={elapsed:?} checksum={sum}",),
@@ -178,10 +193,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let async_sum = runtime.block_on(run_async(&wrapped))?;
   report("async", start.elapsed(), Some(async_sum));
 
-  assert_eq!(uncached_sum, expected, "uncached checksum mismatch");
-  assert_eq!(cached_sum, expected, "cached checksum mismatch");
-  assert_eq!(blocking_sum, expected, "blocking checksum mismatch");
-  assert_eq!(async_sum, expected, "async checksum mismatch");
+  check_checksum("uncached", uncached_sum, expected)?;
+  check_checksum("cached", cached_sum, expected)?;
+  check_checksum("blocking", blocking_sum, expected)?;
+  check_checksum("async", async_sum, expected)?;
   println!("all variants agree on checksum={expected}");
 
   println!("sqlite_version={}", rusqlite::version());
