@@ -143,17 +143,23 @@ fn neither_name_can_end_a_statement() {
     .content_rowid("i\"d")
     .sync_content()
     .build();
+  // Exact text, not a substring: every identifier is double-quoted with its
+  // embedded quote doubled, so none of them can end the statement.
   let sql = create_sql(&table, Dialect::Sqlite);
-  assert!(
-    sql.contains(
-      "CREATE TRIGGER \"toolu_fts5_memory\"\"_fts_insert\" AFTER INSERT ON \
-                  \"memo\"\"ries\""
-    ),
-    "identifier quoting is wrong: {sql}"
+  let insert = sql
+    .split("--> statement-breakpoint")
+    .next()
+    .unwrap_or_default();
+  assert_eq!(
+    insert.trim(),
+    "CREATE TRIGGER \"toolu_fts5_memory\"\"_fts_insert\" AFTER INSERT ON \"memo\"\"ries\" \
+     BEGIN\n  INSERT INTO \"memory\"\"_fts\" (\"rowid\", \"bo\"\"dy\") VALUES (new.\"i\"\"d\", \
+     new.\"bo\"\"dy\");\nEND;"
   );
-  assert!(
-    sql.contains("VALUES (new.\"i\"\"d\", new.\"bo\"\"dy\")"),
-    "column quoting is wrong: {sql}"
+  assert_eq!(
+    sql.matches("VALUES('rebuild')").count(),
+    1,
+    "the rebuild command lost its quoting: {sql}"
   );
 }
 
