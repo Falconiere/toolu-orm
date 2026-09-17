@@ -124,6 +124,20 @@ impl SelectBuilder {
   }
 
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
+    self.to_sql_with_limit(dialect, self.limit_val)
+  }
+
+  /// [`Self::to_sql_for`] with `limit` standing in for [`Self::limit`].
+  ///
+  /// Everything else — select list, joins, `WHERE`, `ORDER BY`, `OFFSET` — is
+  /// rendered exactly as `to_sql_for` renders it. The row bound of
+  /// [`Self::to_first_row_sql_for`] is the only caller that passes something
+  /// other than `self.limit_val`.
+  pub(super) fn to_sql_with_limit(
+    &self,
+    dialect: Dialect,
+    limit: Option<i64>,
+  ) -> (String, Vec<Value>) {
     let mut sql = String::new();
     let mut params: Vec<Value> = Vec::new();
 
@@ -137,7 +151,7 @@ impl SelectBuilder {
 
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
     self.append_order_by(&mut sql);
-    self.append_limit_offset_for(&mut sql, &mut params, dialect);
+    self.append_limit_offset_for(&mut sql, &mut params, dialect, limit);
 
     (sql, params)
   }
@@ -214,18 +228,5 @@ impl SelectBuilder {
     }
     let parts: Vec<String> = self.order_bys.iter().map(|ob| ob.to_sql()).collect();
     sql.push_str(&format!(" ORDER BY {}", parts.join(", ")));
-  }
-
-  fn append_limit_offset_for(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
-    if let Some(limit) = self.limit_val {
-      let idx = params.len() + 1;
-      params.push(Value::Integer(limit));
-      sql.push_str(&format!(" LIMIT {}", dialect.param(idx)));
-    }
-    if let Some(offset) = self.offset_val {
-      let idx = params.len() + 1;
-      params.push(Value::Integer(offset));
-      sql.push_str(&format!(" OFFSET {}", dialect.param(idx)));
-    }
   }
 }

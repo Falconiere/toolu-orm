@@ -98,6 +98,10 @@ name = "select_test"
 path = "tests/select_test/main.rs"
 
 [[test]]
+name = "first_row_sql_test"
+path = "tests/first_row_sql_test.rs"
+
+[[test]]
 name = "fts5_select_sql_test"
 path = "tests/fts5_select_sql_test.rs"
 
@@ -132,6 +136,11 @@ required-features = ["libsql"]
 # driver is the sole backend feature on this crate (see `cfg_single_backend!`).
 # Shared setup lives in tests/fixtures/ and is wired with `#[path]`.
 [[test]]
+name = "libsql_first_row_test"
+path = "tests/libsql_first_row_test.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "libsql_mutations_test"
 path = "tests/libsql_mutations_test.rs"
 required-features = ["libsql"]
@@ -160,6 +169,11 @@ required-features = ["libsql"]
 [[test]]
 name = "rusqlite_derived_from_row_test"
 path = "tests/rusqlite_derived_from_row_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "rusqlite_first_row_test"
+path = "tests/rusqlite_first_row_test.rs"
 required-features = ["rusqlite"]
 
 [[test]]
@@ -194,6 +208,11 @@ required-features = ["sqlite-vec"]
 
 # Need a live Postgres (docker-compose.test.yaml) and the five-crate postgres
 # lane, which gives orm-core the postgres+libsql FromRow shape.
+[[test]]
+name = "postgres_first_row_test"
+path = "tests/postgres_first_row_test.rs"
+required-features = ["postgres"]
+
 [[test]]
 name = "postgres_mutations_test"
 path = "tests/postgres_mutations_test.rs"
