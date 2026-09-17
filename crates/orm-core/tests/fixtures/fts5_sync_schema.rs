@@ -129,10 +129,24 @@ pub fn sync_refusal(old: &Snapshot, new: &SchemaRegistry) -> String {
   }
 }
 
-/// Byte offset of `needle`, or `usize::MAX` when it is absent — so an ordering
-/// assertion fails with both offsets instead of on a missing statement.
-pub fn offset_of(haystack: &str, needle: &str) -> usize {
-  haystack.find(needle).unwrap_or(usize::MAX)
+/// Asserts `sql` holds both statements and that `before` comes first.
+///
+/// Both halves matter and a missing statement is reported as a missing
+/// statement rather than as an ordering failure, so a suite that stops
+/// generating one of them cannot pass by accident.
+///
+/// # Panics
+///
+/// When either statement is absent, or when they are in the wrong order.
+pub fn assert_order(sql: &str, before: &str, after: &str) {
+  let before_at = sql.find(before);
+  let after_at = sql.find(after);
+  assert!(before_at.is_some(), "missing statement {before}: {sql}");
+  assert!(after_at.is_some(), "missing statement {after}: {sql}");
+  assert!(
+    before_at < after_at,
+    "{before} (at {before_at:?}) did not come before {after} (at {after_at:?}): {sql}"
+  );
 }
 
 pub fn occurrences(haystack: &str, needle: &str) -> usize {

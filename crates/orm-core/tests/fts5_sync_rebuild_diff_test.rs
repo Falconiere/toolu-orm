@@ -10,8 +10,9 @@ use toolu_orm_core::fts5::Fts5Table;
 use toolu_orm_core::snapshot::Snapshot;
 
 use schema::{
-  memories, memories_body_not_null, memory_fts, memory_fts_named, memory_fts_unsynced, occurrences,
-  offset_of, registry, snapshot_of, sqlite_sql, sqlite_sql_with_resolver, RenameOneTable,
+  assert_order, memories, memories_body_not_null, memory_fts, memory_fts_named,
+  memory_fts_unsynced, occurrences, registry, snapshot_of, sqlite_sql, sqlite_sql_with_resolver,
+  RenameOneTable,
 };
 
 const DROP_INSERT: &str = "DROP TRIGGER IF EXISTS \"toolu_fts5_memory_fts_insert\"";
@@ -26,21 +27,13 @@ fn a_content_table_rebuild_puts_the_triggers_back_and_reindexes() {
   );
   assert_eq!(occurrences(&sql, "DROP TRIGGER IF EXISTS"), 3, "{sql}");
   assert_eq!(occurrences(&sql, "CREATE TRIGGER"), 3, "{sql}");
-  assert!(
-    offset_of(&sql, DROP_INSERT) < offset_of(&sql, "CREATE TABLE \"_toolu_new_memories\""),
-    "triggers still attached when the rebuild started: {sql}"
+  assert_order(&sql, DROP_INSERT, "CREATE TABLE \"_toolu_new_memories\"");
+  assert_order(
+    &sql,
+    "ALTER TABLE \"_toolu_new_memories\" RENAME TO \"memories\"",
+    CREATE_INSERT,
   );
-  assert!(
-    offset_of(
-      &sql,
-      "ALTER TABLE \"_toolu_new_memories\" RENAME TO \"memories\""
-    ) < offset_of(&sql, CREATE_INSERT),
-    "triggers recreated before the table came back: {sql}"
-  );
-  assert!(
-    offset_of(&sql, CREATE_INSERT) < offset_of(&sql, REBUILD),
-    "reindex ran before the triggers existed: {sql}"
-  );
+  assert_order(&sql, CREATE_INSERT, REBUILD);
   assert!(
     !sql.contains("CREATE VIRTUAL TABLE"),
     "the index was recreated for a content-table change: {sql}"
@@ -92,9 +85,10 @@ fn renaming_the_index_drops_the_old_trigger_names_and_creates_the_new_ones() {
     sql.contains("CREATE TRIGGER \"toolu_fts5_note_fts_insert\""),
     "new trigger name not created: {sql}"
   );
-  assert!(
-    offset_of(&sql, DROP_INSERT) < offset_of(&sql, "CREATE TRIGGER \"toolu_fts5_note_fts_insert\""),
-    "create came before the drop: {sql}"
+  assert_order(
+    &sql,
+    DROP_INSERT,
+    "CREATE TRIGGER \"toolu_fts5_note_fts_insert\"",
   );
 }
 

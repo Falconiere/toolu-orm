@@ -3,6 +3,7 @@
 
 use toolu_orm_core::column::Text;
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::fts5::Fts5Sync;
 use toolu_orm_core::table::TableSchema;
 use toolu_orm_core::value::Value;
 use toolu_orm_macros::fts5_table;
@@ -150,10 +151,16 @@ fn sync_content_records_the_declaration() -> TestResult {
   let sync = MemorySubstring::table_def()
     .fts5_sync
     .ok_or("sync_content = true recorded nothing")?;
-  assert_eq!(sync.content_table, "memories");
-  assert_eq!(sync.content_rowid, "id");
-  assert_eq!(sync.columns, ["body", "note"]);
-  assert_eq!(sync.indexed_columns, ["body"]);
+  // The whole struct, so a field added later cannot default its way past this.
+  assert_eq!(
+    sync,
+    Fts5Sync {
+      content_table: "memories".to_owned(),
+      content_rowid: "id".to_owned(),
+      columns: vec!["body".to_owned(), "note".to_owned()],
+      indexed_columns: vec!["body".to_owned()],
+    }
+  );
   Ok(())
 }
 

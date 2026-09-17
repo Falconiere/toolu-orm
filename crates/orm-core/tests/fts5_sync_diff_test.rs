@@ -13,7 +13,7 @@ use toolu_orm_core::fts5::Fts5Table;
 use toolu_orm_core::snapshot::Snapshot;
 
 use schema::{
-  memories, memory_fts, memory_fts_named, memory_fts_unsynced, occurrences, offset_of, registry,
+  assert_order, memories, memory_fts, memory_fts_named, memory_fts_unsynced, occurrences, registry,
   snapshot_of, sqlite_sql,
 };
 
@@ -33,19 +33,17 @@ fn a_new_declaration_creates_the_triggers_and_rebuilds_without_a_drop() {
     !sql.contains("DROP TRIGGER"),
     "a first migration should not drop triggers that cannot exist: {sql}"
   );
-  assert!(
-    offset_of(&sql, "CREATE TABLE IF NOT EXISTS \"memories\"") < offset_of(&sql, CREATE_INSERT),
-    "trigger created before its content table: {sql}"
+  assert_order(
+    &sql,
+    "CREATE TABLE IF NOT EXISTS \"memories\"",
+    CREATE_INSERT,
   );
-  assert!(
-    offset_of(&sql, "CREATE VIRTUAL TABLE IF NOT EXISTS \"memory_fts\"")
-      < offset_of(&sql, CREATE_INSERT),
-    "trigger created before its index: {sql}"
+  assert_order(
+    &sql,
+    "CREATE VIRTUAL TABLE IF NOT EXISTS \"memory_fts\"",
+    CREATE_INSERT,
   );
-  assert!(
-    offset_of(&sql, CREATE_INSERT) < offset_of(&sql, REBUILD),
-    "rebuild ran before the triggers existed: {sql}"
-  );
+  assert_order(&sql, CREATE_INSERT, REBUILD);
 }
 
 #[test]
@@ -80,10 +78,7 @@ fn dropping_the_index_drops_its_triggers_first() {
     &registry(vec![memories()]),
   );
   assert_eq!(occurrences(&sql, "DROP TRIGGER IF EXISTS"), 3, "{sql}");
-  assert!(
-    offset_of(&sql, DROP_INSERT) < offset_of(&sql, "DROP TABLE IF EXISTS \"memory_fts\""),
-    "the table went before its triggers: {sql}"
-  );
+  assert_order(&sql, DROP_INSERT, "DROP TABLE IF EXISTS \"memory_fts\"");
 }
 
 #[test]
@@ -115,10 +110,7 @@ fn a_tokenizer_change_recreates_the_table_then_its_triggers_then_the_index() {
     let [before, after] = pair else {
       continue;
     };
-    assert!(
-      offset_of(&sql, before) < offset_of(&sql, after),
-      "{before} did not come before {after}: {sql}"
-    );
+    assert_order(&sql, before, after);
   }
   assert_eq!(occurrences(&sql, REBUILD), 1, "index rebuilt twice: {sql}");
 }
