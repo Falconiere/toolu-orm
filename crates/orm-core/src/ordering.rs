@@ -16,14 +16,20 @@ fn priority(op: &Operation) -> u8 {
     Operation::CreateTable { .. } => 3,
     Operation::RenameTable { .. } => 4,
     Operation::RenameColumn { .. } => 5,
+    // FTS5 synchronization triggers come down with the other drops: before an
+    // FTS table is recreated, and before a content-table rebuild would take
+    // them with its `DROP TABLE`.
     Operation::DropForeignKey { .. }
     | Operation::DropIndex { .. }
-    | Operation::DropCheckConstraint { .. } => 6,
+    | Operation::DropCheckConstraint { .. }
+    | Operation::DropFts5SyncTriggers { .. } => 6,
     Operation::AlterColumn { .. } | Operation::RecreateFts5FromContent { .. } => 7,
     Operation::AddColumn { .. } => 8,
+    // And go back up with the other creates, once both tables are in place.
     Operation::AddForeignKey { .. }
     | Operation::CreateIndex { .. }
-    | Operation::AddCheckConstraint { .. } => 9,
+    | Operation::AddCheckConstraint { .. }
+    | Operation::CreateFts5SyncTriggers { .. } => 9,
     Operation::DropColumn { .. } => 10,
     Operation::DropTable { .. } => 11,
     Operation::DropEnum { .. } => 12,

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::column::ColumnDef;
+use crate::fts5::Fts5Sync;
 use crate::index::IndexDef;
 
 /// How the database creates the table.
@@ -31,6 +32,7 @@ impl TableKind {
     }
   }
 
+  /// True for a plain `CREATE TABLE`.
   #[must_use]
   pub fn is_ordinary(&self) -> bool {
     matches!(self, Self::Ordinary)
@@ -55,6 +57,8 @@ impl TableKind {
   }
 }
 
+/// One table as the schema declares it: the unit the registry, the snapshot
+/// and the diff all work in.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TableDef {
   pub name: String,
@@ -72,19 +76,28 @@ pub struct TableDef {
   /// tables existed still deserialize.
   #[serde(default, skip_serializing_if = "TableKind::is_ordinary")]
   pub kind: TableKind,
+  /// Set only by an external-content FTS5 table that opted into generated
+  /// synchronization triggers; `None` for every other table, so a snapshot
+  /// written before this existed is unchanged.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub fts5_sync: Option<Fts5Sync>,
 }
 
 impl TableDef {
+  /// The column declared under `name`, if the table has one.
   pub fn find_column(&self, name: &str) -> Option<&ColumnDef> {
     self.columns.iter().find(|c| c.name == name)
   }
 
+  /// True for any `CREATE VIRTUAL TABLE` form.
   #[must_use]
   pub fn is_virtual(&self) -> bool {
     !self.kind.is_ordinary()
   }
 }
 
+/// Implemented by every declared table, by hand or through `#[table]`.
 pub trait TableSchema {
+  /// The table's declaration.
   fn table_def() -> TableDef;
 }

@@ -28,5 +28,6 @@ pub(crate) fn table(name: &str, columns: Vec<ColumnDef>) -> TableDef {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   }
 }

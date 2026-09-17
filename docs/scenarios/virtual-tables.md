@@ -3,7 +3,7 @@
 **Feature:** `TableKind::Virtual { module, args }` on `TableDef` models any SQLite virtual table; `Fts5Table` and `#[fts5_table]` build the FTS5 case; `create_table_sql` emits `CREATE VIRTUAL TABLE … USING <module>(…)`; in-place changes either rebuild from FTS5 external `content=` or refuse with `VirtualTableChange`.
 **Drivers:** libsql and rusqlite (SQLite only). On Postgres the table is skipped with a comment.
 **Spec:** local `docs/toolu/specs/2026-09-09-virtual-table-repopulate-design.md` (and #18 FTS5 design); AC-1 … AC-8 for rebuild.
-**Reading one:** this page declares and creates the index; [FTS5 queries](fts5-queries.md) searches it with `MATCH` and ranks it with `bm25`.
+**Reading one:** this page declares and creates the index; [FTS5 queries](fts5-queries.md) searches it with `MATCH` and ranks it with `bm25`; [FTS5 synchronization triggers](fts5-sync-triggers.md) keeps an external-content index in step with its content table.
 
 ## What is proven
 
@@ -57,6 +57,12 @@ INSERT INTO "memory_fts"("memory_fts") VALUES('rebuild');
 Proven end to end by `fts5_content_rebuild_sqlite_test` (generate → migrate →
 `MATCH` against rebuilt content). Postgres still emits the SQLite-only skip
 comment and never runs `rebuild`.
+
+A rebuild fills the index once; it does not index later writes to the content
+table. Declaring `sync_content()` hands that to the generator, and then the
+`rebuild` above moves into the trigger operation so the index is filled after
+its triggers exist rather than before — see
+[FTS5 synchronization triggers](fts5-sync-triggers.md).
 
 Standalone FTS5 (no `content`, or `content = ''`), missing content tables,
 missing columns, `vec0`, ordinary↔virtual, module switches, indexes, and

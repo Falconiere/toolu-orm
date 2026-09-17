@@ -55,6 +55,7 @@ fn composite_table() -> TableDef {
     primary_key: vec!["memory_id".to_owned(), "tag".to_owned()],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   }
 }
 
@@ -79,6 +80,7 @@ fn autoincrement_table() -> TableDef {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   }
 }
 

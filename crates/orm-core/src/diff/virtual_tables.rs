@@ -25,8 +25,10 @@ pub(crate) enum VirtualPairCheck {
   Ordinary,
   /// Virtual and unchanged; skip ordinary diffs.
   Unchanged,
-  /// Emit this op instead of ordinary diffs or a refuse error.
-  Recreate(Operation),
+  /// Emit this op instead of ordinary diffs or a refuse error. Boxed: the
+  /// other two variants carry nothing, and an `Operation` holds a whole
+  /// `TableDef`.
+  Recreate(Box<Operation>),
 }
 
 /// Checked before emitting `CreateTable` for a table the snapshot has not seen.
@@ -97,7 +99,7 @@ pub(crate) fn check_virtual_pair(
 
   if new.kind.module() == Some(FTS5_MODULE) {
     if let Some(op) = try_recreate_from_content(name, new_table, schema)? {
-      return Ok(VirtualPairCheck::Recreate(op));
+      return Ok(VirtualPairCheck::Recreate(Box::new(op)));
     }
   }
 
@@ -116,46 +118,57 @@ fn try_recreate_from_content(
     return Ok(None);
   }
 
-  let Some(content) = schema.find_table(&content_name) else {
-    return Err(refuse(
-      name,
-      &format!("its content table \"{content_name}\" is not in the schema"),
-    ));
-  };
-  if content.is_virtual() {
-    return Err(refuse(
-      name,
-      &format!("its content table \"{content_name}\" is not an ordinary table"),
-    ));
-  }
-
-  let content_cols: BTreeSet<&str> = content.columns.iter().map(|c| c.name.as_str()).collect();
-  for column in &new_table.columns {
-    if !content_cols.contains(column.name.as_str()) {
-      return Err(refuse(
-        name,
-        &format!(
-          "its content table \"{content_name}\" is missing column \"{}\"",
-          column.name
-        ),
-      ));
-    }
-  }
-
-  if let Some(rowid) = option_value(new_table.kind.args(), "content_rowid") {
-    if !content_cols.contains(rowid.as_str()) {
-      return Err(refuse(
-        name,
-        &format!(
-          "its content table \"{content_name}\" is missing content_rowid column \"{rowid}\""
-        ),
-      ));
-    }
+  let columns: Vec<String> = new_table.columns.iter().map(|c| c.name.clone()).collect();
+  let rowid = option_value(new_table.kind.args(), "content_rowid");
+  if let Some(reason) = content_table_reason(schema, &content_name, &columns, rowid.as_deref()) {
+    return Err(refuse(name, &reason));
   }
 
   Ok(Some(Operation::RecreateFts5FromContent {
     table: new_table.clone(),
   }))
+}
+
+/// Why `content_name` cannot back an FTS5 index over `columns`, or `None` when
+/// it can.
+///
+/// Shared with [`super::fts5_sync`], which needs exactly the same answer for a
+/// synchronization declaration; each caller reports it under its own error, so
+/// the recreate path and the trigger path cannot drift on what counts as a
+/// usable content table.
+pub(crate) fn content_table_reason(
+  schema: &SchemaRegistry,
+  content_name: &str,
+  columns: &[String],
+  rowid: Option<&str>,
+) -> Option<String> {
+  let Some(content) = schema.find_table(content_name) else {
+    return Some(format!(
+      "its content table \"{content_name}\" is not in the schema"
+    ));
+  };
+  if content.is_virtual() {
+    return Some(format!(
+      "its content table \"{content_name}\" is not an ordinary table"
+    ));
+  }
+
+  let content_cols: BTreeSet<&str> = content.columns.iter().map(|c| c.name.as_str()).collect();
+  for column in columns {
+    if !content_cols.contains(column.as_str()) {
+      return Some(format!(
+        "its content table \"{content_name}\" is missing column \"{column}\""
+      ));
+    }
+  }
+
+  let rowid = rowid?;
+  if content_cols.contains(rowid) {
+    return None;
+  }
+  Some(format!(
+    "its content table \"{content_name}\" is missing content_rowid column \"{rowid}\""
+  ))
 }
 
 /// Reads `key = 'value'` from FTS5 module args (`Fts5Options::render` form).

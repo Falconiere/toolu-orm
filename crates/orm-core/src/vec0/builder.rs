@@ -164,6 +164,7 @@ impl Vec0Table {
       primary_key: Vec::new(),
       strict: false,
       kind: TableKind::virtual_table(VEC0_MODULE, args),
+      fts5_sync: None,
     }
   }
 }

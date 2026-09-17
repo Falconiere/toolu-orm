@@ -15,6 +15,7 @@ fn alter_column_postgres_uses_alter_table() {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   let ops = vec![Operation::AlterColumn {
     table: "users".to_owned(),
@@ -56,6 +57,7 @@ fn alter_column_sqlite_uses_table_recreation_path() {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   let ops = vec![Operation::AlterColumn {
     table: "users".to_owned(),

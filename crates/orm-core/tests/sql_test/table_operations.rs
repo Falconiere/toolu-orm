@@ -27,6 +27,7 @@ fn test_create_table_sql() {
       primary_key: vec![],
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
+      fts5_sync: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -61,6 +62,7 @@ fn test_create_strict_table() {
       primary_key: vec![],
       strict: true,
       kind: toolu_orm_core::table::TableKind::Ordinary,
+      fts5_sync: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -90,6 +92,7 @@ fn test_non_strict_keeps_fk_references() {
       primary_key: vec![],
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
+      fts5_sync: None,
     },
   }];
   // `references` is a foreign key regardless of `strict`; `strict` only
@@ -134,6 +137,7 @@ fn test_non_strict_uses_compat_types() {
       primary_key: vec![],
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
+      fts5_sync: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -206,6 +210,7 @@ fn create_table_postgres_uses_uuid_and_boolean() {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
 
   let ops = vec![Operation::CreateTable { table }];

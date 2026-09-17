@@ -41,5 +41,6 @@ pub(crate) fn sample_registry() -> SchemaRegistry {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   }])
 }

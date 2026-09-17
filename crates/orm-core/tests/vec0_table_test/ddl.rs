@@ -69,6 +69,7 @@ fn a_vector_column_on_an_ordinary_table_is_a_byte_column() {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   };
   assert!(create_sql(&table, Dialect::Sqlite).contains("\"embedding\" BLOB"));
   assert!(create_sql(&table, Dialect::Postgres).contains("\"embedding\" BYTEA"));

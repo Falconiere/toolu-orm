@@ -15,6 +15,7 @@ fn create_enum_before_create_table() {
         primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
+        fts5_sync: None,
       },
     },
     Operation::CreateEnum {
@@ -49,6 +50,7 @@ fn drop_index_before_alter_column() {
         primary_key: vec![],
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
+        fts5_sync: None,
       },
     },
     Operation::DropIndex {

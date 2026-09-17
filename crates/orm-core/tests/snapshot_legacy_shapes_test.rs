@@ -44,6 +44,7 @@ fn matching_registry() -> SchemaRegistry {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   let mut author_id = users_column("author_id", false, true);
   author_id.references = Some("users(id)".to_owned());
@@ -54,6 +55,7 @@ fn matching_registry() -> SchemaRegistry {
     primary_key: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
+    fts5_sync: None,
   };
   SchemaRegistry::from_tables(vec![users, posts])
 }

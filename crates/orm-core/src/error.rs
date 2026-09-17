@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+/// Every error the schema, migration and query layers report.
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum DbCoreError {
@@ -37,6 +38,16 @@ pub enum DbCoreError {
 
   #[error("invalid FTS5 argument for {function}: {reason}")]
   Fts5InvalidArgument { function: String, reason: String },
+
+  /// A `sync_content()` declaration the generator cannot turn into triggers.
+  /// Reported instead of writing a migration, so an index is never left with
+  /// triggers that do not match the schema.
+  #[error(
+    "cannot synchronize FTS5 table \"{table}\": {reason}; generated synchronization needs an \
+     ordinary content table named by content = '…', a content_rowid = '…' column on it, and one \
+     content column per FTS column. Drop sync_content() to keep writing the triggers by hand"
+  )]
+  Fts5SyncInvalid { table: String, reason: String },
 
   /// `vec0` parses its own constructor arguments with a scanner that has no
   /// quoting, so a name outside `[A-Za-z][A-Za-z0-9_]*` cannot be rendered

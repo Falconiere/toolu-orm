@@ -34,6 +34,7 @@ fn table_with_index(index: IndexDef) -> TableDef {
     primary_key: Vec::new(),
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }
 }
 

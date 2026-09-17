@@ -42,6 +42,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
                   primary_key: vec![#(#primary_key.to_owned()),*],
                   strict: #strict,
                   kind: #core::table::TableKind::Ordinary,
+                  fts5_sync: ::core::option::Option::None,
               }
           }
       }

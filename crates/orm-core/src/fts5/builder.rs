@@ -4,6 +4,7 @@ use crate::column::{ColumnDef, ColumnType};
 use crate::table::{TableDef, TableKind};
 
 use super::options::Fts5Options;
+use super::sync::Fts5Sync;
 
 /// The SQLite module name for full-text search tables.
 pub const FTS5_MODULE: &str = "fts5";
@@ -29,15 +30,18 @@ pub struct Fts5Table {
   name: String,
   columns: Vec<ColumnDef>,
   options: Fts5Options,
+  sync: bool,
 }
 
 impl Fts5Table {
+  /// An FTS5 table with no columns and no options yet.
   #[must_use]
   pub fn new(name: impl Into<String>) -> Self {
     Self {
       name: name.into(),
       columns: Vec::new(),
       options: Fts5Options::default(),
+      sync: false,
     }
   }
 
@@ -84,6 +88,24 @@ impl Fts5Table {
     self
   }
 
+  /// Opt into generated insert / delete / update triggers on the `content`
+  /// table, so the index tracks it without a hand-written trigger or a manual
+  /// `rebuild`.
+  ///
+  /// Records what [`content`](Self::content), [`content_rowid`] and the column
+  /// list already say; an incoherent combination — no content table, a
+  /// contentless `content = ''`, or no `content_rowid` — is reported by
+  /// [`diff`](crate::diff::diff) as
+  /// [`DbCoreError::Fts5SyncInvalid`](crate::error::DbCoreError::Fts5SyncInvalid)
+  /// rather than silently dropped.
+  ///
+  /// [`content_rowid`]: Self::content_rowid
+  #[must_use]
+  pub fn sync_content(mut self) -> Self {
+    self.sync = true;
+    self
+  }
+
   /// `columnsize = 0` drops the per-column size index.
   #[must_use]
   pub fn columnsize(mut self, value: u8) -> Self {
@@ -104,6 +126,7 @@ impl Fts5Table {
   pub fn build(self) -> TableDef {
     let mut args: Vec<String> = self.columns.iter().map(column_arg).collect();
     args.extend(self.options.render());
+    let fts5_sync = self.sync.then(|| sync_spec(&self.options, &self.columns));
     TableDef {
       name: self.name,
       columns: self.columns,
@@ -111,6 +134,7 @@ impl Fts5Table {
       primary_key: Vec::new(),
       strict: false,
       kind: TableKind::virtual_table(FTS5_MODULE, args),
+      fts5_sync,
     }
   }
 
@@ -130,6 +154,22 @@ impl Fts5Table {
       autoincrement: false,
     });
     self
+  }
+}
+
+/// The declaration `sync_content` records. What the options hold is copied
+/// verbatim, including an absent or empty content table: the diff reports that
+/// as an error, so an incoherent declaration is never silently discarded here.
+fn sync_spec(options: &Fts5Options, columns: &[ColumnDef]) -> Fts5Sync {
+  Fts5Sync {
+    content_table: options.content.clone().unwrap_or_default(),
+    content_rowid: options.content_rowid.clone().unwrap_or_default(),
+    columns: columns.iter().map(|c| c.name.clone()).collect(),
+    indexed_columns: columns
+      .iter()
+      .filter(|c| !c.unindexed)
+      .map(|c| c.name.clone())
+      .collect(),
   }
 }
 

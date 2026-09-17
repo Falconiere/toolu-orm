@@ -74,6 +74,7 @@ fn embeddings_ddl() -> String {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   };
   generate_sql_for(&[Operation::CreateTable { table }], Dialect::Sqlite)
 }

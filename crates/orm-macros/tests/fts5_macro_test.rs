@@ -33,6 +33,29 @@ pub struct CodeFts {
   pub snippet: Text,
 }
 
+#[fts5_table(
+  name = "memory_substring",
+  tokenize = "trigram",
+  content = "memories",
+  content_rowid = "id",
+  sync_content = true
+)]
+pub struct MemorySubstring {
+  pub body: Text,
+  #[column(unindexed)]
+  pub note: Text,
+}
+
+#[fts5_table(
+  name = "memory_plain",
+  content = "memories",
+  content_rowid = "id",
+  sync_content = false
+)]
+pub struct MemoryPlain {
+  pub body: Text,
+}
+
 #[test]
 fn table_def_is_a_virtual_fts5_table() {
   let def = MemoryFts::table_def();
@@ -119,5 +142,37 @@ fn the_builder_factories_are_generated() {
   assert_eq!(
     MemoryFts::delete().to_sql_for(Dialect::Sqlite).0,
     "DELETE FROM \"memory_fts\""
+  );
+}
+
+#[test]
+fn sync_content_records_the_declaration() -> TestResult {
+  let sync = MemorySubstring::table_def()
+    .fts5_sync
+    .ok_or("sync_content = true recorded nothing")?;
+  assert_eq!(sync.content_table, "memories");
+  assert_eq!(sync.content_rowid, "id");
+  assert_eq!(sync.columns, ["body", "note"]);
+  assert_eq!(sync.indexed_columns, ["body"]);
+  Ok(())
+}
+
+#[test]
+fn sync_content_false_and_an_absent_attribute_record_nothing() {
+  assert_eq!(MemoryPlain::table_def().fts5_sync, None);
+  assert_eq!(CodeFts::table_def().fts5_sync, None);
+}
+
+#[test]
+fn the_declaration_does_not_reach_the_module_arguments() {
+  assert_eq!(
+    MemorySubstring::table_def().kind.args(),
+    [
+      "\"body\"",
+      "\"note\" UNINDEXED",
+      "tokenize = 'trigram'",
+      "content = 'memories'",
+      "content_rowid = 'id'",
+    ]
   );
 }

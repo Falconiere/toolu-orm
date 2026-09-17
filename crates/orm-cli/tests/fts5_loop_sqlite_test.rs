@@ -43,6 +43,7 @@ fn memories() -> TableDef {
     primary_key: vec![],
     strict: false,
     kind: TableKind::Ordinary,
+    fts5_sync: None,
   }
 }
 
