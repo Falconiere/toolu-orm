@@ -16,6 +16,10 @@ concurrency:
 
 jobs:
   review:
+    # Nothing to review on a release-plz PR: it is a version bump plus a
+    # generated changelog, and reviewing that diff has only ever produced
+    # findings that block the release.
+    if: ${{ !startsWith(github.head_ref, 'release-plz-') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
