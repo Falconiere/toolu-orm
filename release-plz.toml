@@ -60,3 +60,12 @@ body = """
 {% endfor -%}
 {% endfor -%}
 """
+
+# NOTE: release-plz attributes a commit to a package when it touches any file
+# cargo packages for that package. `[workspace.package] readme = "README.md"`
+# makes the root README.md part of all seven crates, so a commit that edits it
+# is listed under every `###` section above regardless of which crate it
+# changed (v0.7.0: #96 and #99 fanned out to all seven and were trimmed by
+# hand). Verify with `cargo package --list -p <crate> | grep README`. Until
+# each crate carries its own readme, trim the generated section before merging
+# a release PR whose commits touched the root README.
