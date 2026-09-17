@@ -24,6 +24,12 @@ env:
 
 jobs:
   rust:
+    # release-plz's own PR only bumps versions and rewrites CHANGELOG.md; no
+    # Rust source changes, and `cargo publish` re-verifies every crate builds
+    # before upload. `pull_request.branches` filters the base ref, not the head,
+    # so the skip has to live here. The run is still created, it just claims no
+    # runner.
+    if: ${{ !startsWith(github.head_ref, 'release-plz-') }}
     runs-on: ubuntu-latest
 
     services:

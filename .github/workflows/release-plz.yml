@@ -15,9 +15,9 @@
 # now also skips the PR job on purpose: a release PR opened on top of a
 # half-published version is a stale duplicate (#53), not a recovery.
 #
-# Uses the default GITHUB_TOKEN, so the release PR does not trigger the CI
-# workflow (GitHub suppresses runs for events raised by GITHUB_TOKEN). The PR
-# only touches versions and the changelog; `cargo publish` still verifies
+# Uses the default GITHUB_TOKEN. The release PR still raises CI and Code Review
+# workflow runs, so both skip `release-plz-*` head branches at the job level:
+# the PR only touches versions and the changelog, and `cargo publish` verifies
 # each crate builds before upload.
 
 name: Release-plz
