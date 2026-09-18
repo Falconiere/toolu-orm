@@ -30,8 +30,8 @@ pub const PATH: Column<Text> = Column::new("code_symbols", "path");
 pub const INDEXED_AT: Column<Text> = Column::new("code_symbols", "indexed_at");
 pub const SYMBOL_COLUMNS: [&str; 4] = ["id", "repo", "path", "indexed_at"];
 
-/// `strftime` format for an ISO-8601 timestamp with milliseconds — the one
-/// comemory's `code_row.rs` writes.
+/// `strftime` format for an ISO-8601 timestamp with milliseconds — the one the
+/// `code_symbols` example in issue #108 writes.
 pub const ISO_FORMAT: &str = "%Y-%m-%dT%H:%M:%fZ";
 
 pub const SQLITE_DDL: &str = "

@@ -2,6 +2,7 @@
 //! rendered after the conflict clause on both dialects.
 
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::value::Value;
 use toolu_orm_query::insert::{InsertBuilder, OnConflict};
 
 use super::columns::{INDEXED_AT, MEMORY_ID, PATH, REPO, SYMBOL_ID};
@@ -19,7 +20,11 @@ fn returning_projects_its_columns_unqualified_in_call_order() {
     sql,
     r#"INSERT INTO "code_symbols" ("repo") VALUES (?1) RETURNING "id", "path", "indexed_at""#
   );
-  assert_eq!(params.len(), 1, "a projection binds nothing");
+  assert_eq!(
+    params,
+    vec![Value::Text("r".to_owned())],
+    "the one bind is the VALUES; the three projected columns add none"
+  );
 }
 
 #[test]

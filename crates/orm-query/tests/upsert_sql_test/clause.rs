@@ -148,7 +148,15 @@ fn excluded_and_coalesce_assignments_render_the_upsert_vocabulary() -> TestResul
       r#""workspace_id" = coalesce("memories"."workspace_id", "excluded"."workspace_id")"#
     )
   );
-  assert_eq!(params.len(), 3, "both assignments bind nothing");
+  assert_eq!(
+    params,
+    vec![
+      Value::Text("m1".to_owned()),
+      Value::Text("new".to_owned()),
+      Value::Null,
+    ],
+    "the three binds are the VALUES; set_excluded and the coalesce assignment add none"
+  );
   Ok(())
 }
 
