@@ -16,13 +16,16 @@
 | `a.and(b).or(c)` | `(("a" = ?3 AND "b" = ?4) OR "c" = ?5)` | `$3 $4 $5` | 3, in order |
 | `in_list([])` | `1 = 0` | `1 = 0` | 0 |
 | `not_in([])` | `1 = 1` | `1 = 1` | 0 |
+| `cmp.and(Expr::raw("... ?", [v]))` | `"repo" = ?1 AND ... ?2` | `"repo" = $1 AND ... $2` | 2, in order |
 
 The empty-list rows pin a fix made by this program: the renderer used to emit `IN ()`, which Postgres rejects with SQLSTATE 42601 (SQLite silently treated it as false). Drizzle renders the same constants.
+
+The `Expr::raw` row pins the fix for issue #113: a raw fragment nested inside `and`/`or` used to number its bare `?` placeholders from the caller's `start` alone, colliding with placeholders already emitted by earlier siblings in the same tree, instead of continuing from `start + <params already emitted>`.
 
 ## How to run
 
 ```sh
-cargo nextest run -p toolu-orm-core -E 'binary(expr_offset_and_nesting_test) | binary(expr_test)'
+cargo nextest run -p toolu-orm-core -E 'binary(expr_offset_and_nesting_test) | binary(expr_test) | binary(expr_raw_bind_index_test)'
 ```
 
 ## Tests
@@ -40,3 +43,12 @@ cargo nextest run -p toolu-orm-core -E 'binary(expr_offset_and_nesting_test) | b
 | default | expr_offset_and_nesting_test | empty_in_list_postgres_renders_contradiction |
 | default | expr_offset_and_nesting_test | empty_not_in_sqlite_renders_tautology |
 | default | expr_offset_and_nesting_test | empty_not_in_postgres_renders_tautology |
+| default | expr_raw_bind_index_test | comparison_and_raw_sqlite_numbers_sequentially |
+| default | expr_raw_bind_index_test | comparison_and_raw_postgres_numbers_sequentially |
+| default | expr_raw_bind_index_test | raw_and_comparison_sqlite_numbers_sequentially |
+| default | expr_raw_bind_index_test | raw_or_raw_sqlite_numbers_sequentially |
+| default | expr_raw_bind_index_test | raw_or_raw_postgres_numbers_sequentially |
+| default | expr_raw_bind_index_test | three_raw_siblings_chained_number_sequentially |
+| default | expr_raw_bind_index_test | raw_nested_two_levels_in_and_or |
+| default | expr_raw_bind_index_test | non_default_start_offsets_compose_with_prior_params |
+| default | expr_raw_bind_index_test | zero_param_raw_sibling_does_not_reserve_an_index |

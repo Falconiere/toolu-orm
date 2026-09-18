@@ -69,8 +69,9 @@ pub(super) fn render_expr(
       sql,
       params: raw_params,
     } => {
+      let base = start + params.len();
       params.extend(raw_params.iter().cloned());
-      number_raw_params(sql, start, dialect)
+      number_raw_params(sql, base, dialect)
     },
   }
 }
