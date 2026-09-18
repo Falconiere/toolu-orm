@@ -54,6 +54,27 @@ pub(crate) enum ScalarKind {
     branches: Vec<(Expr, Scalar)>,
     otherwise: Option<Box<Scalar>>,
   },
+  /// `FUNC(*)`, `FUNC(<arg>)` or `FUNC(DISTINCT <arg>)` — an aggregate whose
+  /// name this crate chooses, so it needs no validation.
+  Aggregate {
+    func: &'static str,
+    arg: AggregateArg,
+  },
+}
+
+/// What sits between an aggregate's parentheses.
+///
+/// An enum rather than a `distinct: bool` beside an `Option<Scalar>`, because
+/// that pair can spell `COUNT(DISTINCT *)`, which no engine accepts. Every
+/// constructor in `super::aggregate` produces a valid combination, so the
+/// invalid one is unrepresentable.
+pub(crate) enum AggregateArg {
+  /// `*` — count rows rather than values.
+  Star,
+  /// A plain argument: `SUM("t"."n")`.
+  All(Box<Scalar>),
+  /// `DISTINCT <arg>` — aggregate each distinct value once.
+  Distinct(Box<Scalar>),
 }
 
 impl Scalar {

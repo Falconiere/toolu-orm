@@ -58,7 +58,7 @@ Cargo feature; the application code does not change.
 | 🔁 **Diff-driven migrations** | `run_generate` diffs your registry against the last `*.snapshot.json` and writes numbered SQL with a `--> statement-breakpoint` separator. `run_migrate` / `run_migrate_blocking` apply pending files in one transaction each; `get_status` / `get_status_blocking` list applied and pending. |
 | 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration, and `_migrations` keeps the hash each applied migration ran with. Every run re-checks the whole applied history before it skips anything: an edited file stops the run with `MigrateError::HashMismatch`, a rewritten journal entry with `MigrateError::HistoryMismatch`. |
 | 🧮 **Typed columns, typed expressions** | Generated `Column<T>` constants (`users::email`) build `Expr` trees: `eq` / `ne` / `in_list` / `not_in` / `is_null` on every column, `like` on text, `gt` / `lt` / `gte` / `lte` / `between` on numbers, combined with `.and()` / `.or()`. Table-qualified, always quoted. |
-| 🏗️ **Four builders, one executor** | `SelectBuilder`, `InsertBuilder` (with `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
+| 🏗️ **Four builders, one executor** | `SelectBuilder` (filters, joins, ordering, paging, `distinct` / `group_by` / `having` with typed aggregates), `InsertBuilder` (with `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
 | 🌐 **Dialect-aware SQL** | `to_sql_for(Dialect::Sqlite)` emits `?N` placeholders; `Dialect::Postgres` emits `$N`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`, and `LEFT JOIN LATERAL` + `json_agg` for relations. |
 | 🕸️ **Relational loads without N+1** | `#[derive(Relational)]` with `#[has_many]`, `#[belongs_to]`, `#[many_to_many]`; `RelationalQuery` fetches parent + children as JSON arrays in a single statement per dialect. |
 | 🔎 **Full-text search** | `#[fts5_table]` (or the `Fts5Table` builder) declares an SQLite FTS5 virtual table with `UNINDEXED` columns, a free-form tokenizer, and external content. Migrations emit `CREATE VIRTUAL TABLE ... USING fts5(...)`. |
@@ -486,7 +486,44 @@ On the `rusqlite` driver these are synchronous: same names, no `.await`.
 
 Also available: `to_count_sql_for`, `to_exists_sql_for`,
 `SelectBuilder::raw().column_expr(expr, alias)`, and
-`columns_typed(&[&dyn ColumnRef])`.
+`columns_typed(&[&dyn ColumnRef])`. `count()` reports **how many rows the
+unpaginated query returns**, so once `distinct()` or `group_by()` is in play it
+counts distinct rows or groups rather than underlying rows — see below.
+
+**DISTINCT, grouping and aggregates.** `distinct()` deduplicates whole
+projected rows, `group_by` / `group_by_scalar` add grouping keys and `having`
+filters the groups. Aggregates are `Scalar` nodes — `Scalar::count_star`,
+`count`, `count_distinct`, `sum`, `max`, `min`, `avg` — so they compose with
+`column_scalar`, `order_by`, arithmetic and the comparisons a `HAVING` takes.
+The engine does the grouping and the paging; nothing is deduplicated in Rust.
+
+```rust
+use toolu_orm_core::expr::{OrderBy, Scalar};
+
+let (sql, params) = SelectBuilder::new("source_files")
+  .columns_raw(&["status"])
+  .column_scalar(Scalar::count_star(), "n")
+  .filter(source_files::source_id.eq("s1"))
+  .group_by(&source_files::status)
+  .having(Scalar::count_star().gt(Scalar::bind(1)))
+  .order_by(OrderBy::alias_desc("n"))
+  .to_sql_for(Dialect::Sqlite);
+// SELECT "status", COUNT(*) AS "n" FROM "source_files"
+//   WHERE "source_files"."source_id" = ?1
+//   GROUP BY "source_files"."status"
+//   HAVING COUNT(*) > ?2 ORDER BY "n" DESC
+```
+
+`count()` on that builder returns the **number of groups**, because that is how
+many rows it would return. It gets there by counting a derived table —
+`SELECT COUNT(*) FROM (…) AS "toolu_count"` — which is also what makes a
+`DISTINCT` count report distinct rows. A builder using neither clause renders
+exactly the count SQL it always did.
+
+Two portability notes: Postgres requires a `DISTINCT` query's `ORDER BY` terms
+to appear in the select list (project with `columns_qualified` so the two
+match), and `SUM`/`AVG` over a `bigint` return `numeric` there. See
+[docs/scenarios/distinct-and-grouping.md](docs/scenarios/distinct-and-grouping.md).
 
 **Aliases and compound `ON` clauses.** `TableRef` puts a table in a `FROM` /
 `JOIN` slot under an alias, `TableRef::column` re-qualifies a typed column

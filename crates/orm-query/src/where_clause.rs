@@ -1,4 +1,5 @@
-//! WHERE clause builder and dialect-aware parameter management.
+//! `WHERE` and `HAVING` clause rendering, and dialect-aware parameter
+//! management.
 
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::Expr;
@@ -11,20 +12,35 @@ pub(crate) fn append_where_for(
   params: &mut Vec<Value>,
   dialect: Dialect,
 ) {
-  if filters.is_empty() {
+  append_conjuncts_for(filters, " WHERE ", sql, params, dialect);
+}
+
+/// `<keyword><conjunct>[ AND <conjunct>]…`, or nothing when `exprs` is empty.
+///
+/// `WHERE` and `HAVING` differ only in the keyword: both are an `AND`-joined
+/// list of predicates, each numbering from the parameters already emitted.
+/// One renderer is what keeps the two from drifting apart.
+pub(crate) fn append_conjuncts_for(
+  exprs: &[Expr],
+  keyword: &str,
+  sql: &mut String,
+  params: &mut Vec<Value>,
+  dialect: Dialect,
+) {
+  if exprs.is_empty() {
     return;
   }
 
-  sql.push_str(" WHERE ");
+  sql.push_str(keyword);
   let mut first = true;
-  for filter in filters {
+  for expr in exprs {
     let start = params.len() + 1;
-    let (fragment, filter_params) = filter.to_sql_fragment_for(start, dialect);
+    let (fragment, expr_params) = expr.to_sql_fragment_for(start, dialect);
     if !first {
       sql.push_str(" AND ");
     }
     sql.push_str(&fragment);
-    params.extend(filter_params);
+    params.extend(expr_params);
     first = false;
   }
 }

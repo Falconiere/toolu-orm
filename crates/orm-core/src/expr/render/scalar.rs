@@ -1,7 +1,7 @@
 //! Dialect-aware SQL rendering for [`ScalarKind`] trees.
 
 use crate::dialect::Dialect;
-use crate::expr::scalar::{Scalar, ScalarKind};
+use crate::expr::scalar::{AggregateArg, Scalar, ScalarKind};
 use crate::expr::Expr;
 use crate::value::Value;
 
@@ -56,6 +56,32 @@ pub(crate) fn render_scalar(
       branches,
       otherwise,
     } => render_case(branches, otherwise.as_deref(), start, params, dialect),
+    ScalarKind::Aggregate { func, arg } => {
+      format!(
+        "{func}({})",
+        render_aggregate_arg(arg, start, params, dialect)
+      )
+    },
+  }
+}
+
+/// `*`, the argument, or `DISTINCT ` before it.
+///
+/// The argument renders through `render_scalar` like any other child, so an
+/// aggregate over a bound value numbers from whatever its siblings emitted.
+fn render_aggregate_arg(
+  arg: &AggregateArg,
+  start: usize,
+  params: &mut Vec<Value>,
+  dialect: Dialect,
+) -> String {
+  match arg {
+    AggregateArg::Star => "*".to_owned(),
+    AggregateArg::All(inner) => render_scalar(&inner.kind, start, params, dialect),
+    AggregateArg::Distinct(inner) => {
+      let rendered = render_scalar(&inner.kind, start, params, dialect);
+      format!("DISTINCT {rendered}")
+    },
   }
 }
 
