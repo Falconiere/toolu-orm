@@ -2,7 +2,7 @@
 //! they make possible — every one nesting a real `SelectBuilder`.
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::{Expr, Scalar};
+use toolu_orm_core::expr::{Expr, Scalar, SelectSource};
 use toolu_orm_core::query_column::CommonOps;
 use toolu_orm_core::value::Value;
 use toolu_orm_query::delete::DeleteBuilder;
@@ -176,4 +176,22 @@ fn owner_count_of_item() -> SelectBuilder {
   SelectBuilder::new("owners")
     .column_scalar(Scalar::count_star(), "n")
     .filter(OWNER_ID.equals(&ITEM_OWNER_ID).into())
+}
+
+/// The offset frame that `SelectSource::to_select_sql_for` opens returns
+/// **only** the values this statement binds: the stand-ins for what the caller
+/// already emitted never leave the function, whatever `start` is.
+#[test]
+fn a_nested_statement_returns_only_its_own_values_at_any_offset() {
+  let inner = owner_ids();
+
+  for start in [1, 2, 7] {
+    let (sql, params) = inner.to_select_sql_for(start, Dialect::Sqlite);
+
+    assert_eq!(
+      sql,
+      format!(r#"SELECT "owners"."id" FROM "owners" WHERE "owners"."id" != ?{start}"#)
+    );
+    assert_eq!(params, vec![text("o9")], "start = {start}");
+  }
 }

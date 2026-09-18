@@ -12,11 +12,16 @@ impl SelectSource for SelectBuilder {
   /// The statement rendered so that its *first* placeholder is `start`.
   ///
   /// Every clause helper numbers from `params.len() + 1`, which hardcodes the
-  /// base at 1. So this opens an **offset frame**: pre-fill the vector with
-  /// the `start - 1` values the caller already emitted, render into it, split
-  /// the tail back off. Identical by construction — the helpers read
-  /// `params.len()` and never the contents — and the filler never reaches a
-  /// statement.
+  /// base at 1. So this opens an **offset frame**: stand in for the `start - 1`
+  /// values the caller already emitted, render into that vector, then drop the
+  /// stand-ins. The helpers read `params.len()` and never the contents, so
+  /// `start = N` with an empty vector and `start = 1` with `N - 1` entries
+  /// already present are the same computation.
+  ///
+  /// The stand-ins are dropped by `skip`, which is total, and only this
+  /// function ever sees them: the returned vector holds exactly the values
+  /// *this* statement binds, in bind order.
+  /// `composition_sql_test::subquery` asserts both halves of that.
   fn to_select_sql_for(&self, start: usize, dialect: Dialect) -> (String, Vec<Value>) {
     let emitted = start.saturating_sub(1);
     let mut sql = String::new();
@@ -24,6 +29,6 @@ impl SelectSource for SelectBuilder {
 
     self.push_statement(&mut sql, &mut params, dialect, self.limit_val);
 
-    (sql, params.split_off(emitted))
+    (sql, params.into_iter().skip(emitted).collect())
   }
 }

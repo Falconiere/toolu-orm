@@ -120,6 +120,8 @@ WITH "hits" AS (SELECT … WHERE … = ?1) SELECT ?2 AS "tag", … FROM json_eac
  ORDER BY "id" ASC LIMIT ?7 OFFSET ?8
 ```
 
+`SelectSource::to_select_sql_for(start, dialect)` is asserted directly at `start = 1, 2, 7`: the rendered placeholder follows `start` and the returned vector holds **only** the values that statement binds — the offset frame's stand-ins never leave the function.
+
 The rule is one line: **every clause takes its first index from the live `params.len()` of the statement-wide vector and pushes its values as it writes them.** A CTE body and a set-operation arm render into that same vector, so a nested statement continues the count instead of restarting it. `SelectSource::to_select_sql_for(start, dialect)` is the one place that needs an explicit base, and it opens an *offset frame* — pre-fill the vector with the `start - 1` values already emitted, render, split the tail back off — which is the identical computation because the helpers read only `params.len()`.
 
 The derived-table count keeps its #109 behavior of rebuilding from `?1`, because nothing precedes it; the `WITH` prefix is the one thing that renders outside the wrap and therefore takes the low indices.
@@ -181,6 +183,7 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'b
 | default | composition_sql_test | set_ops::union_all_renders_the_all_keyword |
 | default | composition_sql_test | subquery::a_compound_subquery_nests_with_all_of_its_own_clauses |
 | default | composition_sql_test | subquery::a_correlated_exists_names_the_outer_column_inside_the_subquery |
+| default | composition_sql_test | subquery::a_nested_statement_returns_only_its_own_values_at_any_offset |
 | default | composition_sql_test | subquery::a_scalar_subquery_projects_a_correlated_count |
 | default | composition_sql_test | subquery::a_set_based_delete_binds_only_the_subquerys_own_values |
 | default | composition_sql_test | subquery::an_in_subquery_continues_the_outer_bind_numbering |

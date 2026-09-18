@@ -108,6 +108,8 @@ impl Expr {
     }
   }
 
+  /// An `Expr` around a node built elsewhere in the crate, the twin of
+  /// [`Scalar::from_kind`](crate::expr::Scalar).
   pub(crate) fn from_kind(kind: ExprKind) -> Self {
     Self { kind }
   }

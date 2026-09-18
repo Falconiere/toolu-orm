@@ -57,14 +57,20 @@ impl SelectBuilder {
 
   /// `<core> [ UNION [ALL] <core> ]*`, every arm sharing one parameter vector.
   ///
-  /// Each arm recurses through this same method rather than through
-  /// [`SelectBuilder::push_core`], so a nested compound flattens:
-  /// `a.union(b.union(c))` renders exactly what `a.union(b).union(c)` renders.
-  /// Pushing only the arm's core would silently drop the arm's own arms.
+  /// This builder's own core renders first; each *arm* then recurses through
+  /// this same method rather than through [`SelectBuilder::push_core`], so a
+  /// nested compound flattens — `a.union(b.union(c))` renders exactly what
+  /// `a.union(b).union(c)` renders. Pushing only an arm's core would silently
+  /// drop that arm's own arms.
+  ///
+  /// No clause ever leaves a trailing space, so the separator writes its own
+  /// on both sides and the result cannot double up.
   pub(super) fn push_compound(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
     self.push_core(sql, params, dialect);
     for (op, arm) in &self.set_ops {
-      sql.push_str(&format!(" {} ", op.keyword()));
+      sql.push(' ');
+      sql.push_str(op.keyword());
+      sql.push(' ');
       arm.push_compound(sql, params, dialect);
     }
   }
