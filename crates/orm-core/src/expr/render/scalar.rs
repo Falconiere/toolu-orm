@@ -10,9 +10,16 @@ use super::raw_params::number_raw_params;
 
 /// Renders a scalar node, appending the values it binds to `params`.
 ///
-/// Every arm takes its placeholder index from `start + params.len()`, so a
-/// node numbers from whatever its siblings already emitted, however deeply it
-/// is nested.
+/// `start` is the index the statement's *first* parameter takes — 1 for a
+/// whole statement, higher for a fragment spliced after other clauses. It is
+/// a constant for the whole tree: each binding arm adds the **live**
+/// `params.len()` itself, at the moment it pushes, so a node numbers from
+/// whatever its siblings already emitted however deeply it is nested.
+///
+/// Recursive calls therefore pass `start` through unchanged. Adding
+/// `params.len()` at a call site would count the already-emitted parameters
+/// twice; `render_expr` passes `start` to its `And` / `Or` children for the
+/// same reason.
 pub(crate) fn render_scalar(
   kind: &ScalarKind,
   start: usize,

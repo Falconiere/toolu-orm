@@ -8,6 +8,12 @@ use crate::value::Value;
 use super::raw_params::number_raw_params;
 use super::scalar::render_scalar;
 
+/// Renders a predicate node, appending the values it binds to `params`.
+///
+/// `start` is the index of the statement's first parameter and stays constant
+/// down the tree: each binding arm adds the live `params.len()` when it
+/// pushes, so children take `start` unchanged. See [`render_scalar`] for the
+/// same contract on the value half.
 pub(crate) fn render_expr(
   kind: &ExprKind,
   start: usize,
