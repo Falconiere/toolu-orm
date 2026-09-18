@@ -169,4 +169,12 @@ fn qualified_projection_and_output_alias_render_qualified() {
     .columns_typed(&[&C_ID, &C_KIND])
     .to_sql_for(Dialect::Sqlite);
   assert_eq!(bare, r#"SELECT "id", "kind" FROM "code_symbols""#);
+
+  // The quoting moved out of the select-list renderer and into the setters, so
+  // what a caller passes renders exactly as it did before — including an input
+  // that was already quoted, which the old renderer quoted a second time too.
+  let (raw, _) = SelectBuilder::new("code_symbols")
+    .columns_raw(&["id", r#""kind""#])
+    .to_sql_for(Dialect::Sqlite);
+  assert_eq!(raw, r#"SELECT "id", ""kind"" FROM "code_symbols""#);
 }
