@@ -7,6 +7,7 @@
 //! `UPDATE` assignments, all through the one parameter pipeline that numbers
 //! placeholders from the count already emitted.
 
+mod aggregate;
 mod arith;
 mod case;
 mod compare;
@@ -20,4 +21,4 @@ pub use case::CaseBuilder;
 pub use like::like_pattern_literal;
 pub use types::Scalar;
 
-pub(crate) use types::ScalarKind;
+pub(crate) use types::{AggregateArg, ScalarKind};

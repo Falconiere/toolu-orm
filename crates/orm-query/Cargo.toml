@@ -124,6 +124,13 @@ path = "tests/scalar_expr_sql_test.rs"
 name = "upsert_sql_test"
 path = "tests/upsert_sql_test/main.rs"
 
+# Pure SQL generation for DISTINCT / GROUP BY / HAVING and the grouped count:
+# no driver type in the binary, so it belongs in the feature-less default lane.
+# Its live twins are {rusqlite,libsql,postgres}_grouping_test below.
+[[test]]
+name = "grouping_sql_test"
+path = "tests/grouping_sql_test/main.rs"
+
 [[test]]
 name = "join_alias_sql_test"
 path = "tests/join_alias_sql_test/main.rs"
@@ -206,6 +213,11 @@ path = "tests/libsql_scalar_expr_test/main.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "libsql_grouping_test"
+path = "tests/libsql_grouping_test/main.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "libsql_joins_test"
 path = "tests/libsql_joins_test.rs"
 required-features = ["libsql"]
@@ -282,6 +294,11 @@ path = "tests/rusqlite_upsert_test/main.rs"
 required-features = ["rusqlite"]
 
 [[test]]
+name = "rusqlite_grouping_test"
+path = "tests/rusqlite_grouping_test/main.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "rusqlite_connection_executor_test"
 path = "tests/rusqlite_connection_executor_test.rs"
 required-features = ["rusqlite"]
@@ -336,6 +353,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_upsert_test"
 path = "tests/postgres_upsert_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_grouping_test"
+path = "tests/postgres_grouping_test/main.rs"
 required-features = ["postgres"]
 
 [[test]]

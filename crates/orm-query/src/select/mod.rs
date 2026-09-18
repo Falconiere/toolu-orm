@@ -14,12 +14,15 @@
 //! ```
 
 mod builder;
+mod count_exists;
+mod grouping;
 mod join_clause;
 mod knn;
 mod ordering;
 mod projection;
 pub mod relational;
 mod row_limit;
+mod statement;
 
 use crate::where_clause::cfg_single_backend;
 

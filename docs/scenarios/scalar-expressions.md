@@ -4,6 +4,8 @@
 **Drivers:** libsql, rusqlite, Postgres — plus dialect-only rendering in `scalar_expr_test` / `scalar_expr_sql_test`. `datetime(...)` is SQLite's, so the mixed-precision timestamp rows are SQLite-only; everything else is proven on all three.
 **Spec:** issue #112.
 
+`Scalar` also carries the aggregate constructors (`count_star`, `count`, `count_distinct`, `sum`, `max`, `min`, `avg`) added by issue #109; those nodes and the `scalar_expr_test::aggregates` module that proves them are documented on [distinct-and-grouping.md](distinct-and-grouping.md).
+
 ## What is proven
 
 Seed on every driver — `memories(id, body, created_at, last_accessed, access_count)`:
