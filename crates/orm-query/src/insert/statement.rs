@@ -1,11 +1,13 @@
 //! The full `INSERT` statement: how [`InsertBuilder`] renders its clauses and
 //! numbers their parameters.
 //!
-//! One rule governs the whole file, the same one every other builder in this
-//! workspace follows: each clause takes its first placeholder index from the
-//! **live** `params.len()` of the statement-wide vector and pushes its values
-//! as it writes them. Nothing here does index arithmetic, so a clause can be
-//! added, removed or reordered without renumbering anything after it.
+//! One rule governs the numbering, the same one every other builder in this
+//! workspace follows: each clause derives its own first placeholder index from
+//! the **live** `params.len()` of the statement-wide vector, at the moment it
+//! writes, and pushes its values as it goes. `params.len() + 1` is therefore
+//! the whole computation — a caller never adds an offset on top of it, which
+//! would double-count. Clauses can be added, removed or reordered without
+//! renumbering anything after them.
 
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;

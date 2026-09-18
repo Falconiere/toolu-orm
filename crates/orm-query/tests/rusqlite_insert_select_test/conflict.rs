@@ -3,7 +3,9 @@
 //! `ON CONFLICT` clause SQLite would otherwise refuse to parse.
 
 use toolu_orm_core::alias::TableRef;
+use toolu_orm_core::error::DbCoreError;
 use toolu_orm_core::expr::Scalar;
+use toolu_orm_core::row::FromRow;
 use toolu_orm_query::insert::{InsertBuilder, OnConflict};
 use toolu_orm_query::select::SelectBuilder;
 use toolu_orm_query::QueryError;
@@ -113,5 +115,51 @@ fn an_explicit_conflict_clause_parses_and_updates_the_stored_row() -> TestResult
   );
   assert_eq!(updated.rank, 5);
   assert_eq!(rows.len(), 3);
+  Ok(())
+}
+
+/// A `RETURNING`-projected row. The column is really decoded — a decode
+/// failure would be a different error than the `NotFound` under test — and
+/// then discarded, because only *whether* a row came back matters here.
+#[derive(Debug)]
+struct ReturnedRepo;
+
+impl FromRow for ReturnedRepo {
+  const REQUIRED_COLUMNS: &'static [&'static str] = &["repo"];
+
+  fn from_row(row: &rusqlite::Row<'_>) -> Result<Self, DbCoreError> {
+    row
+      .get::<_, String>(0)
+      .map_err(|e| DbCoreError::RowMapping(e.to_string()))?;
+    Ok(Self)
+  }
+}
+
+#[test]
+fn a_copy_that_ignores_every_row_reports_not_found_under_the_bare_table_name() -> TestResult {
+  let fixture = Attached::open("not-found")?;
+  let attached = fixture.attach()?;
+  // Every source key already exists, so OR IGNORE inserts nothing and
+  // RETURNING projects no row at all.
+  fixture.conn.execute(
+    "INSERT INTO main.indexed_files (repo, path, rank) \
+     SELECT repo, path, 0 FROM old.indexed_files",
+    [],
+  )?;
+
+  let outcome = InsertBuilder::into_table(target())
+    .or_ignore()
+    .select(&[&REPO, &PATH, &BLOB_OID, &INDEXED_AT, &RANK], older(7))
+    .returning(&REPO)
+    .fetch_one::<ReturnedRepo>(&fixture.conn);
+  drop(attached);
+
+  let Err(QueryError::NotFound { table }) = outcome else {
+    return Err(format!("expected NotFound, got {outcome:?}").into());
+  };
+  assert_eq!(
+    table, "indexed_files",
+    "the error names the bare table, not the qualified \"main\".\"indexed_files\""
+  );
   Ok(())
 }

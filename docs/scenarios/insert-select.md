@@ -96,6 +96,7 @@ The source is a *different file*, reached only through `SqliteMaintenance::attac
 - **Explicit `ON CONFLICT`.** Parses and runs, updating the conflicting row from `excluded` — the statement that is a parse error without the guard.
 - **A qualified catalogue read.** One `SelectBuilder` over `sqlite_master`, run twice with `in_database("old")` and `in_database("main")`, returns the two stores' different table sets. That is the presence check the rebuild runs before copying a table an older store may not have.
 - **Empty source.** Reports `0` affected and leaves the target empty.
+- **`NotFound` names the bare table.** A `RETURNING` copy that ignores every row gives `QueryError::NotFound { table: "indexed_files" }`, not the qualified `"main"."indexed_files"`.
 
 ### Against in-memory libsql
 
@@ -122,6 +123,8 @@ The qualifier is a schema each test owns. `bytea` round-trips byte-identical inc
 | default | insert_select_sql_test | rendering::select_replaces_any_recorded_values_whichever_order_they_were_called_in |
 | default | insert_select_sql_test | rendering::select_raw_names_the_target_columns_as_strings |
 | default | insert_select_sql_test | rendering::a_with_prefix_and_a_union_arm_are_appended_whole |
+| default | insert_select_sql_test | rendering::the_target_renders_its_database_and_table_and_drops_any_alias |
+| default | insert_select_sql_test | rendering::table_name_reports_the_bare_table_whatever_the_target_carries |
 | default | insert_select_sql_test | rendering::an_identifier_carrying_a_quote_doubles_it_in_every_part |
 | default | insert_select_sql_test | conflict::sqlite_wraps_the_source_so_on_conflict_cannot_be_read_as_a_join |
 | default | insert_select_sql_test | conflict::postgres_needs_no_guard_and_does_not_get_one |
@@ -143,6 +146,7 @@ The qualifier is a schema each test owns. `bytea` round-trips byte-identical inc
 | rusqlite-only | rusqlite_insert_select_test | conflict::or_ignore_skips_the_conflicting_row_and_keeps_the_stored_one |
 | rusqlite-only | rusqlite_insert_select_test | conflict::without_a_conflict_mode_the_same_copy_reports_the_uniqueness_violation |
 | rusqlite-only | rusqlite_insert_select_test | conflict::an_explicit_conflict_clause_parses_and_updates_the_stored_row |
+| rusqlite-only | rusqlite_insert_select_test | conflict::a_copy_that_ignores_every_row_reports_not_found_under_the_bare_table_name |
 | rusqlite-only | rusqlite_insert_select_test | catalogue::the_qualifier_selects_which_databases_catalogue_is_read |
 | libsql-only | libsql_insert_select_test | copy::one_statement_copies_every_row_with_its_nulls_and_blobs |
 | libsql-only | libsql_insert_select_test | copy::or_ignore_keeps_the_stored_row_and_copies_the_rest |
