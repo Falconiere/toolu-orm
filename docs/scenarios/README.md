@@ -30,6 +30,7 @@ test, update its page.
 | [Embedded migrations](embedded-migrations.md) | `run_migrate_embedded` applies an `include_str!`'d list with the same hashes and transactions as the directory runner, and the two sources interchange. |
 | [Migration history integrity](migration-history-integrity.md) | Already-applied migrations are re-checked against the journal (or embedded list) and their current bytes before a run skips them, with defined behavior for unhashed rows and pruned histories. |
 | [Migration failures](migration-failures.md) | Rollback after a failing statement, unreadable inputs, malformed journal, absent directory, comment-only chunks. |
+| [Scalar expressions and LIKE ESCAPE](scalar-expressions.md) | `Scalar` columns, binds, function calls, arithmetic, `\|\|` and `CASE` composed into filters, projections, `ORDER BY`, INSERT values and UPDATE assignments, with one bind pipeline and an explicit `LIKE … ESCAPE`. |
 | [Expression fragments](expr-fragments.md) | `Expr` SQL fragments with parameter offsets per dialect, nesting, and the empty-list constant. |
 | [Virtual tables (FTS5)](virtual-tables.md) | `TableKind::Virtual` DDL, `#[fts5_table]`, real `MATCH` queries, and the refusal to alter one in place. |
 | [FTS5 synchronization triggers](fts5-sync-triggers.md) | `sync_content()` puts the three triggers an external-content FTS5 index needs into the schema, so writes to the content table stay indexed and the triggers survive every recreation. |

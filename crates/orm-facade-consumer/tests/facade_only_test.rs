@@ -6,6 +6,9 @@
 //! builders, `#[fts5_table]`, a `#[view]` struct, `#[derive(ColumnEnum)]`, and
 //! `#[derive(Relational)]` decoding a real JSON row.
 //!
+//! Scalar expressions and `LIKE … ESCAPE` have their own binary,
+//! `facade_only_scalar_test`, which keeps this file under the line cap.
+//!
 //! This file deliberately does **not** glob `toolu_orm::prelude`. This package
 //! depends on `toolu-orm` alone, so `toolu_orm_core`, `toolu_orm_query`,
 //! `serde` and `serde_json` are absent from the extern prelude — a `use` here
