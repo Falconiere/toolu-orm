@@ -107,8 +107,15 @@ pub struct CodeSymbol {
   pub indexed_at: String,
 }
 
-/// One `RETURNING "id"` projection.
+/// One `RETURNING "id"` projection over `code_symbols`, whose id is generated.
 #[derive(FromRow, Debug, Clone, PartialEq)]
 pub struct GeneratedId {
   pub id: i64,
+}
+
+/// One `RETURNING "id"` projection over `memories`, whose id is caller-supplied
+/// text — a different column type, so it needs its own row type.
+#[derive(FromRow, Debug, Clone, PartialEq)]
+pub struct MemoryId {
+  pub id: String,
 }

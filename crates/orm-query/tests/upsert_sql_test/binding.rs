@@ -74,7 +74,18 @@ fn the_same_statement_numbers_dollar_placeholders_in_the_same_order() -> TestRes
       r#"RETURNING "id""#
     )
   );
-  assert_eq!(params.len(), 6);
+  assert_eq!(
+    params,
+    vec![
+      Value::Text("toolu-orm".to_owned()),
+      Value::Text("src/lib.rs".to_owned()),
+      Value::Text(ISO_FORMAT.to_owned()),
+      Value::Text("now".to_owned()),
+      Value::Text(ISO_FORMAT.to_owned()),
+      Value::Text("now".to_owned()),
+    ],
+    "the Postgres renderer must emit the same values in the same order"
+  );
   Ok(())
 }
 

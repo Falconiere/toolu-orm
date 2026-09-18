@@ -1,6 +1,7 @@
 //! Foreign-key safety: the difference between updating the conflicting row
 //! and deleting it, proven with a real `ON DELETE CASCADE` child row.
 
+use toolu_orm_core::expr::Scalar;
 use toolu_orm_query::insert::{InsertBuilder, OnConflict};
 
 use super::db;
@@ -72,10 +73,10 @@ fn an_upsert_that_raises_the_counter_still_keeps_the_child_row() -> TestResult {
     .set(&MEMORY_ID, "m1")
     .set(&BODY, "incoming")
     .set(&USED_COUNT, 1_i64)
-    .on_conflict(OnConflict::column(&MEMORY_ID).set_scalar(
-      &USED_COUNT,
-      toolu_orm_core::expr::Scalar::col(&USED_COUNT) + toolu_orm_core::expr::Scalar::bind(1_i64),
-    ))
+    .on_conflict(
+      OnConflict::column(&MEMORY_ID)
+        .set_scalar(&USED_COUNT, Scalar::col(&USED_COUNT) + Scalar::bind(1_i64)),
+    )
     .execute(&conn)?;
 
   assert_eq!(links(&conn)?.len(), 1);

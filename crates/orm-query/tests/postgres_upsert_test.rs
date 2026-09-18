@@ -16,9 +16,9 @@ use toolu_orm_query::select::SelectBuilder;
 use toolu_orm_query::QueryError;
 
 use schema::{
-  CodeSymbol, GeneratedId, Memory, MemoryLink, BODY, INDEXED_AT, LAST_USED, LINK_COLUMNS, LINK_ID,
-  LINK_MEMORY_ID, LINK_NOTE, MEMORY_COLUMNS, MEMORY_ID, PATH, REPO, SYMBOL_COLUMNS, SYMBOL_ID,
-  USED_COUNT, WORKSPACE_ID,
+  CodeSymbol, GeneratedId, Memory, MemoryId, MemoryLink, BODY, INDEXED_AT, LAST_USED, LINK_COLUMNS,
+  LINK_ID, LINK_MEMORY_ID, LINK_NOTE, MEMORY_COLUMNS, MEMORY_ID, PATH, REPO, SYMBOL_COLUMNS,
+  SYMBOL_ID, USED_COUNT, WORKSPACE_ID,
 };
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -189,11 +189,11 @@ async fn fetch_optional_is_none_when_do_nothing_suppressed_the_write() -> TestRe
   let client = db::setup_db("upsert_suppressed").await?;
   seed_memory(&client).await?;
 
-  let suppressed: Option<GeneratedId> = InsertBuilder::new("memories")
+  let suppressed: Option<MemoryId> = InsertBuilder::new("memories")
     .set(&MEMORY_ID, "m1")
     .set(&BODY, "incoming")
     .on_conflict(OnConflict::column(&MEMORY_ID).do_nothing())
-    .returning(&SYMBOL_ID)
+    .returning(&MEMORY_ID)
     .fetch_optional(&client)
     .await?;
   assert!(suppressed.is_none(), "no row was written, so none returned");

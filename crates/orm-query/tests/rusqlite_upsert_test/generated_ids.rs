@@ -8,7 +8,8 @@ use toolu_orm_query::QueryError;
 
 use super::db;
 use super::schema::{
-  CodeSymbol, GeneratedId, BODY, INDEXED_AT, MEMORY_ID, PATH, REPO, SYMBOL_COLUMNS, SYMBOL_ID,
+  CodeSymbol, GeneratedId, MemoryId, BODY, INDEXED_AT, MEMORY_ID, PATH, REPO, SYMBOL_COLUMNS,
+  SYMBOL_ID,
 };
 use super::support::{seed_memory, TestResult};
 
@@ -86,7 +87,7 @@ fn fetch_optional_is_none_when_do_nothing_suppressed_the_write() -> TestResult {
   let conn = db::setup_db()?;
   seed_memory(&conn)?;
 
-  let suppressed: Option<GeneratedId> = InsertBuilder::new("memories")
+  let suppressed: Option<MemoryId> = InsertBuilder::new("memories")
     .set(&MEMORY_ID, "m1")
     .set(&BODY, "incoming")
     .on_conflict(OnConflict::column(&MEMORY_ID).do_nothing())
@@ -103,7 +104,7 @@ fn fetch_one_without_a_returning_clause_reports_not_found() -> TestResult {
   let outcome = InsertBuilder::new("memories")
     .set(&MEMORY_ID, "m9")
     .set(&BODY, "fresh")
-    .fetch_one::<GeneratedId>(&conn);
+    .fetch_one::<MemoryId>(&conn);
 
   let Err(QueryError::NotFound { table }) = outcome else {
     return Err("a statement that projects nothing must report NotFound".into());

@@ -96,7 +96,16 @@ fn the_same_upsert_renders_with_dollar_placeholders_on_postgres() {
       r#""used_count" = ("memories"."used_count" + $3), "last_used" = $4"#
     )
   );
-  assert_eq!(params.len(), 4);
+  assert_eq!(
+    params,
+    vec![
+      Value::Text("m1".to_owned()),
+      Value::Integer(1),
+      Value::Integer(1),
+      Value::Text("t1".to_owned()),
+    ],
+    "the Postgres renderer must emit the same values in the same order"
+  );
 }
 
 #[test]
