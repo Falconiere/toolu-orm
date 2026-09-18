@@ -17,6 +17,8 @@ against all eight (see [FromRow derive](from-row-derive.md)).
 
 Before this program, only the first two lanes ran. The four suites below existed but could not compile (`E0407: method from_pg_row is not a member of trait FromRow`): they implemented the two-driver shape while their `required-features` resolved to one driver. They now implement `from_row` and run on their lane.
 
+A suite can also be missing for a reason no lane explains: `query_column_test` was never *built*, because its entry file was `mod.rs` rather than `main.rs` and `orm-core` names no `[[test]]` path (issue #125, 33 tests inert). `bash scripts/check-test-targets.sh` closes that gap the way `check-derive-matrix.sh` closes the feature-combination one; the revived tests are documented in [Expression fragments](expr-fragments.md).
+
 ## What the revived suites prove
 
 - **executor_test (libsql):** `InsertBuilder` / `SelectBuilder` / `UpdateBuilder` / `DeleteBuilder` executed on an in-memory libsql database; `fetch_one` on an empty table is `QueryError::NotFound`; `count` matches inserted rows.
