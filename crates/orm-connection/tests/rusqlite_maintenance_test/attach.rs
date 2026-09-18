@@ -39,6 +39,67 @@ fn attach_quotes_a_schema_name_containing_a_quote() -> TestResult {
   Ok(())
 }
 
+/// A schema name shaped like an injection attempt is a name, not a statement.
+///
+/// The quoted identifier is the one thing this API renders into SQL text, so
+/// this is the test that matters: inside a SQLite double-quoted identifier the
+/// only escape is `""`, and `quote_schema` doubles every interior quote, so no
+/// `;`, newline, `--` or `/* */` can end the token. Proven rather than argued —
+/// on both paths, including `DETACH`, which goes through `execute_batch` and
+/// really would run a second statement if one escaped.
+#[test]
+fn an_injection_shaped_schema_name_is_quoted_not_executed() -> TestResult {
+  let dir = TempDbDir::new("injection")?;
+  let payload = dir.file("payload.db");
+  drop(seeded_db(&payload, 1)?);
+  let conn = seeded_db(&dir.file("victim.db"), 3)?;
+
+  for hostile in [
+    "x\"; DROP TABLE t; --",
+    "y\"\n/* */; DELETE FROM t; --",
+    "\"\"; ATTACH DATABASE ':memory:' AS pwned; --",
+  ] {
+    {
+      let attached = conn.attach_database(&payload, hostile)?;
+      assert_eq!(
+        attached.schema(),
+        hostile,
+        "the name must come back exactly as it was given"
+      );
+      assert_eq!(
+        attached_schemas(&conn)?,
+        vec!["main".to_owned(), hostile.to_owned()],
+        "the whole hostile string must land as one identifier"
+      );
+      assert_eq!(
+        victim_rows(&conn)?,
+        3,
+        "ATTACH must not have executed anything else"
+      );
+    }
+    // The guard's DETACH runs through `execute_batch`, which *does* accept
+    // multiple statements -- so a quote that escaped would fire right here.
+    assert_eq!(attached_schemas(&conn)?, vec!["main"]);
+    assert_eq!(
+      victim_rows(&conn)?,
+      3,
+      "DETACH must not have executed anything else"
+    );
+
+    // ...and the same name down the explicit detach path.
+    conn.attach_database(&payload, hostile)?.detach()?;
+    assert_eq!(victim_rows(&conn)?, 3);
+    assert_eq!(attached_schemas(&conn)?, vec!["main"]);
+  }
+  Ok(())
+}
+
+/// Rows in the connection's *own* `t`, named explicitly so an attachment that
+/// also has a `t` cannot answer for it.
+fn victim_rows(conn: &rusqlite::Connection) -> Result<i64, rusqlite::Error> {
+  conn.query_row("SELECT count(*) FROM main.t", [], |row| row.get(0))
+}
+
 /// Attach, then fail. The `?` abandons the copy and the attachment goes with it,
 /// which is the whole reason the guard exists.
 #[test]
@@ -51,8 +112,16 @@ fn a_failed_copy_still_detaches_the_attached_database() -> TestResult {
   let error = copy_from_attached(&conn, &source).expect_err("the copy must fail");
 
   assert!(
+    matches!(
+      &error,
+      MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(failure, _))
+        if failure.extended_code == rusqlite::ffi::SQLITE_ERROR
+    ),
+    "the SQLite result code must survive the early return, got {error:?}"
+  );
+  assert!(
     error.to_string().contains("no such table"),
-    "SQLite's own message must survive the early return, got {error}"
+    "SQLite's own message must survive it too, got {error}"
   );
   assert_eq!(
     attached_schemas(&conn)?,
@@ -95,10 +164,11 @@ fn explicit_detach_clears_the_attachment_and_reports_its_own_failure() -> TestRe
 
   assert!(
     matches!(
-      error,
-      MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(..))
+      &error,
+      MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(failure, _))
+        if failure.extended_code == rusqlite::ffi::SQLITE_ERROR
     ),
-    "the driver error must survive as itself, got {error:?}"
+    "the driver error must survive with its result code, got {error:?}"
   );
   assert!(
     error.to_string().contains("no such database"),
@@ -164,14 +234,16 @@ fn attaching_a_file_that_is_not_a_database_preserves_the_sqlite_error() -> TestR
 
   assert!(
     matches!(
-      error,
-      MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(..))
+      &error,
+      MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(failure, _))
+        if failure.code == rusqlite::ErrorCode::NotADatabase
+          && failure.extended_code == rusqlite::ffi::SQLITE_NOTADB
     ),
-    "the driver error must survive as itself, got {error:?}"
+    "SQLITE_NOTADB must survive as a code, not only as prose, got {error:?}"
   );
   assert!(
     error.to_string().contains("file is not a database"),
-    "SQLite's own message must survive, got {error}"
+    "SQLite's own message must survive too, got {error}"
   );
   assert_eq!(attached_schemas(&conn)?, vec!["main"]);
   Ok(())

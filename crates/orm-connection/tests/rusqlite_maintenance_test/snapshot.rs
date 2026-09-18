@@ -42,10 +42,11 @@ fn vacuum_into_refuses_an_existing_destination() -> TestResult {
 
   assert!(
     matches!(
-      error,
-      MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(..))
+      &error,
+      MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(failure, _))
+        if failure.extended_code == rusqlite::ffi::SQLITE_ERROR
     ),
-    "the driver error must survive as itself, got {error:?}"
+    "the driver error must survive with its result code, got {error:?}"
   );
   assert!(
     error.to_string().contains("output file already exists"),
@@ -89,11 +90,22 @@ fn a_vacuum_snapshot_passes_quick_check_through_an_attachment() -> TestResult {
 #[test]
 fn vacuum_into_and_attach_bind_a_path_containing_quotes() -> TestResult {
   let dir = TempDbDir::new("qu'ote\"dir")?;
+  let dir_name = dir
+    .path()
+    .file_name()
+    .and_then(std::ffi::OsStr::to_str)
+    .ok_or("the temp directory must have a UTF-8 name")?;
   assert!(
-    dir.path().to_string_lossy().contains("qu'ote\"dir"),
-    "the fixture must really put both quotes in the path"
+    dir_name.ends_with("-qu'ote\"dir"),
+    "the fixture must put both quote characters in the directory component, got {dir_name}"
   );
-  let source = seeded_db(&dir.file("sr'c\".db"), 2)?;
+  let source_path = dir.file("sr'c\".db");
+  assert_eq!(
+    source_path.file_name().and_then(std::ffi::OsStr::to_str),
+    Some("sr'c\".db"),
+    "and in the file component"
+  );
+  let source = seeded_db(&source_path, 2)?;
   let destination = dir.file("sn'ap\".db");
 
   source.vacuum_into(&destination)?;

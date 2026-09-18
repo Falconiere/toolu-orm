@@ -40,7 +40,9 @@ pub(super) fn quote_schema(name: &str) -> Result<String, MaintenanceError> {
     });
   }
 
-  let mut quoted = String::with_capacity(name.len() + 2);
+  // Two delimiters, plus one extra byte for every interior quote this doubles,
+  // so a name full of quotes still allocates once.
+  let mut quoted = String::with_capacity(name.len() + name.matches('"').count() + 2);
   quoted.push('"');
   for ch in name.chars() {
     if ch == '"' {

@@ -38,7 +38,15 @@ fn a_non_utf8_path_is_refused_before_the_driver() -> TestResult {
     "got {attach:?}"
   );
 
-  assert!(!bad.exists(), "no file may be created for a refused path");
+  // Stronger than `!bad.exists()`, which a broken symlink would also satisfy:
+  // the directory still holds no entry of any kind.
+  let entries = std::fs::read_dir(dir.path())?
+    .map(|entry| entry.map(|entry| entry.file_name()))
+    .collect::<Result<Vec<_>, _>>()?;
+  assert!(
+    entries.is_empty(),
+    "a refused path must create nothing at all, found {entries:?}"
+  );
   assert_eq!(attached_schemas(&conn)?, vec!["main"]);
   Ok(())
 }

@@ -67,9 +67,14 @@ Design points the tests pin:
   *expression*, so `?1` is legal in both and no path can alter a statement.
 - **The schema identifier is the only thing rendered into SQL**, and it is
   rendered in exactly one place (`schema_name.rs`): always double-quoted, with
-  every interior `"` doubled. Schema-qualified `PRAGMA` reads go through
-  rusqlite's own `pragma_query` / `pragma_query_value`, which apply the same
-  rule.
+  every interior `"` doubled. That is total, not best-effort: inside a SQLite
+  double-quoted identifier the *only* escape is `""` — there is no backslash
+  escape — so once every interior quote is doubled, the sole unpaired quotes are
+  the delimiters, and `;`, a newline, `--` and `/* */` are all ordinary
+  characters of the name. `an_injection_shaped_schema_name_is_quoted_not_executed`
+  proves it on both statements rather than arguing it. Schema-qualified `PRAGMA`
+  reads go through rusqlite's own `pragma_query` / `pragma_query_value`, which
+  apply the same rule.
 - **Every read names its schema.** A schema-less `PRAGMA quick_check` checks
   *all* attached databases, so `conn.quick_check()` issues `PRAGMA main.quick_check`
   and means the main database whatever is attached; `AttachedDatabase::quick_check`
@@ -128,6 +133,7 @@ database cannot stand in for the database under test.
 | The destination is taken | a real database already holding 3 different rows | `MaintenanceError::Sqlite(rusqlite::Error::SqliteFailure(..))` saying `output file already exists`; the occupant keeps its rows and the file is unchanged byte for byte |
 | A validated snapshot | vacuum, attach, check, detach | `is_ok()`, `messages() == ["ok"]`, `Display` is `ok`, and nothing is left attached |
 | An identifier holding `"` | schema `we"ird` over an empty main database | `database_list` shows `we"ird`, `schema()` returns it unchanged, `SELECT count(*) FROM "we""ird".t` is 2, and the guard detaches at end of scope |
+| An identifier shaped like an injection | schemas `x"; DROP TABLE t; --`, `y"\n/* */; DELETE FROM t; --`, `""; ATTACH DATABASE ':memory:' AS pwned; --` | each lands as one identifier (`database_list` shows the whole string, `schema()` returns it unchanged) and the victim table keeps its 3 rows — through `ATTACH`, through the guard's `Drop`, and through `detach()`, which runs on `execute_batch` and would really execute a second statement if one escaped |
 | A copy that fails | `INSERT … SELECT … FROM old.does_not_exist` behind a `?` | SQLite's `no such table` survives the early return; `database_list` is back to `main`; the same name attaches again |
 | Explicit detach | `detach()` twice over, then a schema detached behind the guard's back | `Ok(())` and a clean `database_list` in the first case; `no such database` preserved as `SqliteFailure` in the second |
 | A name this API refuses | `""` and `"a\0b"` | `InvalidSchemaName` naming `it is empty` / `it contains a NUL byte`; `database_list` shows nothing was attached |
@@ -173,6 +179,7 @@ cargo nextest run -p toolu-orm-connection --features rusqlite -E 'binary(rusqlit
 | rusqlite-only | rusqlite_maintenance_test | snapshot::a_vacuum_snapshot_passes_quick_check_through_an_attachment |
 | rusqlite-only | rusqlite_maintenance_test | snapshot::vacuum_into_and_attach_bind_a_path_containing_quotes |
 | rusqlite-only | rusqlite_maintenance_test | attach::attach_quotes_a_schema_name_containing_a_quote |
+| rusqlite-only | rusqlite_maintenance_test | attach::an_injection_shaped_schema_name_is_quoted_not_executed |
 | rusqlite-only | rusqlite_maintenance_test | attach::a_failed_copy_still_detaches_the_attached_database |
 | rusqlite-only | rusqlite_maintenance_test | attach::explicit_detach_clears_the_attachment_and_reports_its_own_failure |
 | rusqlite-only | rusqlite_maintenance_test | attach::attach_rejects_an_unusable_schema_name |
