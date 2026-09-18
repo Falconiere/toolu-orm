@@ -70,6 +70,18 @@ docker compose -f docker-compose.test.yaml up -d --wait
 TEST_DB_PORT=5434 cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer --features postgres -E 'binary(postgres_joins_test)'
 ```
 
+### Since #110
+
+`TableRef` now names three kinds of `FROM` source, not one: a table, a common
+table expression (referenced by a plain quoted identifier, so it needs nothing
+extra) and a table-valued function call carrying bound arguments —
+`TableRef::function(name, args)?.with_alias(alias)`, rendered through
+`to_sql_fragment_for(start, dialect)`. `to_sql()` is unchanged for every source
+that binds nothing, which is every source this page asserts. The derived `Eq`
+is gone (`Debug`, `Clone` and `PartialEq` remain), because a function source
+holds `Value` arguments and `Value::Real` holds an `f64`. See
+[Query composition](query-composition.md).
+
 ## Tests
 
 | Lane | Binary | Test |

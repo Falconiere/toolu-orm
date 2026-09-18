@@ -7,6 +7,7 @@ use crate::value::Value;
 
 use super::predicate::render_expr;
 use super::raw_params::number_raw_params;
+use super::subquery::render_scalar_subquery;
 
 /// Renders a scalar node, appending the values it binds to `params`.
 ///
@@ -62,6 +63,7 @@ pub(crate) fn render_scalar(
         render_aggregate_arg(arg, start, params, dialect)
       )
     },
+    ScalarKind::Subquery(query) => render_scalar_subquery(query.as_ref(), start, params, dialect),
   }
 }
 

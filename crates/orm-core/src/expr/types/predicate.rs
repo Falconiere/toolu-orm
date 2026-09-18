@@ -2,7 +2,7 @@
 
 use crate::dialect::Dialect;
 use crate::expr::render::render_expr;
-use crate::expr::Scalar;
+use crate::expr::{Scalar, SelectSource};
 use crate::value::Value;
 
 /// A WHERE-clause expression tree; render with [`Expr::to_sql_fragment_for`].
@@ -54,6 +54,17 @@ pub(crate) enum ExprKind {
     pattern: Scalar,
     escape: Option<char>,
   },
+  /// `[NOT ]EXISTS (<statement>)`.
+  Exists {
+    query: Box<dyn SelectSource>,
+    negated: bool,
+  },
+  /// `<left> [NOT ]IN (<statement>)`.
+  InSubquery {
+    left: Scalar,
+    query: Box<dyn SelectSource>,
+    negated: bool,
+  },
   And(Box<Expr>, Box<Expr>),
   Or(Box<Expr>, Box<Expr>),
   Raw {
@@ -95,6 +106,12 @@ impl Expr {
     Self {
       kind: ExprKind::Compare { left, op, right },
     }
+  }
+
+  /// An `Expr` around a node built elsewhere in the crate, the twin of
+  /// [`Scalar::from_kind`](crate::expr::Scalar).
+  pub(crate) fn from_kind(kind: ExprKind) -> Self {
+    Self { kind }
   }
 
   pub(crate) fn like_node(left: Scalar, pattern: Scalar, escape: Option<char>) -> Self {

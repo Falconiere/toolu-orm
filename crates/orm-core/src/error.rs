@@ -109,6 +109,11 @@ pub enum DbCoreError {
   #[error("\"{name}\" cannot be a scalar function name: it must match [A-Za-z_][A-Za-z0-9_]*")]
   InvalidScalarFunction { name: String },
 
+  /// Same rule as [`Self::InvalidScalarFunction`], for a table-valued function
+  /// in a `FROM` slot: the name is syntax, so it is validated, not quoted.
+  #[error("\"{name}\" cannot be a table function name: it must match [A-Za-z_][A-Za-z0-9_]*")]
+  InvalidTableFunction { name: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

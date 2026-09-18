@@ -15,6 +15,7 @@ mod excluded;
 mod func;
 mod like;
 mod order;
+mod subquery;
 mod types;
 
 pub use case::CaseBuilder;

@@ -3,6 +3,7 @@
 //! # Public API
 //!
 //! - [`SelectBuilder`] — fluent builder for SELECT queries
+//! - [`Cte`] — one member of a `WITH` / `WITH RECURSIVE` prefix
 //!
 //! # Usage
 //!
@@ -14,7 +15,9 @@
 //! ```
 
 mod builder;
+mod compound;
 mod count_exists;
+mod cte;
 mod grouping;
 mod join_clause;
 mod knn;
@@ -22,6 +25,7 @@ mod ordering;
 mod projection;
 pub mod relational;
 mod row_limit;
+mod source;
 mod statement;
 
 use crate::where_clause::cfg_single_backend;
@@ -31,4 +35,5 @@ cfg_single_backend! {
 }
 
 pub use builder::SelectBuilder;
+pub use cte::Cte;
 pub use relational::{RelationColumn, RelationConfig, RelationalSelectBuilder};

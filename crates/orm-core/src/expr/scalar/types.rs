@@ -2,7 +2,7 @@
 
 use crate::dialect::Dialect;
 use crate::expr::render::render_scalar;
-use crate::expr::Expr;
+use crate::expr::{Expr, SelectSource};
 use crate::query_column::Column;
 use crate::value::Value;
 
@@ -60,6 +60,8 @@ pub(crate) enum ScalarKind {
     func: &'static str,
     arg: AggregateArg,
   },
+  /// `(SELECT …)` — a whole statement read as one value.
+  Subquery(Box<dyn SelectSource>),
 }
 
 /// What sits between an aggregate's parentheses.

@@ -10,6 +10,8 @@ use toolu_orm_core::query_column::ColumnRef;
 
 use crate::where_clause::impl_filter;
 
+use super::compound::SetOp;
+use super::cte::Cte;
 use super::join_clause::JoinClause;
 
 // ── SelectBuilder ─────────────────────────────────────────────────────────────
@@ -30,6 +32,10 @@ pub struct SelectBuilder {
   pub(super) group_bys: Vec<Scalar>,
   /// `HAVING` conjuncts, `AND`-joined like the `WHERE` filters.
   pub(super) havings: Vec<Expr>,
+  /// Set-operation arms, rendered after this builder's own core in call order.
+  pub(super) set_ops: Vec<(SetOp, SelectBuilder)>,
+  /// `WITH` members, rendered before `SELECT` in call order.
+  pub(super) ctes: Vec<Cte>,
   pub(super) is_raw: bool,
   pub(super) knn_applied: bool,
 }
@@ -58,6 +64,8 @@ impl SelectBuilder {
       distinct: false,
       group_bys: Vec::new(),
       havings: Vec::new(),
+      set_ops: Vec::new(),
+      ctes: Vec::new(),
       is_raw: false,
       knn_applied: false,
     }

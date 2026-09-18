@@ -35,25 +35,23 @@ impl JoinClause {
 }
 
 impl SelectBuilder {
-  /// Appends every join, binding whatever its `ON` clause carries.
+  /// Appends every join, binding whatever its source and its `ON` clause
+  /// carry.
   ///
-  /// Each condition numbers its placeholders from `params.len() + 1` and its
-  /// values are pushed as they are written, so the indices follow render
-  /// order: in `to_sql_with_limit` the select list comes first — it can bind
-  /// through `column_scalar` — then `ON`, then `WHERE`, then `ORDER BY` and
-  /// `LIMIT`/`OFFSET`. In `to_count_sql_for` and `to_exists_sql_for` no select
-  /// list is rendered, so `ON` starts at 1. `append_where_for` derives its own
-  /// start the same way and continues after whatever came before it.
+  /// Both halves number from the live `params.len() + 1` and push as they are
+  /// written, so the indices follow render order: the joined source first —
+  /// a table-valued function binds its arguments there — then its `ON`. The
+  /// clauses around them do the same, so the whole statement's parameter
+  /// vector is in bind order by construction.
   pub(super) fn append_joins(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
     for join in &self.joins {
-      let start = params.len() + 1;
-      let (on_sql, on_params) = join.condition.to_sql_fragment_for(start, dialect);
+      let table_start = params.len() + 1;
+      let (table_sql, table_params) = join.table.to_sql_fragment_for(table_start, dialect);
+      params.extend(table_params);
+      let on_start = params.len() + 1;
+      let (on_sql, on_params) = join.condition.to_sql_fragment_for(on_start, dialect);
       params.extend(on_params);
-      sql.push_str(&format!(
-        " {} {} ON {on_sql}",
-        join.join_type,
-        join.table.to_sql()
-      ));
+      sql.push_str(&format!(" {} {table_sql} ON {on_sql}", join.join_type));
     }
   }
 }
