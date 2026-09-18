@@ -121,6 +121,13 @@ jobs:
       - name: FromRow derive compiles on every driver combination
         run: bash scripts/check-derive-matrix.sh
 
+      # The derive matrix compiles only the derive, in two packages. It never
+      # builds orm-connection or orm-query, which is how issue #124 shipped:
+      # those crates picked a `FromRow` method from their own feature flags
+      # instead of orm-core's unified set.
+      - name: Driver-dependent crates compile on every driver combination
+        run: bash scripts/check-driver-matrix.sh
+
       # docs/scenarios must name real tests, and every test in a scenario
       # binary must be documented.
       - name: Scenario docs in sync

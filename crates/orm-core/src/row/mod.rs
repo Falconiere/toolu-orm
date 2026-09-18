@@ -1,14 +1,22 @@
-//! Row decoding (`FromRow`) and Postgres helpers.
+//! Row decoding (`FromRow`) and the per-driver decode helpers.
 
+#[cfg(feature = "libsql")]
+mod decode_libsql;
 #[cfg(feature = "postgres")]
 mod decode_postgres;
+#[cfg(feature = "rusqlite")]
+mod decode_rusqlite;
 mod derived;
 #[cfg(feature = "postgres")]
 mod pg_count_scalar;
 mod traits;
 
+#[cfg(feature = "libsql")]
+pub use decode_libsql::from_libsql_row;
 #[cfg(feature = "postgres")]
 pub use decode_postgres::from_postgres_row;
+#[cfg(feature = "rusqlite")]
+pub use decode_rusqlite::from_rusqlite_row;
 #[cfg(feature = "postgres")]
 pub use pg_count_scalar::PgCountScalar;
 pub use traits::FromRow;
