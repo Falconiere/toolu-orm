@@ -518,9 +518,11 @@ let (sql, params) = SelectBuilder::from_table(&u)
 //   WHERE "u"."org_id" = ?2
 ```
 
-`ON` parameters are numbered before `WHERE` parameters in every rendered form,
-including `to_count_sql_for` and `to_exists_sql_for`. Keep a `LEFT JOIN`
-predicate in the `ON` clause: moving it to `filter` drops the unmatched rows.
+Placeholders are numbered in render order, so `ON` parameters come after the
+select list's (a `column_scalar` projection can bind) and before the `WHERE`
+clause's — in `to_count_sql_for` and `to_exists_sql_for`, which render no select
+list, `ON` starts at 1. Keep a `LEFT JOIN` predicate in the `ON` clause: moving
+it to `filter` drops the unmatched rows.
 
 **Transactions.** Anything that errors inside the closure rolls the whole block back.
 

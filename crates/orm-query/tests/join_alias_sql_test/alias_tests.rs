@@ -147,15 +147,21 @@ fn qualified_projection_and_output_alias_render_qualified() {
   );
   assert!(params.is_empty());
 
-  // columns_qualified takes plain and aliased columns in one slice.
+  // columns_qualified takes a plain column and an aliased one in one slice.
+  // The unaliased table is named by its own name, so both qualifiers resolve
+  // against the FROM/JOIN list this query actually declares.
   let f_live = f.column(&F_LIVE);
   let mixed: Vec<&dyn QualifiedColumn> = vec![&C_KIND, &f_live];
   let (sql, _) = SelectBuilder::from_table("code_symbols")
     .columns_qualified(&mixed)
+    .left_join(&f, f.column(&F_REPO).equals(&C_REPO))
     .to_sql_for(Dialect::Sqlite);
   assert_eq!(
     sql,
-    r#"SELECT "code_symbols"."kind", "f"."live" FROM "code_symbols""#
+    concat!(
+      r#"SELECT "code_symbols"."kind", "f"."live" FROM "code_symbols""#,
+      r#" LEFT JOIN "code_feedback" AS "f" ON "f"."repo" = "code_symbols"."repo""#
+    )
   );
 
   // columns_typed keeps its unqualified rendering.

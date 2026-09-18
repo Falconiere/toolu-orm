@@ -59,7 +59,10 @@ fn aliased_column_qualifies_with_the_alias_and_falls_back_to_the_table() {
   let original = old.column(&ID);
   let cloned = original.clone();
   assert_eq!(cloned.qualified(), original.qualified());
-  assert!(format!("{cloned:?}").contains("AliasedColumn"));
+  assert_eq!(
+    format!("{cloned:?}"),
+    r#"AliasedColumn { qualifier: "old", name: "id" }"#
+  );
 
   // Object-safe: one slice can mix a plain column and an aliased one.
   let mixed: Vec<&dyn QualifiedColumn> = vec![&ID, &original];
@@ -181,7 +184,13 @@ fn join_condition_and_or_number_params_from_the_given_start() {
   );
 
   let (pg_sql, pg_params) = condition.to_sql_fragment_for(2, Dialect::Postgres);
-  assert!(pg_sql.ends_with(r#"AND "old"."owner" = $2) OR "newer"."created_at" > $3)"#));
+  assert_eq!(
+    pg_sql,
+    concat!(
+      r#"((("old"."owner" = "newer"."owner" AND "old"."created_at" < "newer"."created_at")"#,
+      r#" AND "old"."owner" = $2) OR "newer"."created_at" > $3)"#
+    )
+  );
   assert_eq!(pg_params, sqlite_params);
 
   // An Expr converts into an ON predicate and back.

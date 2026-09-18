@@ -178,12 +178,26 @@ fn an_injection_shaped_alias_is_quoted_not_executed() -> TestResult {
   let conn = db::setup_db()?;
   let hostile = TableRef::aliased("code_symbols", r#"x"; DROP TABLE code_symbols; --"#);
 
-  let rows: Vec<Labelled> = SelectBuilder::from_table(&hostile)
+  let query = SelectBuilder::from_table(&hostile)
     .column_as(&hostile.column(&S_ID), "s_id")
     .column_as(&hostile.column(&S_KIND), "label")
-    .order_by(hostile.column(&S_ID).asc())
-    .fetch_all(&conn)?;
+    .order_by(hostile.column(&S_ID).asc());
 
+  // The alias is one identifier: every interior quote is doubled, so the `;`
+  // and everything after it stay inside it.
+  let (sql, params) = query.to_sql();
+  assert_eq!(
+    sql,
+    concat!(
+      r#"SELECT "x""; DROP TABLE code_symbols; --"."id" AS "s_id", "#,
+      r#""x""; DROP TABLE code_symbols; --"."kind" AS "label""#,
+      r#" FROM "code_symbols" AS "x""; DROP TABLE code_symbols; --""#,
+      r#" ORDER BY "x""; DROP TABLE code_symbols; --"."id" ASC"#
+    )
+  );
+  assert!(params.is_empty());
+
+  let rows: Vec<Labelled> = query.fetch_all(&conn)?;
   assert_eq!(ids(&rows), vec!["s1", "s2", "s3", "s4"]);
   assert_eq!(
     labels(&rows),

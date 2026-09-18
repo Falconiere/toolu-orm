@@ -38,9 +38,12 @@ impl SelectBuilder {
   /// Appends every join, binding whatever its `ON` clause carries.
   ///
   /// Each condition numbers its placeholders from `params.len() + 1` and its
-  /// values are pushed as they are written, so `ON` takes the low indices and
-  /// `append_where_for` — which derives its own start the same way — continues
-  /// after them.
+  /// values are pushed as they are written, so the indices follow render
+  /// order: in `to_sql_with_limit` the select list comes first — it can bind
+  /// through `column_scalar` — then `ON`, then `WHERE`, then `ORDER BY` and
+  /// `LIMIT`/`OFFSET`. In `to_count_sql_for` and `to_exists_sql_for` no select
+  /// list is rendered, so `ON` starts at 1. `append_where_for` derives its own
+  /// start the same way and continues after whatever came before it.
   pub(super) fn append_joins(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
     for join in &self.joins {
       let start = params.len() + 1;
