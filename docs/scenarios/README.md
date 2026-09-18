@@ -19,6 +19,7 @@ test, update its page.
 | [Fetch semantics](fetch-semantics.md) | `fetch_one` / `fetch_optional` / `count` / `exists` and their empty, single, and multi-row behavior. |
 | [Bounded first-row fetch](bounded-first-row.md) | `fetch_one` / `fetch_optional` ask the database for at most one row, so a 10,000-row match costs one decode and a later undecodable row cannot fail a valid first row. |
 | [SQLite offset without limit](sqlite-offset-without-limit.md) | `.offset(n)` without `.limit(...)` renders `LIMIT -1 OFFSET ...` on SQLite instead of an invalid bare `OFFSET`, with correct parameter numbering; Postgres's standalone `OFFSET` stays unaffected. |
+| [Table aliases and JOIN predicates](table-aliases-and-joins.md) | `TableRef` aliases a table, `AliasedColumn` addresses its columns, `columns_qualified` / `column_as` project unambiguously, and an `ON` clause is an expression tree — self-joins, the same table joined twice, and a `LEFT JOIN` that keeps its unmatched rows. |
 | [Filters](filters.md) | Every `Expr` operator executed against real rows, parameter numbering across filters, nested AND/OR, empty `in_list`. |
 | [Transactions](transactions.md) | Commit persists; rollback and drop discard; reads inside see own writes (libsql `run_transaction`, orm-query `PgTransaction`, connection `PgTransaction`). |
 | [Postgres connection](postgres-connection.md) | `PgDatabase` pool, `PgConnection`, error mapping with SQLSTATE, unreachable server, and the per-connection prepared-statement cache. |

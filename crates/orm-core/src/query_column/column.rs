@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use crate::expr::{JoinCondition, OrderBy, Scalar};
+use crate::expr::{OrderBy, Scalar};
 
 pub trait ColumnRef {
   fn name(&self) -> &'static str;
@@ -45,12 +45,5 @@ impl<T> Column<T> {
 
   pub fn desc(&self) -> OrderBy {
     Scalar::col(self).desc()
-  }
-
-  pub fn equals<U>(&self, other: &Column<U>) -> JoinCondition {
-    JoinCondition {
-      left: self.qualified(),
-      right: other.qualified(),
-    }
   }
 }

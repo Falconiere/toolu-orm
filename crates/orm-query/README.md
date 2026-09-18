@@ -43,6 +43,25 @@ let (sql, params) = SelectBuilder::new("users")
     .limit(10)
     .to_sql();
 
+// Aliased tables: users sharing an email, oldest first (a self-join)
+let older = TableRef::aliased("users", "older");
+let newer = TableRef::aliased("users", "newer");
+let (sql, params) = SelectBuilder::from_table(&older)
+    .column_as(&older.column(&users::columns::ID), "older_id")
+    .column_as(&newer.column(&users::columns::ID), "newer_id")
+    .join(
+        &newer,
+        older
+            .column(&users::columns::EMAIL)
+            .equals(&newer.column(&users::columns::EMAIL))
+            .and(
+                older
+                    .column(&users::columns::CREATED_AT)
+                    .less_than(&newer.column(&users::columns::CREATED_AT)),
+            ),
+    )
+    .to_sql();
+
 // Insert
 let rows = InsertBuilder::new("users")
     .set(&users::columns::ID, "uuid-123")

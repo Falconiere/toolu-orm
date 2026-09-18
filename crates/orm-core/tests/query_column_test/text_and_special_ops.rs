@@ -43,11 +43,14 @@ fn column_asc_produces_correct_sql() {
 
 #[test]
 fn column_equals_produces_join_condition_sql() {
+  use toolu_orm_core::dialect::Dialect;
   use toolu_orm_core::expr::JoinCondition;
   let col_a: Column<Uuid> = Column::new("orders", "user_id");
   let col_b: Column<Uuid> = Column::new("users", "id");
   let join: JoinCondition = col_a.equals(&col_b);
-  assert_eq!(join.to_sql(), r#""orders"."user_id" = "users"."id""#);
+  let (sql, params) = join.to_sql_fragment_for(1, Dialect::Sqlite);
+  assert_eq!(sql, r#""orders"."user_id" = "users"."id""#);
+  assert!(params.is_empty());
 }
 
 // ── Expr::raw ─────────────────────────────────────────────────────────────

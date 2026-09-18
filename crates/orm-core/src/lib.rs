@@ -12,6 +12,7 @@ pub use tokio_postgres;
 // than through the consumer's extern prelude.
 pub use {serde, serde_json};
 
+pub mod alias;
 pub mod column;
 pub mod dialect;
 pub mod diff;

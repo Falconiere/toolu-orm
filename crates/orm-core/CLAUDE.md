@@ -20,7 +20,8 @@ Foundation crate for toolu-orm — core types, schema definitions, snapshot/diff
 - `table.rs` — TableDef, TableSchema trait
 - `schema.rs` — SchemaRegistry (collection of TableDefs)
 - `value.rs` — Value enum with database driver conversions
-- `expr/` — Expression AST. `types/` (Expr + ExprKind, OrderBy, JoinCondition, JsonExpr), `scalar/` (Scalar + ScalarKind, function calls, arithmetic, `CASE`, `like_pattern_literal`), `render/` (per-dialect SQL rendering; empty `in_list` renders `1 = 0`, every node numbers its placeholders from `start + params.len()`)
+- `expr/` — Expression AST. `types/` (Expr + ExprKind, OrderBy, JsonExpr, and JoinCondition — an Expr newtype with and/or), `scalar/` (Scalar + ScalarKind, function calls, arithmetic, `CASE`, `like_pattern_literal`), `render/` (per-dialect SQL rendering; empty `in_list` renders `1 = 0`, every node numbers its placeholders from `start + params.len()`)
+- `alias/` — TableRef (table + optional alias), AliasedColumn\<T\>, the object-safe QualifiedColumn trait, and the six column-to-column comparisons on both column kinds
 - `query_column/` — Column\<T\>, ColumnRef trait, CommonOps/TextOps (`like`, `like_escape`)/NumericOps traits, Fts5Ops, Vec0Ops
 - `row.rs` — FromRow trait (feature-gated)
 - `diff.rs` — Schema diff algorithm (Operation enum)

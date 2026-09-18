@@ -40,7 +40,7 @@ macro_rules! impl_async_fetch {
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<T, $crate::QueryError> {
         let results = self.fetch_first_row::<T>(exec).await?;
-        super::shared::first_or_not_found(results, &self.table)
+        super::shared::first_or_not_found(results, self.table_name())
       }
 
       /// [`Self::fetch_one`]'s bound, with an absent row as `None`.
@@ -74,7 +74,7 @@ macro_rules! impl_async_fetch {
       ) -> Result<i64, $crate::QueryError> {
         let (sql, params) = self.to_count_sql();
         let rows = exec.query_map::<$scalar_ty>(&sql, params).await?;
-        super::shared::first_or_not_found(rows, &self.table).map(|r| r.value)
+        super::shared::first_or_not_found(rows, self.table_name()).map(|r| r.value)
       }
 
       /// # Errors
@@ -130,7 +130,7 @@ macro_rules! impl_sync_fetch {
         exec: &impl $crate::executor::Executor,
       ) -> Result<T, $crate::QueryError> {
         let results = self.fetch_first_row::<T>(exec)?;
-        super::shared::first_or_not_found(results, &self.table)
+        super::shared::first_or_not_found(results, self.table_name())
       }
 
       /// [`Self::fetch_one`]'s bound, with an absent row as `None`.
@@ -164,7 +164,7 @@ macro_rules! impl_sync_fetch {
       ) -> Result<i64, $crate::QueryError> {
         let (sql, params) = self.to_count_sql();
         let rows = exec.query_map::<$scalar_ty>(&sql, params)?;
-        super::shared::first_or_not_found(rows, &self.table).map(|r| r.value)
+        super::shared::first_or_not_found(rows, self.table_name()).map(|r| r.value)
       }
 
       /// # Errors

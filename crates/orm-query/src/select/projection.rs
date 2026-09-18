@@ -1,5 +1,6 @@
 //! The `SELECT` projection list: plain columns, raw fragments, and scalars.
 
+use toolu_orm_core::alias::QualifiedColumn;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::Scalar;
 use toolu_orm_core::value::Value;
@@ -20,6 +21,26 @@ impl SelectBuilder {
     self
   }
 
+  /// Typed columns projected qualified: `"users"."id", "old"."id"`.
+  ///
+  /// Takes plain and aliased columns in one slice, so a joined query can name
+  /// exactly which relation each item comes from. Pair it with
+  /// [`SelectBuilder::column_as`] when two items would otherwise share an
+  /// output name.
+  pub fn columns_qualified(mut self, cols: &[&dyn QualifiedColumn]) -> Self {
+    self.columns = cols.iter().map(|c| c.qualified()).collect();
+    self
+  }
+
+  /// `"qualifier"."column" AS "<alias>"` — the qualified twin of
+  /// [`SelectBuilder::column_expr`].
+  ///
+  /// The output alias is what tells two same-named columns apart in the result
+  /// — `"c"."id" AS "c_id"` next to `"f"."id" AS "f_id"`.
+  pub fn column_as(self, col: &dyn QualifiedColumn, out_alias: &str) -> Self {
+    self.column_scalar(Scalar::sql(col.qualified()), out_alias)
+  }
+
   /// `<scalar> AS "<alias>"` — a computed output that may bind values.
   ///
   /// Its placeholders are numbered before the `WHERE` clause's, because the
@@ -32,12 +53,13 @@ impl SelectBuilder {
 
   /// Plain columns first, then the aliased expressions.
   ///
-  /// Only the non-empty halves are joined, so a builder carrying just one of
-  /// the two gains no stray comma. The expressions used to be dropped unless
-  /// the builder came from [`SelectBuilder::raw`], which silently discarded an
-  /// FTS5 `bm25(...)` projection on an ordinary table.
+  /// The plain half arrives already rendered, so a qualified item and a bare
+  /// one look the same here. Only the non-empty halves are joined, so a builder
+  /// carrying just one of the two gains no stray comma. The expressions used to
+  /// be dropped unless the builder came from [`SelectBuilder::raw`], which
+  /// silently discarded an FTS5 `bm25(...)` projection on an ordinary table.
   pub(super) fn build_select_list(&self, params: &mut Vec<Value>, dialect: Dialect) -> String {
-    let mut parts: Vec<String> = self.columns.iter().map(|c| format!(r#""{c}""#)).collect();
+    let mut parts: Vec<String> = self.columns.clone();
     for (expr, alias) in &self.column_exprs {
       let start = params.len() + 1;
       let (fragment, expr_params) = expr.to_sql_fragment_for(start, dialect);

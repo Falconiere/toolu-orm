@@ -90,3 +90,23 @@ UsersTable::select()
   .left_join("pipelines", users::id.equals(&pipelines::user_id))
   .order_by(users::created_at.desc());
 ```
+
+A `JoinCondition` is an expression tree, not a single equality. Alongside
+`equals` there are `not_equals`, `less_than`, `less_or_equal`, `greater_than`
+and `greater_or_equal` — all column-to-column, binding nothing — and `and` / `or`
+combine them with ordinary value predicates, which are plain `Expr`s:
+
+```rust
+UsersTable::select()
+  .left_join(
+    "pipelines",
+    users::id.equals(&pipelines::user_id).and(pipelines::active.eq(1)),
+  );
+// ... LEFT JOIN "pipelines" ON ("users"."id" = "pipelines"."user_id" AND "pipelines"."active" = ?1)
+```
+
+`Expr` and `JoinCondition` convert into each other, so a column-to-column
+comparison also works in `filter(...)` and a value predicate also works in an
+`ON` clause. Render one with `to_sql_fragment_for(start, dialect)`, which
+returns the fragment together with the values it binds. Table aliases are in
+[Select](select.md).
