@@ -5,6 +5,8 @@ use toolu_orm_core::expr::Scalar;
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
 
+use super::ident::quote_ident;
+
 /// What the clause does once its target matches.
 ///
 /// Private, so a later feature (a `DO UPDATE … WHERE` guard, a constraint
@@ -116,7 +118,7 @@ impl OnConflict {
   /// from `params.len() + 1` — the statement-absolute index of its first
   /// placeholder, which is what [`Scalar::to_sql_fragment_for`] expects.
   pub(super) fn push_sql(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
-    let target: Vec<String> = self.target.iter().map(|c| format!(r#""{c}""#)).collect();
+    let target: Vec<String> = self.target.iter().map(|c| quote_ident(c)).collect();
     sql.push_str(&format!(" ON CONFLICT ({}) DO ", target.join(", ")));
 
     match &self.action {
@@ -127,7 +129,7 @@ impl OnConflict {
           let start = params.len() + 1;
           let (fragment, value_params) = value.to_sql_fragment_for(start, dialect);
           params.extend(value_params);
-          parts.push(format!(r#""{column}" = {fragment}"#));
+          parts.push(format!("{} = {fragment}", quote_ident(column)));
         }
         sql.push_str(&format!("UPDATE SET {}", parts.join(", ")));
       },

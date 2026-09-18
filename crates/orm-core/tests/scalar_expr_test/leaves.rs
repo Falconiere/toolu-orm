@@ -82,3 +82,12 @@ fn an_excluded_leaf_leaves_its_offset_free_for_the_next_bind() -> Result<(), DbC
   assert_eq!(params, vec![Value::Text("unset".to_owned())]);
   Ok(())
 }
+
+#[test]
+fn an_excluded_leaf_doubles_an_embedded_double_quote() {
+  const ODD: Column<Text> = Column::new("memories", r#"wo"rkspace"#);
+
+  let (sql, params) = Scalar::excluded(&ODD).to_sql_fragment_for(1, Dialect::Sqlite);
+  assert_eq!(sql, r#""excluded"."wo""rkspace""#);
+  assert!(params.is_empty());
+}

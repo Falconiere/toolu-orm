@@ -1,6 +1,7 @@
 //! The conflict policy an [`super::InsertBuilder`] carries, and the legacy
 //! Postgres rendering of `or_replace()`.
 
+use super::ident::quote_ident;
 use super::on_conflict::OnConflict;
 
 /// How an `INSERT` reacts to a uniqueness conflict.
@@ -35,11 +36,11 @@ pub(super) fn push_legacy_postgres_replace(
     conflict_cols.to_vec()
   };
 
-  let target_sql: Vec<String> = target.iter().map(|c| format!(r#""{c}""#)).collect();
+  let target_sql: Vec<String> = target.iter().map(|c| quote_ident(c)).collect();
   let update_cols: Vec<String> = columns
     .iter()
     .filter(|c| !target.iter().any(|t| t == *c))
-    .map(|c| format!(r#""{c}" = EXCLUDED."{c}""#))
+    .map(|c| format!("{} = EXCLUDED.{}", quote_ident(c), quote_ident(c)))
     .collect();
 
   sql.push_str(&format!(" ON CONFLICT ({}) DO ", target_sql.join(", ")));

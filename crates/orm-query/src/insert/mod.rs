@@ -8,6 +8,7 @@
 
 mod builder;
 mod conflict;
+mod ident;
 mod on_conflict;
 
 use crate::where_clause::cfg_single_backend;

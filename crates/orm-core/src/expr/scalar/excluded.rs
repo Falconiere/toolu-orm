@@ -42,6 +42,14 @@ impl Scalar {
   /// ```
   #[must_use]
   pub fn excluded<T>(column: &Column<T>) -> Self {
-    Self::sql(format!(r#""excluded"."{}""#, column.name))
+    // An embedded double quote doubles — the only escape a delimited
+    // identifier has, in SQLite and Postgres alike, and the same one the
+    // alias module applies to the identifiers it renders. `column.name` is a
+    // `&'static str` written in Rust source, so for a legal identifier this
+    // is byte-identical to a bare wrap.
+    Self::sql(format!(
+      r#""excluded"."{}""#,
+      column.name.replace('"', "\"\"")
+    ))
   }
 }

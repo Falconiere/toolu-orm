@@ -8,6 +8,7 @@ use toolu_orm_core::value::Value;
 use crate::where_clause::cfg_single_backend;
 
 use super::conflict::{push_legacy_postgres_replace, ConflictMode};
+use super::ident::quote_ident;
 use super::on_conflict::OnConflict;
 
 cfg_single_backend! {
@@ -124,7 +125,7 @@ impl InsertBuilder {
     if self.returning.is_empty() {
       return;
     }
-    let cols: Vec<String> = self.returning.iter().map(|c| format!(r#""{c}""#)).collect();
+    let cols: Vec<String> = self.returning.iter().map(|c| quote_ident(c)).collect();
     sql.push_str(&format!(" RETURNING {}", cols.join(", ")));
   }
 
@@ -142,7 +143,7 @@ impl InsertBuilder {
   /// Appends `("a", "b") VALUES (<a>, <b>)` and returns the values bound, in
   /// the order their placeholders were written.
   fn push_columns_and_values(&self, sql: &mut String, dialect: Dialect) -> Vec<Value> {
-    let col_list: Vec<String> = self.columns.iter().map(|c| format!(r#""{c}""#)).collect();
+    let col_list: Vec<String> = self.columns.iter().map(|c| quote_ident(c)).collect();
     sql.push_str(&format!(" ({}) VALUES (", col_list.join(", ")));
 
     let mut params: Vec<Value> = Vec::with_capacity(self.values.len());
@@ -169,7 +170,8 @@ impl InsertBuilder {
     };
 
     sql.push_str(keyword);
-    sql.push_str(&format!(r#" "{}""#, self.table));
+    sql.push(' ');
+    sql.push_str(&quote_ident(&self.table));
     let mut params = self.push_columns_and_values(&mut sql, Dialect::Sqlite);
 
     if let ConflictMode::Clause(clause) = &self.conflict_mode {
@@ -183,7 +185,8 @@ impl InsertBuilder {
   fn to_sql_postgres(&self) -> (String, Vec<Value>) {
     let mut sql = String::new();
 
-    sql.push_str(&format!(r#"INSERT INTO "{}""#, self.table));
+    sql.push_str("INSERT INTO ");
+    sql.push_str(&quote_ident(&self.table));
     let mut params = self.push_columns_and_values(&mut sql, Dialect::Postgres);
 
     match &self.conflict_mode {

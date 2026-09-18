@@ -29,6 +29,7 @@
 | `Scalar::func("coalesce", [Scalar::col(&WS), Scalar::excluded(&WS)])?` | `coalesce("memories"."workspace_id", "excluded"."workspace_id")` |
 | `.do_nothing()` after assignments | `DO NOTHING` — the recorded assignments are discarded |
 | `.returning(&ID).returning(&PATH)` | `… RETURNING "id", "path"` |
+| any identifier carrying a `"` | the interior quote **doubles** (`"wo""rkspace"`), the only escape a delimited identifier has on either engine |
 
 Inside the clause `Scalar::col` names the **stored** row and `Scalar::excluded` the one the `INSERT` proposed. The whole statement keeps one ordered parameter list: every `VALUES` bind first, then every `DO UPDATE` bind, in call order; `RETURNING` binds nothing. So the `code_row.rs` statement from issue #108 renders as
 
@@ -93,6 +94,7 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'b
 | default | upsert_sql_test | binding::expression_values_then_expression_assignments_number_left_to_right |
 | default | upsert_sql_test | binding::the_same_statement_numbers_dollar_placeholders_in_the_same_order |
 | default | upsert_sql_test | clause::a_clause_without_assignments_renders_do_nothing |
+| default | upsert_sql_test | clause::an_embedded_double_quote_in_an_identifier_doubles_rather_than_escaping |
 | default | upsert_sql_test | clause::a_composite_target_lists_its_columns_in_call_order |
 | default | upsert_sql_test | clause::a_counter_update_reads_the_existing_row_and_binds_after_the_values |
 | default | upsert_sql_test | clause::a_later_or_replace_replaces_the_clause_and_a_later_clause_replaces_it |

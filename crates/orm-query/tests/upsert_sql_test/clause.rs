@@ -1,9 +1,11 @@
 //! Conflict target and action: `DO NOTHING`, `DO UPDATE SET`, composite
 //! targets, `excluded` references, and which conflict policy wins.
 
+use toolu_orm_core::column::Text;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::error::DbCoreError;
 use toolu_orm_core::expr::Scalar;
+use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
 use toolu_orm_query::insert::{InsertBuilder, OnConflict};
 
@@ -182,5 +184,31 @@ fn a_later_or_replace_replaces_the_clause_and_a_later_clause_replaces_it() {
     clause,
     r#"INSERT INTO "memories" ("id") VALUES ($1) ON CONFLICT ("id") DO UPDATE SET "body" = $2"#,
     "the later clause wins and conflict_columns does not reach it"
+  );
+}
+
+#[test]
+fn an_embedded_double_quote_in_an_identifier_doubles_rather_than_escaping() {
+  const ODD_TABLE: &str = r#"me"mories"#;
+  const ODD_COLUMN: Column<Text> = Column::new("memories", r#"wo"rkspace"#);
+
+  let (sql, params) = InsertBuilder::new(ODD_TABLE)
+    .set(&ODD_COLUMN, "w1")
+    .on_conflict(OnConflict::column(&ODD_COLUMN).set(&ODD_COLUMN, "w2"))
+    .returning(&ODD_COLUMN)
+    .to_sql_for(Dialect::Sqlite);
+
+  assert_eq!(
+    sql,
+    concat!(
+      r#"INSERT INTO "me""mories" ("wo""rkspace") VALUES (?1) "#,
+      r#"ON CONFLICT ("wo""rkspace") DO UPDATE SET "wo""rkspace" = ?2 "#,
+      r#"RETURNING "wo""rkspace""#
+    ),
+    "every interior quote doubles, so the only unpaired quotes are delimiters"
+  );
+  assert_eq!(
+    params,
+    vec![Value::Text("w1".to_owned()), Value::Text("w2".to_owned())]
   );
 }

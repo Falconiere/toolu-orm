@@ -72,6 +72,7 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'b
 | default | scalar_expr_test | functions::nested_arguments_number_left_to_right_from_the_offset |
 | default | scalar_expr_test | leaves::a_bound_leaf_takes_the_offset_it_is_rendered_at |
 | default | scalar_expr_test | leaves::a_column_leaf_renders_qualified_and_binds_nothing |
+| default | scalar_expr_test | leaves::an_excluded_leaf_doubles_an_embedded_double_quote |
 | default | scalar_expr_test | leaves::an_excluded_leaf_leaves_its_offset_free_for_the_next_bind |
 | default | scalar_expr_test | leaves::an_excluded_leaf_names_the_proposed_row_and_binds_nothing |
 | default | scalar_expr_test | leaves::a_raw_leaf_numbers_its_placeholders_from_the_offset |
