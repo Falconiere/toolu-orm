@@ -1,7 +1,7 @@
 # Filters
 
 **Feature:** typed `Column<T>` constants build `Expr` filters: `eq` / `ne` / `in_list` / `not_in` / `is_null` / `is_not_null` on every column, `like` on text, `gt` / `lt` / `gte` / `lte` / `between` on numbers, combined with `.and()` / `.or()`. `SelectBuilder::filter` can be called repeatedly; filters are ANDed and their parameters keep numbering across calls.
-**Drivers:** libsql, rusqlite, Postgres. The fragments themselves are pinned per dialect in [Expression fragments](expr-fragments.md).
+**Drivers:** libsql, rusqlite, Postgres. The fragments themselves are pinned per dialect in [Expression fragments](expr-fragments.md). To reference one bound value from several predicates instead of binding it per occurrence, see [Reusable bound parameters](reusable-bound-parameters.md).
 **Spec:** AC-11.
 
 ## What is proven

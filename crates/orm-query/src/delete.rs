@@ -1,7 +1,7 @@
 //! DELETE query builder with dialect-aware SQL generation.
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::Expr;
+use toolu_orm_core::expr::{BoundParams, Expr};
 use toolu_orm_core::value::Value;
 
 use crate::where_clause::{append_where_for, cfg_single_backend, impl_filter};
@@ -29,12 +29,12 @@ impl DeleteBuilder {
 
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     let mut sql = String::new();
-    let mut params: Vec<Value> = Vec::new();
+    let mut params = BoundParams::new();
 
     sql.push_str(&format!(r#"DELETE FROM "{}""#, self.table));
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   pub fn to_sql(&self) -> (String, Vec<Value>) {

@@ -50,6 +50,12 @@ path = "tests/facade_only_grouping_test.rs"
 name = "facade_only_composition_test"
 path = "tests/facade_only_composition_test.rs"
 
+# Reusable bound parameters through the facade. Its own binary for the same
+# reason as the scalar one.
+[[test]]
+name = "facade_only_shared_bind_test"
+path = "tests/facade_only_shared_bind_test.rs"
+
 # Compile-proof that macro-generated public items carry docs: the binary is
 # `#![deny(missing_docs)]` and exports one of each table macro from a `pub mod`.
 [[test]]

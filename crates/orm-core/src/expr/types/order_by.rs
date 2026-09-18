@@ -1,7 +1,7 @@
 //! One `ORDER BY` term.
 
 use crate::dialect::Dialect;
-use crate::expr::Scalar;
+use crate::expr::{BoundParams, Scalar};
 use crate::value::Value;
 
 /// One `ORDER BY` term: a scalar and a direction.
@@ -15,12 +15,21 @@ pub struct OrderBy {
 }
 
 impl OrderBy {
+  /// Renders into `params`, sharing its binding ledger; see
+  /// [`Expr::render_into`](crate::expr::Expr::render_into).
+  #[must_use]
+  pub fn render_into(&self, params: &mut BoundParams, dialect: Dialect) -> String {
+    let sql = self.term.render_into(params, dialect);
+    format!("{sql} {}", self.direction)
+  }
+
   /// The term and its direction, with placeholders numbered from `start` and
   /// the values the term binds returned alongside.
   #[must_use]
   pub fn to_sql_fragment_for(&self, start: usize, dialect: Dialect) -> (String, Vec<Value>) {
-    let (sql, params) = self.term.to_sql_fragment_for(start, dialect);
-    (format!("{sql} {}", self.direction), params)
+    let mut params = BoundParams::new();
+    let sql = params.nested(start, |nested| self.render_into(nested, dialect));
+    (sql, params.into_values())
   }
 
   /// The parameter-free rendering.

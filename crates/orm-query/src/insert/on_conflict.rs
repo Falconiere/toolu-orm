@@ -2,7 +2,7 @@
 
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::Scalar;
+use toolu_orm_core::expr::{BoundParams, Scalar};
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
 
@@ -30,7 +30,7 @@ enum ConflictAction {
 /// ```
 /// use toolu_orm_core::column::{Integer, Text};
 /// use toolu_orm_core::dialect::Dialect;
-/// use toolu_orm_core::expr::Scalar;
+/// use toolu_orm_core::expr::{BoundParams, Scalar};
 /// use toolu_orm_core::query_column::Column;
 /// use toolu_orm_query::insert::{InsertBuilder, OnConflict};
 ///
@@ -116,7 +116,7 @@ impl OnConflict {
   /// `params` already holds the `VALUES` binds, so each assignment numbers
   /// from `params.len() + 1` — the statement-absolute index of its first
   /// placeholder, which is what [`Scalar::to_sql_fragment_for`] expects.
-  pub(super) fn push_sql(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
+  pub(super) fn push_sql(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     let target: Vec<String> = self.target.iter().map(|c| quote_ident(c)).collect();
     sql.push_str(&format!(" ON CONFLICT ({}) DO ", target.join(", ")));
 
@@ -125,9 +125,7 @@ impl OnConflict {
       ConflictAction::DoUpdate(sets) => {
         let mut parts: Vec<String> = Vec::with_capacity(sets.len());
         for (column, value) in sets {
-          let start = params.len() + 1;
-          let (fragment, value_params) = value.to_sql_fragment_for(start, dialect);
-          params.extend(value_params);
+          let fragment = value.render_into(params, dialect);
           parts.push(format!("{} = {fragment}", quote_ident(column)));
         }
         sql.push_str(&format!("UPDATE SET {}", parts.join(", ")));

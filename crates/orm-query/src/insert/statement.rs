@@ -11,6 +11,7 @@
 
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::expr::BoundParams;
 use toolu_orm_core::value::Value;
 
 use super::conflict::{push_legacy_postgres_replace, ConflictMode};
@@ -46,14 +47,15 @@ impl InsertBuilder {
     sql.push_str(keyword);
     sql.push(' ');
     self.push_target(&mut sql);
-    let mut params = self.push_rows(&mut sql, Dialect::Sqlite);
+    let mut params = BoundParams::new();
+    self.push_rows(&mut sql, &mut params, Dialect::Sqlite);
 
     if let ConflictMode::Clause(clause) = &self.conflict_mode {
       clause.push_sql(&mut sql, &mut params, Dialect::Sqlite);
     }
     self.push_returning(&mut sql);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// `INSERT INTO <target> <rows> [<conflict>] [<returning>]`.
@@ -65,7 +67,8 @@ impl InsertBuilder {
 
     sql.push_str("INSERT INTO ");
     self.push_target(&mut sql);
-    let mut params = self.push_rows(&mut sql, Dialect::Postgres);
+    let mut params = BoundParams::new();
+    self.push_rows(&mut sql, &mut params, Dialect::Postgres);
 
     match &self.conflict_mode {
       ConflictMode::None => {},
@@ -77,7 +80,7 @@ impl InsertBuilder {
     }
     self.push_returning(&mut sql);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// Appends the target: `"table"`, or `"database"."table"` when qualified.

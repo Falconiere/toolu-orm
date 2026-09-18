@@ -2,9 +2,8 @@
 
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::SelectSource;
+use toolu_orm_core::expr::{BoundParams, SelectSource};
 use toolu_orm_core::query_column::ColumnRef;
-use toolu_orm_core::value::Value;
 
 use super::conflict::ConflictMode;
 use super::InsertBuilder;
@@ -77,50 +76,55 @@ impl InsertBuilder {
     sql.push_str(&format!(" ({})", rendered.join(", ")));
   }
 
-  /// Appends the column list and the rows, returning the values they bind in
-  /// the order their placeholders were written.
-  pub(super) fn push_rows(&self, sql: &mut String, dialect: Dialect) -> Vec<Value> {
+  /// Appends the column list and the rows, binding what they carry onto the
+  /// statement's `params` in the order their placeholders were written.
+  pub(super) fn push_rows(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     self.push_column_list(sql);
     match &self.select {
-      Some(rows) => self.push_select_rows(sql, rows, dialect),
-      None => self.push_values(sql, dialect),
+      Some(rows) => self.push_select_rows(sql, rows, params, dialect),
+      None => self.push_values(sql, params, dialect),
     }
   }
 
   /// Appends ` VALUES (<a>, <b>)`.
-  fn push_values(&self, sql: &mut String, dialect: Dialect) -> Vec<Value> {
+  fn push_values(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     sql.push_str(" VALUES (");
 
-    let mut params: Vec<Value> = Vec::with_capacity(self.values.len());
     let mut rendered: Vec<String> = Vec::with_capacity(self.values.len());
     for value in &self.values {
-      let start = params.len() + 1;
-      let (fragment, value_params) = value.to_sql_fragment_for(start, dialect);
-      params.extend(value_params);
-      rendered.push(fragment);
+      rendered.push(value.render_into(params, dialect));
     }
 
     sql.push_str(&rendered.join(", "));
     sql.push(')');
-    params
   }
 
-  /// Appends ` <select>`, numbered from `1`: the target and the column list
-  /// are written before it and neither binds a value.
+  /// Appends ` <select>`, numbered from the live `params.len() + 1`: the
+  /// target and the column list are written before it and neither binds.
   ///
-  /// The statement returned by `to_select_sql_for` is complete and
+  /// The statement `to_select_sql_into` renders is complete and
   /// unparenthesised — `WITH` prefix and `UNION` arms included — so it is
   /// appended whole. Whatever renders after it (`ON CONFLICT`, `RETURNING`)
   /// continues from the live `params.len()`, which is how a source's binds end
-  /// up ahead of a conflict clause's with no arithmetic anywhere.
-  fn push_select_rows(&self, sql: &mut String, rows: &SelectRows, dialect: Dialect) -> Vec<Value> {
+  /// up ahead of a conflict clause's with no arithmetic anywhere — and, since
+  /// the source shares the statement's ledger, how one handle can appear in
+  /// both.
+  fn push_select_rows(
+    &self,
+    sql: &mut String,
+    rows: &SelectRows,
+    params: &mut BoundParams,
+    dialect: Dialect,
+  ) {
     sql.push(' ');
     if self.needs_sqlite_guard(dialect) {
-      return push_guarded(sql, rows, dialect);
+      push_guarded(sql, rows, params, dialect);
+      return;
     }
-    let (select_sql, params) = rows.source.to_select_sql_for(1, dialect);
+    let select_sql = rows
+      .source
+      .to_select_sql_into(params.next_index(), params, dialect);
     sql.push_str(&select_sql);
-    params
   }
 
   /// Whether SQLite would misread the `ON` of a following `ON CONFLICT` as a
@@ -145,12 +149,14 @@ impl InsertBuilder {
 /// directly is not an alternative: SQLite rejects `INSERT INTO "t" ("a")
 /// (SELECT …)` outright.
 ///
-/// The inner statement still numbers from `1`: the wrapper binds nothing.
-fn push_guarded(sql: &mut String, rows: &SelectRows, dialect: Dialect) -> Vec<Value> {
-  let (select_sql, params) = rows.source.to_select_sql_for(1, dialect);
+/// The inner statement numbers from the live `params.len() + 1`: the wrapper
+/// binds nothing.
+fn push_guarded(sql: &mut String, rows: &SelectRows, params: &mut BoundParams, dialect: Dialect) {
+  let select_sql = rows
+    .source
+    .to_select_sql_into(params.next_index(), params, dialect);
   sql.push_str(&format!(
     "SELECT * FROM ({select_sql}) AS {} WHERE true",
     quote_ident(GUARD_ALIAS)
   ));
-  params
 }

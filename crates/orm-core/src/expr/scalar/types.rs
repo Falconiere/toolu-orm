@@ -1,8 +1,9 @@
 //! The scalar node: [`Scalar`], its kinds, and its leaf constructors.
 
 use crate::dialect::Dialect;
+use crate::expr::binding::BindSource;
 use crate::expr::render::render_scalar;
-use crate::expr::{Expr, SelectSource};
+use crate::expr::{BoundParams, Expr, SelectSource, SharedBind};
 use crate::query_column::Column;
 use crate::value::Value;
 
@@ -38,8 +39,8 @@ pub struct Scalar {
 pub(crate) enum ScalarKind {
   /// Pre-rendered SQL text plus the values its `?` placeholders bind.
   Raw { sql: String, params: Vec<Value> },
-  /// One bound value, rendered as `?N` / `$N`.
-  Bind(Value),
+  /// One bound value, rendered as `?N` / `$N` — its own, or a shared handle's.
+  Bind(BindSource),
   /// `name(arg, ...)` with a validated function name.
   Func { name: String, args: Vec<Scalar> },
   /// `(left <op> right)` for arithmetic and `||` concatenation.
@@ -90,7 +91,20 @@ impl Scalar {
   #[must_use]
   pub fn bind(value: impl Into<Value>) -> Self {
     Self {
-      kind: ScalarKind::Bind(value.into()),
+      kind: ScalarKind::Bind(BindSource::Owned(value.into())),
+    }
+  }
+
+  /// A [`SharedBind`] in value position — the reusable twin of
+  /// [`Scalar::bind`].
+  ///
+  /// Every scalar built from one handle renders the same placeholder, so the
+  /// value is bound once however many projections, comparisons, `CASE` arms or
+  /// assignments name it.
+  #[must_use]
+  pub fn shared(bind: &SharedBind) -> Self {
+    Self {
+      kind: ScalarKind::Bind(BindSource::Shared(bind.clone())),
     }
   }
 
@@ -121,13 +135,20 @@ impl Scalar {
     Self { kind }
   }
 
+  /// Renders into `params`, sharing its binding ledger; the scalar twin of
+  /// [`Expr::render_into`].
+  #[must_use]
+  pub fn render_into(&self, params: &mut BoundParams, dialect: Dialect) -> String {
+    render_scalar(&self.kind, params, dialect)
+  }
+
   /// Render with dialect-specific placeholders starting at `start`, returning
   /// the SQL and the values it binds, in emission order.
   #[must_use]
   pub fn to_sql_fragment_for(&self, start: usize, dialect: Dialect) -> (String, Vec<Value>) {
-    let mut params: Vec<Value> = Vec::new();
-    let sql = render_scalar(&self.kind, start, &mut params, dialect);
-    (sql, params)
+    let mut params = BoundParams::new();
+    let sql = params.nested(start, |nested| self.render_into(nested, dialect));
+    (sql, params.into_values())
   }
 
   /// [`Scalar::to_sql_fragment_for`] against [`Dialect::CURRENT`].

@@ -3,6 +3,7 @@
 //! [`SelectBuilder::fetch_optional`] send.
 
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::expr::BoundParams;
 use toolu_orm_core::value::Value;
 
 use super::SelectBuilder;
@@ -50,20 +51,18 @@ impl SelectBuilder {
   pub(super) fn append_limit_offset_for(
     &self,
     sql: &mut String,
-    params: &mut Vec<Value>,
+    params: &mut BoundParams,
     dialect: Dialect,
     limit: Option<i64>,
   ) {
     if let Some(limit) = limit {
-      let idx = params.len() + 1;
-      params.push(Value::Integer(limit));
+      let idx = params.push(Value::Integer(limit));
       sql.push_str(&format!(" LIMIT {}", dialect.param(idx)));
     } else if dialect == Dialect::Sqlite && self.offset_val.is_some() {
       sql.push_str(" LIMIT -1");
     }
     if let Some(offset) = self.offset_val {
-      let idx = params.len() + 1;
-      params.push(Value::Integer(offset));
+      let idx = params.push(Value::Integer(offset));
       sql.push_str(&format!(" OFFSET {}", dialect.param(idx)));
     }
   }

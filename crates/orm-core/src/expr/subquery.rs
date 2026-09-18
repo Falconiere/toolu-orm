@@ -10,6 +10,7 @@
 //! already solves this for columns.
 
 use crate::dialect::Dialect;
+use crate::expr::BoundParams;
 use crate::value::Value;
 
 /// A complete `SELECT` statement whose first placeholder takes a
@@ -27,4 +28,19 @@ use crate::value::Value;
 pub trait SelectSource: Send + Sync {
   /// The statement and the values it binds, first placeholder at `start`.
   fn to_select_sql_for(&self, start: usize, dialect: Dialect) -> (String, Vec<Value>);
+
+  /// The statement rendered into `params`, sharing its binding ledger so a
+  /// [`SharedBind`](crate::expr::SharedBind) used inside *and* outside this
+  /// statement takes one placeholder.
+  ///
+  /// The default renders through [`Self::to_select_sql_for`] with an
+  /// independent ledger: correct SQL and correct values, but a handle used on
+  /// both sides binds once on each. Implementors that render into a
+  /// [`BoundParams`] should override it — `SelectBuilder` does, through
+  /// [`BoundParams::nested`].
+  fn to_select_sql_into(&self, start: usize, params: &mut BoundParams, dialect: Dialect) -> String {
+    let (sql, sub_params) = self.to_select_sql_for(start, dialect);
+    params.extend(sub_params);
+    sql
+  }
 }

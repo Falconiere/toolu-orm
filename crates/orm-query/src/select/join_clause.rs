@@ -2,8 +2,7 @@
 
 use toolu_orm_core::alias::TableRef;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::JoinCondition;
-use toolu_orm_core::value::Value;
+use toolu_orm_core::expr::{BoundParams, JoinCondition};
 
 use super::SelectBuilder;
 
@@ -43,14 +42,12 @@ impl SelectBuilder {
   /// a table-valued function binds its arguments there — then its `ON`. The
   /// clauses around them do the same, so the whole statement's parameter
   /// vector is in bind order by construction.
-  pub(super) fn append_joins(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
+  pub(super) fn append_joins(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     for join in &self.joins {
-      let table_start = params.len() + 1;
+      let table_start = params.next_index();
       let (table_sql, table_params) = join.table.to_sql_fragment_for(table_start, dialect);
       params.extend(table_params);
-      let on_start = params.len() + 1;
-      let (on_sql, on_params) = join.condition.to_sql_fragment_for(on_start, dialect);
-      params.extend(on_params);
+      let on_sql = join.condition.render_into(params, dialect);
       sql.push_str(&format!(" {} {table_sql} ON {on_sql}", join.join_type));
     }
   }
