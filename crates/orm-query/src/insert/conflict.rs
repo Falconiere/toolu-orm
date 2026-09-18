@@ -1,7 +1,8 @@
 //! The conflict policy an [`super::InsertBuilder`] carries, and the legacy
 //! Postgres rendering of `or_replace()`.
 
-use super::ident::quote_ident;
+use toolu_orm_core::alias::quote_ident;
+
 use super::on_conflict::OnConflict;
 
 /// How an `INSERT` reacts to a uniqueness conflict.

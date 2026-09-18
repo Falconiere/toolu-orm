@@ -5,11 +5,14 @@
 //! - [`InsertBuilder`] — fluent builder for INSERT statements
 //! - [`OnConflict`] — an explicit `ON CONFLICT (…) DO NOTHING | DO UPDATE SET …`
 //!   clause, rendered identically on SQLite and Postgres
+//! - `InsertBuilder::select` — `INSERT INTO "t" ("a", "b") SELECT …`, a
+//!   set-based copy whose rows are never decoded into Rust
 
 mod builder;
 mod conflict;
-mod ident;
 mod on_conflict;
+mod rows;
+mod statement;
 
 use crate::where_clause::cfg_single_backend;
 

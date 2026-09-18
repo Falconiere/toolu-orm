@@ -1,11 +1,10 @@
 //! [`OnConflict`] — an explicit `ON CONFLICT (…) DO NOTHING | DO UPDATE SET …`.
 
+use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::Scalar;
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
-
-use super::ident::quote_ident;
 
 /// What the clause does once its target matches.
 ///

@@ -1,6 +1,8 @@
 # Table aliases and JOIN predicates
 
 **Feature:** `TableRef` puts a table in a `FROM` / `JOIN` slot under an optional alias, `TableRef::column` turns a typed `Column<T>` into an `AliasedColumn<T>` addressed through that alias, `columns_qualified` / `column_as` project qualified, and `JoinCondition` is an expression tree — column-to-column comparisons and bound-value predicates combined with `and` / `or`.
+A `TableRef` also carries an optional **database or schema** qualifier — `TableRef::new("t").in_database("old")` renders `"old"."t"` — which is covered on its own page, [INSERT … SELECT and database-qualified names](insert-select.md), together with the tests that pin it.
+
 **Drivers:** libsql, rusqlite, Postgres. The rendered SQL is pinned per dialect without a database; the four behaviours are executed against real rows on all three.
 **Spec:** issue [#111](https://github.com/Falconiere/toolu-orm/issues/111).
 

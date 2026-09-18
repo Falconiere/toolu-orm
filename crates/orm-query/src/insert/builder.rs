@@ -1,42 +1,69 @@
-//! The [`InsertBuilder`] itself: columns, values, and dialect rendering.
+//! The [`InsertBuilder`] itself: the target, the column/value pairs, the
+//! conflict policy and the `RETURNING` projection.
+//!
+//! The `SELECT` row source lives in `super::rows`, and rendering in
+//! `super::statement`; both read these fields.
 
-use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::alias::TableRef;
 use toolu_orm_core::expr::Scalar;
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
 
 use crate::where_clause::cfg_single_backend;
 
-use super::conflict::{push_legacy_postgres_replace, ConflictMode};
-use super::ident::quote_ident;
+use super::conflict::ConflictMode;
 use super::on_conflict::OnConflict;
+use super::rows::SelectRows;
 
 cfg_single_backend! {
   use crate::exec_helpers::impl_execute;
 }
 
 pub struct InsertBuilder {
-  /// Named by the `RETURNING` fetch methods for `QueryError::NotFound`.
-  pub(super) table: String,
-  columns: Vec<String>,
+  /// The `INSERT INTO` target, which may carry a database qualifier.
+  pub(super) table: TableRef,
+  pub(super) columns: Vec<String>,
   /// One scalar per column, in the same order; a plain `set` stores a bind.
-  values: Vec<Scalar>,
-  conflict_mode: ConflictMode,
-  conflict_cols: Vec<String>,
+  /// Unused, but kept, while a `SELECT` source is present.
+  pub(super) values: Vec<Scalar>,
+  /// When set, rows come from this statement instead of from `values`.
+  pub(super) select: Option<SelectRows>,
+  pub(super) conflict_mode: ConflictMode,
+  pub(super) conflict_cols: Vec<String>,
   /// Column names projected by `RETURNING`, in call order.
-  returning: Vec<String>,
+  pub(super) returning: Vec<String>,
 }
 
 impl InsertBuilder {
   pub fn new(table: &str) -> Self {
+    Self::into_table(table)
+  }
+
+  /// [`Self::new`] for a target that may carry a database qualifier or an
+  /// alias.
+  ///
+  /// `TableRef::new("indexed_files").in_database("main")` renders
+  /// `INSERT INTO "main"."indexed_files"` — two identifiers, where the dotted
+  /// string `"main.indexed_files"` would be one. `&str`, `String`, `TableRef`
+  /// and `&TableRef` all convert.
+  pub fn into_table(table: impl Into<TableRef>) -> Self {
     Self {
-      table: table.to_owned(),
+      table: table.into(),
       columns: Vec::new(),
       values: Vec::new(),
+      select: None,
       conflict_mode: ConflictMode::None,
       conflict_cols: Vec::new(),
       returning: Vec::new(),
     }
+  }
+
+  /// The target's base name, never its database qualifier or alias.
+  ///
+  /// This is what `QueryError::NotFound` carries, because it is what the
+  /// caller named.
+  pub fn table_name(&self) -> &str {
+    self.table.table()
   }
 
   /// `"<column>"` bound to one value.
@@ -118,88 +145,6 @@ impl InsertBuilder {
   pub fn returning<T>(mut self, col: &Column<T>) -> Self {
     self.returning.push(col.name.to_owned());
     self
-  }
-
-  /// Appends ` RETURNING "a", "b"` when any column was projected.
-  fn push_returning(&self, sql: &mut String) {
-    if self.returning.is_empty() {
-      return;
-    }
-    let cols: Vec<String> = self.returning.iter().map(|c| quote_ident(c)).collect();
-    sql.push_str(&format!(" RETURNING {}", cols.join(", ")));
-  }
-
-  pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
-    match dialect {
-      Dialect::Sqlite => self.to_sql_sqlite(),
-      Dialect::Postgres => self.to_sql_postgres(),
-    }
-  }
-
-  pub fn to_sql(&self) -> (String, Vec<Value>) {
-    self.to_sql_for(Dialect::CURRENT)
-  }
-
-  /// Appends `("a", "b") VALUES (<a>, <b>)` and returns the values bound, in
-  /// the order their placeholders were written.
-  fn push_columns_and_values(&self, sql: &mut String, dialect: Dialect) -> Vec<Value> {
-    let col_list: Vec<String> = self.columns.iter().map(|c| quote_ident(c)).collect();
-    sql.push_str(&format!(" ({}) VALUES (", col_list.join(", ")));
-
-    let mut params: Vec<Value> = Vec::with_capacity(self.values.len());
-    let mut rendered: Vec<String> = Vec::with_capacity(self.values.len());
-    for value in &self.values {
-      let start = params.len() + 1;
-      let (fragment, value_params) = value.to_sql_fragment_for(start, dialect);
-      params.extend(value_params);
-      rendered.push(fragment);
-    }
-
-    sql.push_str(&rendered.join(", "));
-    sql.push(')');
-    params
-  }
-
-  fn to_sql_sqlite(&self) -> (String, Vec<Value>) {
-    let mut sql = String::new();
-
-    let keyword = match self.conflict_mode {
-      ConflictMode::Replace => "INSERT OR REPLACE INTO",
-      ConflictMode::Ignore => "INSERT OR IGNORE INTO",
-      ConflictMode::None | ConflictMode::Clause(_) => "INSERT INTO",
-    };
-
-    sql.push_str(keyword);
-    sql.push(' ');
-    sql.push_str(&quote_ident(&self.table));
-    let mut params = self.push_columns_and_values(&mut sql, Dialect::Sqlite);
-
-    if let ConflictMode::Clause(clause) = &self.conflict_mode {
-      clause.push_sql(&mut sql, &mut params, Dialect::Sqlite);
-    }
-    self.push_returning(&mut sql);
-
-    (sql, params)
-  }
-
-  fn to_sql_postgres(&self) -> (String, Vec<Value>) {
-    let mut sql = String::new();
-
-    sql.push_str("INSERT INTO ");
-    sql.push_str(&quote_ident(&self.table));
-    let mut params = self.push_columns_and_values(&mut sql, Dialect::Postgres);
-
-    match &self.conflict_mode {
-      ConflictMode::None => {},
-      ConflictMode::Ignore => sql.push_str(" ON CONFLICT DO NOTHING"),
-      ConflictMode::Replace => {
-        push_legacy_postgres_replace(&mut sql, &self.columns, &self.conflict_cols);
-      },
-      ConflictMode::Clause(clause) => clause.push_sql(&mut sql, &mut params, Dialect::Postgres),
-    }
-    self.push_returning(&mut sql);
-
-    (sql, params)
   }
 }
 
