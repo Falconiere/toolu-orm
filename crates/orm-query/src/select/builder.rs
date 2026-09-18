@@ -13,7 +13,7 @@
 //! ```
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::{Expr, JoinCondition, OrderBy};
+use toolu_orm_core::expr::{Expr, JoinCondition, OrderBy, Scalar};
 use toolu_orm_core::query_column::ColumnRef;
 use toolu_orm_core::value::Value;
 
@@ -37,7 +37,7 @@ pub struct SelectBuilder {
   pub(super) order_bys: Vec<OrderBy>,
   pub(super) limit_val: Option<i64>,
   pub(super) offset_val: Option<i64>,
-  pub(super) column_exprs: Vec<(String, String)>,
+  pub(super) column_exprs: Vec<(Scalar, String)>,
   pub(super) is_raw: bool,
   pub(super) knn_applied: bool,
 }
@@ -103,11 +103,6 @@ impl SelectBuilder {
     self
   }
 
-  pub fn order_by(mut self, ob: impl Into<OrderBy>) -> Self {
-    self.order_bys.push(ob.into());
-    self
-  }
-
   pub fn limit(mut self, n: i64) -> Self {
     self.limit_val = Some(n);
     self
@@ -115,11 +110,6 @@ impl SelectBuilder {
 
   pub fn offset(mut self, n: i64) -> Self {
     self.offset_val = Some(n);
-    self
-  }
-
-  pub fn column_expr(mut self, expr: &str, alias: &str) -> Self {
-    self.column_exprs.push((expr.to_owned(), alias.to_owned()));
     self
   }
 
@@ -142,7 +132,8 @@ impl SelectBuilder {
     let mut params: Vec<Value> = Vec::new();
 
     sql.push_str("SELECT ");
-    sql.push_str(&self.build_select_list());
+    let select_list = self.build_select_list(&mut params, dialect);
+    sql.push_str(&select_list);
 
     if !self.is_raw {
       sql.push_str(&format!(r#" FROM "{}""#, self.table));
@@ -150,7 +141,7 @@ impl SelectBuilder {
     }
 
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
-    self.append_order_by(&mut sql);
+    self.append_order_by(&mut sql, &mut params, dialect);
     self.append_limit_offset_for(&mut sql, &mut params, dialect, limit);
 
     (sql, params)
@@ -196,21 +187,6 @@ impl SelectBuilder {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  /// Plain columns first, then the aliased expressions.
-  ///
-  /// Only the non-empty halves are joined, so a builder carrying just one of
-  /// the two gains no stray comma. The expressions used to be dropped unless
-  /// the builder came from [`SelectBuilder::raw`], which silently discarded an
-  /// FTS5 `bm25(...)` projection on an ordinary table.
-  fn build_select_list(&self) -> String {
-    let columns = self.columns.iter().map(|c| format!(r#""{c}""#));
-    let exprs = self
-      .column_exprs
-      .iter()
-      .map(|(expr, alias)| format!(r#"{expr} AS "{alias}""#));
-    columns.chain(exprs).collect::<Vec<_>>().join(", ")
-  }
-
   fn append_joins(&self, sql: &mut String) {
     for join in &self.joins {
       sql.push_str(&format!(
@@ -220,13 +196,5 @@ impl SelectBuilder {
         join.condition.to_sql()
       ));
     }
-  }
-
-  fn append_order_by(&self, sql: &mut String) {
-    if self.order_bys.is_empty() {
-      return;
-    }
-    let parts: Vec<String> = self.order_bys.iter().map(|ob| ob.to_sql()).collect();
-    sql.push_str(&format!(" ORDER BY {}", parts.join(", ")));
   }
 }

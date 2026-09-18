@@ -53,6 +53,7 @@ cargo nextest run -p toolu-orm-facade-consumer --features postgres
 | default | facade_only_test | table_macro_expands_without_the_prelude |
 | default | facade_only_test | companion_column_module_holds_typed_columns |
 | default | facade_only_test | generated_builders_reach_the_query_crate |
+| default | facade_only_test | scalar_expressions_compose_through_the_facade |
 | default | facade_only_test | fts5_table_macro_expands_without_the_prelude |
 | default | facade_only_test | vec0_table_macro_expands_without_the_prelude |
 | default | facade_only_test | view_struct_serializes_through_the_re_exported_serde |

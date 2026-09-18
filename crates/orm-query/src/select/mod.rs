@@ -15,6 +15,8 @@
 
 mod builder;
 mod knn;
+mod ordering;
+mod projection;
 pub mod relational;
 mod row_limit;
 

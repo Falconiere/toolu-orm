@@ -1,11 +1,14 @@
 //! Dialect-aware SQL rendering for [`ExprKind`] trees.
 
 use crate::dialect::Dialect;
+use crate::expr::types::ExprKind;
+use crate::expr::Scalar;
 use crate::value::Value;
 
-use super::types::ExprKind;
+use super::raw_params::number_raw_params;
+use super::scalar::render_scalar;
 
-pub(super) fn render_expr(
+pub(crate) fn render_expr(
   kind: &ExprKind,
   start: usize,
   params: &mut Vec<Value>,
@@ -55,6 +58,16 @@ pub(super) fn render_expr(
       params.push(pattern.clone());
       format!("{document} @@ {query_fn}({config}, {})", dialect.param(idx))
     },
+    ExprKind::Compare { left, op, right } => {
+      let left_sql = render_scalar(&left.kind, start, params, dialect);
+      let right_sql = render_scalar(&right.kind, start, params, dialect);
+      format!("{left_sql} {op} {right_sql}")
+    },
+    ExprKind::Like {
+      left,
+      pattern,
+      escape,
+    } => render_like(left, pattern, *escape, start, params, dialect),
     ExprKind::And(left, right) => {
       let left_sql = render_expr(&left.kind, start, params, dialect);
       let right_sql = render_expr(&right.kind, start, params, dialect);
@@ -73,6 +86,34 @@ pub(super) fn render_expr(
       params.extend(raw_params.iter().cloned());
       number_raw_params(sql, base, dialect)
     },
+  }
+}
+
+/// `<left> LIKE <pattern> [ESCAPE ?N]`.
+///
+/// The escape character is bound like any other value — both SQLite and
+/// Postgres accept a parameter in this position — so it travels through the
+/// same numbering as the rest of the tree and no character is interpolated
+/// into the SQL.
+fn render_like(
+  left: &Scalar,
+  pattern: &Scalar,
+  escape: Option<char>,
+  start: usize,
+  params: &mut Vec<Value>,
+  dialect: Dialect,
+) -> String {
+  let left_sql = render_scalar(&left.kind, start, params, dialect);
+  let pattern_sql = render_scalar(&pattern.kind, start, params, dialect);
+  if let Some(character) = escape {
+    let idx = start + params.len();
+    params.push(Value::Text(character.to_string()));
+    format!(
+      "{left_sql} LIKE {pattern_sql} ESCAPE {}",
+      dialect.param(idx)
+    )
+  } else {
+    format!("{left_sql} LIKE {pattern_sql}")
   }
 }
 
@@ -99,34 +140,4 @@ fn render_in_list(
   params.extend(values.iter().cloned());
   let keyword = if negated { "NOT IN" } else { "IN" };
   format!("{column} {keyword} ({})", placeholders.join(", "))
-}
-
-/// Replace bare `?` (not already `?N`) with sequential placeholders starting at `start`.
-fn number_raw_params(sql: &str, start: usize, dialect: Dialect) -> String {
-  let mut result = String::with_capacity(sql.len() + 8);
-  let mut counter = start;
-  let mut chars = sql.chars().peekable();
-
-  while let Some(ch) = chars.next() {
-    if ch != '?' {
-      result.push(ch);
-      continue;
-    }
-    // ch == '?': check if next char is a digit (already numbered)
-    if chars.peek().is_some_and(|c| c.is_ascii_digit()) {
-      let mut num_str = String::new();
-      while chars.peek().is_some_and(|c| c.is_ascii_digit()) {
-        if let Some(d) = chars.next() {
-          num_str.push(d);
-        }
-      }
-      let idx: usize = num_str.parse().unwrap_or(counter);
-      result.push_str(&dialect.param(idx));
-    } else {
-      result.push_str(&dialect.param(counter));
-      counter += 1;
-    }
-  }
-
-  result
 }

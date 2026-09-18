@@ -103,6 +103,12 @@ pub enum DbCoreError {
   #[error("invalid pgvector argument for {feature}: {reason}")]
   PgVectorInvalidArgument { feature: String, reason: String },
 
+  /// A scalar function name is rendered as SQL syntax, never quoted, so it is
+  /// validated instead of escaped — nothing outside `[A-Za-z_][A-Za-z0-9_]*`
+  /// can reach a statement.
+  #[error("\"{name}\" cannot be a scalar function name: it must match [A-Za-z_][A-Za-z0-9_]*")]
+  InvalidScalarFunction { name: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

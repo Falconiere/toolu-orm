@@ -1,7 +1,7 @@
 //! UPDATE query builder with SET clause and filter support.
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::Expr;
+use toolu_orm_core::expr::{Expr, Scalar};
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
 
@@ -11,18 +11,12 @@ cfg_single_backend! {
   use crate::exec_helpers::impl_execute;
 }
 
-// ── SetClause ─────────────────────────────────────────────────────────────────
-
-enum SetClause {
-  Value { column: String, value: Value },
-  Expr { column: String, sql: String },
-}
-
 // ── UpdateBuilder ─────────────────────────────────────────────────────────────
 
 pub struct UpdateBuilder {
   table: String,
-  sets: Vec<SetClause>,
+  /// Assigned column name and the scalar it is set to, in call order.
+  sets: Vec<(String, Scalar)>,
   filters: Vec<Expr>,
 }
 
@@ -37,57 +31,43 @@ impl UpdateBuilder {
     }
   }
 
+  /// `"<column>" = ?N` — one bound value.
   pub fn set<T>(mut self, col: &Column<T>, val: impl Into<Value>) -> Self {
-    self.sets.push(SetClause::Value {
-      column: col.name.to_owned(),
-      value: val.into(),
-    });
+    self.sets.push((col.name.to_owned(), Scalar::bind(val)));
     self
   }
 
+  /// `"<column>" = <expr>` from SQL text that binds nothing.
+  ///
+  /// [`UpdateBuilder::set_scalar`] is the form that carries parameters and
+  /// composes: `access_count = access_count + 1` is
+  /// `set_scalar(&HITS, Scalar::col(&HITS) + Scalar::bind(1))`.
   pub fn set_expr<T>(mut self, col: &Column<T>, expr: &str) -> Self {
-    self.sets.push(SetClause::Expr {
-      column: col.name.to_owned(),
-      sql: expr.to_owned(),
-    });
+    self.sets.push((col.name.to_owned(), Scalar::sql(expr)));
+    self
+  }
+
+  /// `"<column>" = <scalar>` — a computed assignment that may bind values.
+  ///
+  /// Its placeholders are numbered before the `WHERE` clause's, because `SET`
+  /// is rendered first.
+  pub fn set_scalar<T>(mut self, col: &Column<T>, expr: Scalar) -> Self {
+    self.sets.push((col.name.to_owned(), expr));
     self
   }
 
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
-    let mut sql = String::new();
+    let mut sql = format!(r#"UPDATE "{}" SET "#, self.table);
     let mut params: Vec<Value> = Vec::new();
 
-    let mut set_params: Vec<Value> = Vec::new();
-    for clause in &self.sets {
-      if let SetClause::Value { value, .. } = clause {
-        set_params.push(value.clone());
-      }
+    let mut parts: Vec<String> = Vec::with_capacity(self.sets.len());
+    for (column, value) in &self.sets {
+      let start = params.len() + 1;
+      let (fragment, value_params) = value.to_sql_fragment_for(start, dialect);
+      params.extend(value_params);
+      parts.push(format!(r#""{column}" = {fragment}"#));
     }
-
-    sql.push_str(&format!(r#"UPDATE "{}""#, self.table));
-    sql.push_str(" SET ");
-
-    let mut set_idx = 1usize;
-    let set_parts: Vec<String> = self
-      .sets
-      .iter()
-      .map(|clause| match clause {
-        SetClause::Value { column, .. } => {
-          let part = format!(r#""{column}" = {}"#, dialect.param(set_idx));
-          set_idx += 1;
-          part
-        },
-        SetClause::Expr {
-          column,
-          sql: expr_sql,
-        } => {
-          format!(r#""{column}" = {expr_sql}"#)
-        },
-      })
-      .collect();
-
-    sql.push_str(&set_parts.join(", "));
-    params.extend(set_params);
+    sql.push_str(&parts.join(", "));
 
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
 

@@ -110,6 +110,13 @@ path = "tests/relational_binary_decode_test.rs"
 name = "select_test"
 path = "tests/select_test/main.rs"
 
+# Pure SQL generation for the scalar-expression surface: no driver type in the
+# binary, so it belongs in the feature-less default lane. Its live twins are
+# {rusqlite,libsql,postgres}_scalar_expr_test below.
+[[test]]
+name = "scalar_expr_sql_test"
+path = "tests/scalar_expr_sql_test.rs"
+
 [[test]]
 name = "first_row_sql_test"
 path = "tests/first_row_sql_test.rs"
@@ -183,6 +190,11 @@ path = "tests/libsql_relational_blob_test.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "libsql_scalar_expr_test"
+path = "tests/libsql_scalar_expr_test/main.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "fts5_libsql_test"
 path = "tests/fts5_libsql_test.rs"
 required-features = ["libsql"]
@@ -231,6 +243,11 @@ required-features = ["rusqlite"]
 [[test]]
 name = "fts5_rusqlite_test"
 path = "tests/fts5_rusqlite_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "rusqlite_scalar_expr_test"
+path = "tests/rusqlite_scalar_expr_test/main.rs"
 required-features = ["rusqlite"]
 
 [[test]]
@@ -283,6 +300,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_transaction_test"
 path = "tests/postgres_transaction_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_scalar_expr_test"
+path = "tests/postgres_scalar_expr_test/main.rs"
 required-features = ["postgres"]
 
 [[test]]

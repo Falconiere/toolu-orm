@@ -14,10 +14,12 @@ Type-safe SQL query builders for toolu-orm. Provides Select, Insert, Update, and
 src/
 ├── lib.rs                       # Module exports
 ├── select/
-│   ├── builder.rs               # SelectBuilder (columns, joins, filters, order, limit)
+│   ├── builder.rs               # SelectBuilder (columns, joins, filters, limit)
+│   ├── projection.rs            # column_expr / column_scalar and the select list
+│   ├── ordering.rs              # order_by and the ORDER BY tail
 │   └── executor_fetch.rs        # query_map extension methods (feature-gated)
-├── insert.rs                    # InsertBuilder (set, or_replace, or_ignore)
-├── update.rs                    # UpdateBuilder (set, set_expr, filter)
+├── insert.rs                    # InsertBuilder (set, set_scalar, or_replace, or_ignore)
+├── update.rs                    # UpdateBuilder (set, set_expr, set_scalar, filter)
 ├── delete.rs                    # DeleteBuilder (filter)
 ├── executor.rs                  # Executor trait + database implementations
 ├── transaction.rs               # Transaction wrapper

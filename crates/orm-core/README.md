@@ -19,8 +19,8 @@ src/
 ├── index.rs            # IndexDef
 ├── value.rs            # Value enum + driver conversions
 ├── row.rs              # FromRow trait (feature-gated)
-├── expr/               # Expr, ExprKind, OrderBy, JoinCondition (types.rs) + per-dialect rendering (render.rs)
-├── query_column.rs     # Column<T>, ColumnRef, CommonOps/TextOps/NumericOps
+├── expr/               # Expr + Scalar trees (types/, scalar/) and per-dialect rendering (render/)
+├── query_column/       # Column<T>, ColumnRef, CommonOps/TextOps/NumericOps/Fts5Ops/Vec0Ops
 ├── connection.rs       # libsql Connection wrapper (feature: libsql)
 ├── error.rs            # DbCoreError
 ├── diff.rs             # Schema diff → Operation list
