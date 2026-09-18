@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0](https://github.com/Falconiere/toolu-orm/compare/v0.7.0...v0.8.0) - 2026-09-18
+
+### `toolu-orm-cli`
+
+#### Added
+- *(core,query)* add DISTINCT, GROUP BY, HAVING and typed aggregate projections ([#109](https://github.com/Falconiere/toolu-orm/pull/109)) ([#123](https://github.com/Falconiere/toolu-orm/pull/123))
+- *(core,query)* [**breaking**] table aliases, qualified projections, and expression JOIN predicates ([#111](https://github.com/Falconiere/toolu-orm/pull/111)) ([#121](https://github.com/Falconiere/toolu-orm/pull/121))
+
+### `toolu-orm`
+
+#### Added
+- *(core,query)* add DISTINCT, GROUP BY, HAVING and typed aggregate projections ([#109](https://github.com/Falconiere/toolu-orm/pull/109)) ([#123](https://github.com/Falconiere/toolu-orm/pull/123))
+- *(core,query)* [**breaking**] table aliases, qualified projections, and expression JOIN predicates ([#111](https://github.com/Falconiere/toolu-orm/pull/111)) ([#121](https://github.com/Falconiere/toolu-orm/pull/121))
+
+### `toolu-orm-query`
+
+#### Added
+- *(core,query)* reuse one bound parameter across repeated predicates ([#116](https://github.com/Falconiere/toolu-orm/pull/116)) ([#129](https://github.com/Falconiere/toolu-orm/pull/129))
+- *(core,query)* compose INSERT … SELECT and database-qualified table references ([#114](https://github.com/Falconiere/toolu-orm/pull/114)) ([#128](https://github.com/Falconiere/toolu-orm/pull/128))
+- *(core,query)* [**breaking**] compose CTEs, set operations, subqueries and table-valued sources ([#110](https://github.com/Falconiere/toolu-orm/pull/110)) ([#127](https://github.com/Falconiere/toolu-orm/pull/127))
+- *(core,query)* add DISTINCT, GROUP BY, HAVING and typed aggregate projections ([#109](https://github.com/Falconiere/toolu-orm/pull/109)) ([#123](https://github.com/Falconiere/toolu-orm/pull/123))
+- *(query,core)* compose SQLite upserts, expression values and RETURNING ([#108](https://github.com/Falconiere/toolu-orm/pull/108)) ([#122](https://github.com/Falconiere/toolu-orm/pull/122))
+- *(core,query)* [**breaking**] table aliases, qualified projections, and expression JOIN predicates ([#111](https://github.com/Falconiere/toolu-orm/pull/111)) ([#121](https://github.com/Falconiere/toolu-orm/pull/121))
+- *(core,query)* compose scalar expressions and LIKE ESCAPE ([#112](https://github.com/Falconiere/toolu-orm/pull/112)) ([#120](https://github.com/Falconiere/toolu-orm/pull/120))
+
+### `toolu-orm-macros`
+
+#### Added
+- *(core,query)* add DISTINCT, GROUP BY, HAVING and typed aggregate projections ([#109](https://github.com/Falconiere/toolu-orm/pull/109)) ([#123](https://github.com/Falconiere/toolu-orm/pull/123))
+- *(core,query)* [**breaking**] table aliases, qualified projections, and expression JOIN predicates ([#111](https://github.com/Falconiere/toolu-orm/pull/111)) ([#121](https://github.com/Falconiere/toolu-orm/pull/121))
+
+### `toolu-orm-connection`
+
+#### Added
+- *(core,query)* add DISTINCT, GROUP BY, HAVING and typed aggregate projections ([#109](https://github.com/Falconiere/toolu-orm/pull/109)) ([#123](https://github.com/Falconiere/toolu-orm/pull/123))
+- *(core,query)* [**breaking**] table aliases, qualified projections, and expression JOIN predicates ([#111](https://github.com/Falconiere/toolu-orm/pull/111)) ([#121](https://github.com/Falconiere/toolu-orm/pull/121))
+- *(connection)* expose typed SQLite maintenance operations ([#115](https://github.com/Falconiere/toolu-orm/pull/115)) ([#119](https://github.com/Falconiere/toolu-orm/pull/119))
+
+### `toolu-orm-sqlite-vec-register`
+
+#### Added
+- *(core,query)* add DISTINCT, GROUP BY, HAVING and typed aggregate projections ([#109](https://github.com/Falconiere/toolu-orm/pull/109)) ([#123](https://github.com/Falconiere/toolu-orm/pull/123))
+- *(core,query)* [**breaking**] table aliases, qualified projections, and expression JOIN predicates ([#111](https://github.com/Falconiere/toolu-orm/pull/111)) ([#121](https://github.com/Falconiere/toolu-orm/pull/121))
+
+### `toolu-orm-core`
+
+#### Added
+- *(core,query)* reuse one bound parameter across repeated predicates ([#116](https://github.com/Falconiere/toolu-orm/pull/116)) ([#129](https://github.com/Falconiere/toolu-orm/pull/129))
+- *(core,query)* compose INSERT … SELECT and database-qualified table references ([#114](https://github.com/Falconiere/toolu-orm/pull/114)) ([#128](https://github.com/Falconiere/toolu-orm/pull/128))
+- *(core,query)* [**breaking**] compose CTEs, set operations, subqueries and table-valued sources ([#110](https://github.com/Falconiere/toolu-orm/pull/110)) ([#127](https://github.com/Falconiere/toolu-orm/pull/127))
+- *(core,query)* add DISTINCT, GROUP BY, HAVING and typed aggregate projections ([#109](https://github.com/Falconiere/toolu-orm/pull/109)) ([#123](https://github.com/Falconiere/toolu-orm/pull/123))
+- *(query,core)* compose SQLite upserts, expression values and RETURNING ([#108](https://github.com/Falconiere/toolu-orm/pull/108)) ([#122](https://github.com/Falconiere/toolu-orm/pull/122))
+- *(core,query)* [**breaking**] table aliases, qualified projections, and expression JOIN predicates ([#111](https://github.com/Falconiere/toolu-orm/pull/111)) ([#121](https://github.com/Falconiere/toolu-orm/pull/121))
+- *(core,query)* compose scalar expressions and LIKE ESCAPE ([#112](https://github.com/Falconiere/toolu-orm/pull/112)) ([#120](https://github.com/Falconiere/toolu-orm/pull/120))
+
+#### Fixed
+- *(core)* number Expr::raw placeholders after prior params in a tree ([#113](https://github.com/Falconiere/toolu-orm/pull/113)) ([#117](https://github.com/Falconiere/toolu-orm/pull/117))
+
 ## [0.7.0](https://github.com/Falconiere/toolu-orm/compare/v0.6.0...v0.7.0) - 2026-09-17
 
 ### `toolu-orm-cli`
