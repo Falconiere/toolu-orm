@@ -1,6 +1,7 @@
 //! `name(arg, ...)` — a scalar function call with a validated name.
 
 use crate::error::DbCoreError;
+use crate::expr::function_name::is_valid_function_name;
 
 use super::types::{Scalar, ScalarKind};
 
@@ -36,25 +37,14 @@ impl Scalar {
   /// anything but ASCII letters, digits and underscores, or starts with a
   /// digit.
   pub fn func(name: &str, args: Vec<Scalar>) -> Result<Self, DbCoreError> {
-    validate_name(name)?;
+    if !is_valid_function_name(name) {
+      return Err(DbCoreError::InvalidScalarFunction {
+        name: name.to_owned(),
+      });
+    }
     Ok(Self::from_kind(ScalarKind::Func {
       name: name.to_owned(),
       args,
     }))
   }
-}
-
-fn validate_name(name: &str) -> Result<(), DbCoreError> {
-  let invalid = || DbCoreError::InvalidScalarFunction {
-    name: name.to_owned(),
-  };
-  let mut chars = name.chars();
-  let first = chars.next().ok_or_else(invalid)?;
-  if !(first.is_ascii_alphabetic() || first == '_') {
-    return Err(invalid());
-  }
-  if !chars.all(|c| c.is_ascii_alphanumeric() || c == '_') {
-    return Err(invalid());
-  }
-  Ok(())
 }

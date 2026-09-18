@@ -7,6 +7,7 @@ use crate::value::Value;
 
 use super::raw_params::number_raw_params;
 use super::scalar::render_scalar;
+use super::subquery::{render_exists, render_in_subquery};
 
 /// Renders a predicate node, appending the values it binds to `params`.
 ///
@@ -74,6 +75,14 @@ pub(crate) fn render_expr(
       pattern,
       escape,
     } => render_like(left, pattern, *escape, start, params, dialect),
+    ExprKind::Exists { query, negated } => {
+      render_exists(query.as_ref(), *negated, start, params, dialect)
+    },
+    ExprKind::InSubquery {
+      left,
+      query,
+      negated,
+    } => render_in_subquery(left, query.as_ref(), *negated, start, params, dialect),
     ExprKind::And(left, right) => {
       let left_sql = render_expr(&left.kind, start, params, dialect);
       let right_sql = render_expr(&right.kind, start, params, dialect);

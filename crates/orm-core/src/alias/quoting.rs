@@ -12,6 +12,6 @@
 /// [`Dialect::quote_ident`](crate::dialect::Dialect::quote_ident) is a
 /// different function: it wraps without doubling, so it cannot be handed a name
 /// that carries a quote.
-pub(super) fn quote_ident(ident: &str) -> String {
+pub fn quote_ident(ident: &str) -> String {
   format!("\"{}\"", ident.replace('"', "\"\""))
 }

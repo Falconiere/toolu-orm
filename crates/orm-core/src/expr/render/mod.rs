@@ -3,6 +3,7 @@
 mod predicate;
 mod raw_params;
 mod scalar;
+mod subquery;
 
 pub(crate) use predicate::render_expr;
 pub(crate) use scalar::render_scalar;

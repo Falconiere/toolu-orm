@@ -131,6 +131,13 @@ path = "tests/upsert_sql_test/main.rs"
 name = "grouping_sql_test"
 path = "tests/grouping_sql_test/main.rs"
 
+# Pure SQL generation for CTEs, set operations, subqueries and table-valued
+# FROM sources: no driver type in the binary, so it belongs in the feature-less
+# default lane. Its live twins are {rusqlite,libsql,postgres}_composition_test.
+[[test]]
+name = "composition_sql_test"
+path = "tests/composition_sql_test/main.rs"
+
 [[test]]
 name = "join_alias_sql_test"
 path = "tests/join_alias_sql_test/main.rs"
@@ -218,6 +225,11 @@ path = "tests/libsql_grouping_test/main.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "libsql_composition_test"
+path = "tests/libsql_composition_test/main.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "libsql_joins_test"
 path = "tests/libsql_joins_test.rs"
 required-features = ["libsql"]
@@ -299,6 +311,11 @@ path = "tests/rusqlite_grouping_test/main.rs"
 required-features = ["rusqlite"]
 
 [[test]]
+name = "rusqlite_composition_test"
+path = "tests/rusqlite_composition_test/main.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "rusqlite_connection_executor_test"
 path = "tests/rusqlite_connection_executor_test.rs"
 required-features = ["rusqlite"]
@@ -353,6 +370,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_upsert_test"
 path = "tests/postgres_upsert_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_composition_test"
+path = "tests/postgres_composition_test/main.rs"
 required-features = ["postgres"]
 
 [[test]]

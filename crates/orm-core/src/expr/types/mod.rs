@@ -4,6 +4,7 @@ mod join_condition;
 mod json_expr;
 mod order_by;
 mod predicate;
+mod subquery_predicate;
 
 pub use join_condition::JoinCondition;
 pub use json_expr::JsonExpr;
