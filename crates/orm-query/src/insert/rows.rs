@@ -31,7 +31,8 @@ impl InsertBuilder {
   /// number in the same order, and may project a literal for one the source
   /// table does not have. Calling this makes the `SELECT` the row source, so
   /// any value recorded by [`set`](Self::set) is dropped and a later `set` goes
-  /// on being ignored. An empty `columns` renders `INSERT INTO "t" <select>`,
+  /// on being ignored — both are still held on the builder, and neither is
+  /// rendered. An empty `columns` renders `INSERT INTO "t" <select>`,
   /// matching positionally rather than emitting an empty `()`. `returning`
   /// projects one row per *inserted* row here, so read it with `fetch_all`.
   #[must_use]
@@ -104,7 +105,8 @@ impl InsertBuilder {
     params
   }
 
-  /// Appends ` <select>`, numbered from `1` because nothing precedes it.
+  /// Appends ` <select>`, numbered from `1`: the target and the column list
+  /// are written before it and neither binds a value.
   ///
   /// The statement returned by `to_select_sql_for` is complete and
   /// unparenthesised — `WITH` prefix and `UNION` arms included — so it is
