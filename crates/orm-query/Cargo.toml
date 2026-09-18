@@ -117,6 +117,13 @@ path = "tests/select_test/main.rs"
 name = "scalar_expr_sql_test"
 path = "tests/scalar_expr_sql_test.rs"
 
+# Pure SQL generation for the explicit conflict clause and RETURNING: no
+# driver type in the binary, so it belongs in the feature-less default lane.
+# Its live twins are {rusqlite,libsql,postgres}_upsert_test below.
+[[test]]
+name = "upsert_sql_test"
+path = "tests/upsert_sql_test/main.rs"
+
 [[test]]
 name = "join_alias_sql_test"
 path = "tests/join_alias_sql_test/main.rs"
@@ -204,6 +211,11 @@ path = "tests/libsql_joins_test.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "libsql_upsert_test"
+path = "tests/libsql_upsert_test/main.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "fts5_libsql_test"
 path = "tests/fts5_libsql_test.rs"
 required-features = ["libsql"]
@@ -265,6 +277,11 @@ path = "tests/rusqlite_scalar_expr_test/main.rs"
 required-features = ["rusqlite"]
 
 [[test]]
+name = "rusqlite_upsert_test"
+path = "tests/rusqlite_upsert_test/main.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "rusqlite_connection_executor_test"
 path = "tests/rusqlite_connection_executor_test.rs"
 required-features = ["rusqlite"]
@@ -314,6 +331,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_joins_test"
 path = "tests/postgres_joins_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_upsert_test"
+path = "tests/postgres_upsert_test.rs"
 required-features = ["postgres"]
 
 [[test]]

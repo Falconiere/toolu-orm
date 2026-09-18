@@ -2,6 +2,7 @@
 
 use toolu_orm_core::column::{Integer, Text};
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::error::DbCoreError;
 use toolu_orm_core::expr::Scalar;
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
@@ -51,4 +52,42 @@ fn a_raw_leaf_numbers_its_placeholders_from_the_offset() {
 
   let (postgres, _) = raw.to_sql_fragment_for(5, Dialect::Postgres);
   assert_eq!(postgres, "substr($5, 1, $6)");
+}
+
+#[test]
+fn an_excluded_leaf_names_the_proposed_row_and_binds_nothing() {
+  let (sqlite, sqlite_params) = Scalar::excluded(&BODY).to_sql_fragment_for(3, Dialect::Sqlite);
+  assert_eq!(sqlite, r#""excluded"."body""#);
+  assert!(sqlite_params.is_empty());
+
+  let (postgres, postgres_params) =
+    Scalar::excluded(&HITS).to_sql_fragment_for(7, Dialect::Postgres);
+  assert_eq!(postgres, r#""excluded"."access_count""#);
+  assert!(postgres_params.is_empty());
+}
+
+#[test]
+fn an_excluded_leaf_leaves_its_offset_free_for_the_next_bind() -> Result<(), DbCoreError> {
+  let keep_existing = Scalar::func(
+    "coalesce",
+    vec![Scalar::col(&BODY), Scalar::excluded(&BODY)],
+  )?;
+  let fallback = Scalar::func("coalesce", vec![keep_existing, Scalar::bind("unset")])?;
+
+  let (sql, params) = fallback.to_sql_fragment_for(3, Dialect::Sqlite);
+  assert_eq!(
+    sql,
+    r#"coalesce(coalesce("memories"."body", "excluded"."body"), ?3)"#
+  );
+  assert_eq!(params, vec![Value::Text("unset".to_owned())]);
+  Ok(())
+}
+
+#[test]
+fn an_excluded_leaf_doubles_an_embedded_double_quote() {
+  const ODD: Column<Text> = Column::new("memories", r#"wo"rkspace"#);
+
+  let (sql, params) = Scalar::excluded(&ODD).to_sql_fragment_for(1, Dialect::Sqlite);
+  assert_eq!(sql, r#""excluded"."wo""rkspace""#);
+  assert!(params.is_empty());
 }

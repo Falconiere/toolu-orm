@@ -10,6 +10,7 @@
 mod arith;
 mod case;
 mod compare;
+mod excluded;
 mod func;
 mod like;
 mod order;
