@@ -49,3 +49,4 @@ test, update its page.
 | [Lanes and revived suites](lanes.md) | Which CI lane compiles which suite, and the executor/transaction suites brought back from bit-rot. |
 | [Prepared-statement cache](prepared-statement-cache.md) | Both rusqlite adapters reuse `Connection::prepare_cached` across changed parameters, a schema change, an error followed by reuse, and a row-mapping failure. |
 | [rusqlite async backpressure](rusqlite-async-backpressure.md) | The async rusqlite path admits one operation at a time before `spawn_blocking`, so a contended connection cannot starve tokio's blocking pool, and cancellation on either side of admission is bounded. |
+| [SQLite maintenance operations](sqlite-maintenance-ops.md) | `VACUUM INTO`, `PRAGMA quick_check`, quoted `ATTACH` with a `Drop`-guaranteed `DETACH`, and typed `page_count` / `page_size` on a borrowed `rusqlite::Connection` — plus the documented FFI exception for the FTS5 tokenizer handshake. |

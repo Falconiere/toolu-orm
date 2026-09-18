@@ -52,6 +52,102 @@ run migrate / KNN on the wrapper. The CI rusqlite lane enables the optional
 `sqlite-vec` feature on `toolu-orm-query` to statically link the extension and
 prove that path (`vec0_sqlite_vec_live_test`).
 
+## Maintenance and inspection
+
+SQLite's administration statements are not DML, so no builder reaches them:
+`VACUUM`, `ATTACH`, `DETACH` and `PRAGMA` name schemas and files rather than
+tables and columns. `SqliteMaintenance` is the typed replacement for building
+them as strings, and it works on a **borrowed** connection — it never opens a
+database, never begins a transaction, and never takes ownership, so your
+connection and your transactions stay yours.
+
+```rust
+use std::path::Path;
+use toolu_orm_connection::SqliteMaintenance;
+
+// A validated pre-upgrade snapshot.
+conn.vacuum_into(Path::new("/var/app/snapshot.db"))?;
+let snapshot = conn.attach_database(Path::new("/var/app/snapshot.db"), "snapshot")?;
+let report = snapshot.quick_check()?;
+snapshot.detach()?;
+if !report.is_ok() {
+  return Err(format!("snapshot is unusable: {report}").into());
+}
+
+// Storage statistics.
+let stats = conn.storage_stats()?;
+println!("{} bytes over {} pages", stats.bytes(), stats.page_count);
+```
+
+`attach_database` returns a guard. The `DETACH` happens on every exit path,
+including the `?` that abandons a half-finished copy, so the error branch you
+used to have to write is gone:
+
+```rust
+let old = conn.attach_database(&archive, "old")?;
+conn.execute("INSERT INTO t SELECT * FROM old.t", [])?;  // a failure here still detaches
+old.detach()?;                                           // explicit, and reports its own error
+```
+
+Four things are worth knowing:
+
+- **The filename is always a bound parameter.** SQLite treats it as an
+  expression in both statements, so a path containing quotes is not a special
+  case. The schema *identifier* cannot be bound — SQLite does not accept a
+  parameter there — so it is rendered, always double-quoted with interior `"`
+  doubled. `attach_database(path, "we\"ird")` attaches the database it names.
+- **Every read names its schema.** A bare `PRAGMA quick_check` checks *all*
+  attached databases, so `conn.quick_check()` issues `PRAGMA main.quick_check`
+  and means your main database whatever is attached. The guard's own
+  `quick_check` / `page_count` / `page_size` / `storage_stats` are its
+  counterparts for one attachment.
+- **Failures keep their type.** `MaintenanceError::Sqlite` holds the
+  `rusqlite::Error`, result code included. Only two refusals are this API's own —
+  an empty schema name and one containing a NUL byte — and neither sends a
+  statement. An integrity problem is not an error at all: it comes back as a
+  report whose `is_ok()` is false.
+- **`Drop` cannot report.** A detach that fails while being dropped is logged at
+  `warn`. Call `detach()` when you need to see it — SQLite refuses to detach a
+  database your own open transaction has written to.
+
+## Supported surface and FFI exceptions
+
+Registering a **custom FTS5 tokenizer** — `SELECT fts5(?1)` bound through
+`sqlite3_bind_pointer(.., "fts5_api_ptr", ..)`, then a C function pointer out of
+`fts5_api` — is deliberately **outside** this ORM's supported surface. It is a
+decision, not an omission:
+
+1. A host pointer is not a value of any SQL type. `Value` and rusqlite's `ToSql`
+   model SQL *data*, so no amount of extending them would express that handshake.
+2. Supporting it means re-exporting `libsqlite3-sys` types and owning `unsafe`
+   here. The workspace denies `unsafe_code`, and the single exception —
+   the separately published `toolu-orm-sqlite-vec-register` — exists precisely
+   so one `unsafe` registration call had somewhere to live.
+3. A tokenizer belongs to a *connection*, not to a schema or a query. That is
+   connection bootstrap, which this driver already delegates to you.
+
+The sanctioned escape hatch is `with_raw_connection`, which borrows the wrapped
+driver connection for one closure:
+
+```rust
+let conn = RusqliteConnection::from_connection(raw);
+
+// Anything outside the supported surface, on the real connection.
+conn.with_raw_connection(|driver| register_my_tokenizer(driver))??;
+
+// It is also how a wrapper owner reaches the maintenance surface: the outer
+// Result is the connection lock, the inner one the operation.
+let stats = conn.with_raw_connection(SqliteMaintenance::storage_stats)??;
+```
+
+The lock is held for the whole closure and is not re-entrant, so the closure
+must not call back into the wrapper. You can equally register before
+`from_connection` — that is what the `sqlite-vec` note above does.
+
+Everything *downstream* of registration stays fully supported: the
+`#[fts5_table]` schema, `MATCH`, `bm25`, `snippet`, `highlight`, and `vec0` KNN.
+Only the registration handshake is out of scope.
+
 ## Without a runtime
 
 rusqlite is synchronous, so the connection wrapper does not have to pretend
