@@ -104,9 +104,12 @@ Every SQL assertion names its dialect through `to_sql_for(Dialect::…)`; `to_sq
 | default | bound_params_test | an_empty_buffer_numbers_the_first_placeholder_one |
 | default | bound_params_test | extend_appends_a_rendered_fragments_values_in_order |
 | default | bound_params_test | handles_and_expressions_stay_send_and_sync |
+| default | bound_params_test | handles_built_on_many_threads_all_stay_independent |
+| default | bound_params_test | one_handle_shared_across_threads_is_still_one_binding |
 | default | bound_params_test | nested_at_one_is_the_identity_frame |
 | default | bound_params_test | nested_carries_the_binding_ledger_out_of_the_frame |
-| default | bound_params_test | nested_numbers_from_start_and_keeps_only_what_the_frame_bound |
+| default | bound_params_test | nested_continues_a_live_buffer_from_its_next_index |
+| default | bound_params_test | nested_on_an_empty_buffer_is_the_standalone_fragment_frame |
 | default | bound_params_test | push_returns_the_index_it_took_and_advances_the_count |
 | default | facade_only_shared_bind_test | a_reused_binding_takes_one_placeholder_through_the_facade |
 | default | facade_only_shared_bind_test | the_same_predicate_renders_dollar_placeholders_through_the_facade |
@@ -135,6 +138,7 @@ Every SQL assertion names its dialect through `to_sql_for(Dialect::…)`; `to_sq
 | default | shared_bind_test | foreign_source::a_handle_inside_a_foreign_source_binds_again_rather_than_taking_a_wrong_index |
 | default | shared_bind_test | identity::a_cloned_handle_is_the_same_binding |
 | default | shared_bind_test | identity::a_handle_exposes_the_payload_it_binds |
+| default | shared_bind_test | identity::a_handle_that_is_never_used_binds_nothing |
 | default | shared_bind_test | identity::a_handle_used_once_binds_exactly_what_the_owned_form_binds |
 | default | shared_bind_test | identity::an_empty_list_handle_renders_the_constant_at_every_occurrence |
 | default | shared_bind_test | identity::rendering_the_same_expression_twice_is_idempotent |
@@ -148,6 +152,7 @@ Every SQL assertion names its dialect through `to_sql_for(Dialect::…)`; `to_sq
 | default | shared_bind_test | nesting::every_rendered_index_is_backed_by_a_bound_value |
 | default | shared_bind_test | nesting::the_same_predicate_renders_dollar_placeholders_on_postgres |
 | default | shared_bind_test | raw_and_offsets::a_between_beside_a_reuse_keeps_its_own_two_placeholders |
+| default | shared_bind_test | raw_and_offsets::a_literal_index_in_a_raw_fragment_cannot_address_a_handle |
 | default | shared_bind_test | raw_and_offsets::a_raw_fragment_after_a_reuse_takes_the_next_unused_index |
 | default | shared_bind_test | raw_and_offsets::a_raw_fragment_before_a_reuse_still_owns_the_low_indices |
 | default | shared_bind_test | raw_and_offsets::a_shared_list_and_an_owned_list_of_the_same_values_stay_apart |
@@ -175,7 +180,7 @@ Every SQL assertion names its dialect through `to_sql_for(Dialect::…)`; `to_sq
 | rusqlite-only | rusqlite_reusable_bind_test | clauses::an_update_shares_a_handle_between_set_and_where |
 | rusqlite-only | rusqlite_reusable_bind_test | clauses::negated_shared_predicates_return_the_complementary_rows |
 | rusqlite-only | rusqlite_reusable_bind_test | clauses::one_handle_spans_a_projection_and_two_filters |
-| rusqlite-only | rusqlite_reusable_bind_test | co_change::a_single_orientation_lookup_agrees_with_the_shared_one |
+| rusqlite-only | rusqlite_reusable_bind_test | co_change::a_one_use_handle_binds_exactly_what_the_owned_form_binds |
 | rusqlite-only | rusqlite_reusable_bind_test | co_change::the_issue_query_binds_16_385_parameters_and_returns_the_right_weight |
 | rusqlite-only | rusqlite_reusable_bind_test | co_change::the_owned_form_exceeds_sqlites_variable_limit_on_the_same_input |
 | rusqlite-only | rusqlite_reusable_bind_test | co_change::two_distinct_list_handles_over_the_same_paths_bind_twice |

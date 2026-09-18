@@ -30,7 +30,7 @@ enum ConflictAction {
 /// ```
 /// use toolu_orm_core::column::{Integer, Text};
 /// use toolu_orm_core::dialect::Dialect;
-/// use toolu_orm_core::expr::{BoundParams, Scalar};
+/// use toolu_orm_core::expr::Scalar;
 /// use toolu_orm_core::query_column::Column;
 /// use toolu_orm_query::insert::{InsertBuilder, OnConflict};
 ///
@@ -114,8 +114,10 @@ impl OnConflict {
   /// values onto the statement's `params` in emission order.
   ///
   /// `params` already holds the `VALUES` binds, so each assignment numbers
-  /// from `params.len() + 1` — the statement-absolute index of its first
-  /// placeholder, which is what [`Scalar::to_sql_fragment_for`] expects.
+  /// from `BoundParams::next_index` — no offset is passed, because position
+  /// lives in the buffer. An assignment built from a
+  /// [`SharedBind`](toolu_orm_core::expr::SharedBind) the `VALUES` already
+  /// bound reuses that placeholder instead of adding one.
   pub(super) fn push_sql(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     let target: Vec<String> = self.target.iter().map(|c| quote_ident(c)).collect();
     sql.push_str(&format!(" ON CONFLICT ({}) DO ", target.join(", ")));

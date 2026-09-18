@@ -48,9 +48,34 @@ fn a_default_buffer_is_an_empty_one() {
 }
 
 #[test]
-fn nested_numbers_from_start_and_keeps_only_what_the_frame_bound() {
+fn nested_continues_a_live_buffer_from_its_next_index() {
   let mut params = BoundParams::new();
   params.push(text("outer"));
+
+  let start = params.next_index();
+  let indices = params.nested(start, |nested| {
+    let first = nested.push(text("inner-a"));
+    let second = nested.push(text("inner-b"));
+    (first, second)
+  });
+
+  // `start` is where the frame's values will land, so the indices it numbered
+  // are the positions those values actually occupy.
+  assert_eq!(indices, (2, 3));
+  let values = params.into_values();
+  assert_eq!(
+    values,
+    vec![text("outer"), text("inner-a"), text("inner-b")]
+  );
+  assert_eq!(values.get(1), Some(&text("inner-a")));
+  assert_eq!(values.get(2), Some(&text("inner-b")));
+}
+
+#[test]
+fn nested_on_an_empty_buffer_is_the_standalone_fragment_frame() {
+  // The shape `Expr::to_sql_fragment_for(4, …)` uses: an empty buffer plus the
+  // absolute index the caller will splice the fragment at.
+  let mut params = BoundParams::new();
 
   let indices = params.nested(4, |nested| {
     let first = nested.push(text("inner-a"));
@@ -58,13 +83,9 @@ fn nested_numbers_from_start_and_keeps_only_what_the_frame_bound() {
     (first, second)
   });
 
-  // The frame was told its first placeholder is ?4, so it numbered 4 and 5 …
   assert_eq!(indices, (4, 5));
-  // … and only its own two values were appended to the caller's buffer.
-  assert_eq!(
-    params.into_values(),
-    vec![text("outer"), text("inner-a"), text("inner-b")]
-  );
+  // Only the frame's own values come back; the stand-ins never escape.
+  assert_eq!(params.into_values(), vec![text("inner-a"), text("inner-b")]);
 }
 
 #[test]
@@ -116,4 +137,52 @@ fn a_handle_moves_across_a_thread_and_still_renders_one_placeholder() {
   let (first, second, values) = handle.join().expect("render thread panicked");
   assert_eq!((first.as_str(), second.as_str()), ("?1", "?1"));
   assert_eq!(values, vec![text("moved")]);
+}
+
+/// Handles built concurrently must stay distinct.
+///
+/// Identity is a `fetch_add` on one atomic counter: `fetch_add` is a
+/// read-modify-write, so every caller observes a different value whatever the
+/// ordering — `Relaxed` constrains only the visibility of *other* memory, and
+/// nothing else is published through the counter. This asserts the property
+/// rather than the ordering: 64 handles built on 64 threads, all used in one
+/// statement, must bind 64 separate parameters.
+#[test]
+fn handles_built_on_many_threads_all_stay_independent() {
+  let threads: Vec<_> = (0..64)
+    .map(|_| std::thread::spawn(|| SharedBind::new("same value everywhere")))
+    .collect();
+  let handles: Vec<SharedBind> = threads
+    .into_iter()
+    .map(|thread| thread.join().expect("handle thread panicked"))
+    .collect();
+
+  let dialect = toolu_orm_core::dialect::Dialect::Sqlite;
+  let mut params = BoundParams::new();
+  let rendered: Vec<String> = handles
+    .iter()
+    .map(|handle| Scalar::shared(handle).render_into(&mut params, dialect))
+    .collect();
+
+  assert_eq!(params.len(), 64);
+  let expected: Vec<String> = (1..=64).map(|index| format!("?{index}")).collect();
+  assert_eq!(rendered, expected);
+}
+
+/// The same handle across threads is still one binding — the twin of the test
+/// above, so "distinct" cannot be passing by accident of construction.
+#[test]
+fn one_handle_shared_across_threads_is_still_one_binding() {
+  let handle = SharedBind::new("shared");
+  let threads: Vec<_> = (0..16).map(|_| handle.clone()).collect();
+
+  let dialect = toolu_orm_core::dialect::Dialect::Sqlite;
+  let mut params = BoundParams::new();
+  let rendered: Vec<String> = threads
+    .iter()
+    .map(|clone| Scalar::shared(clone).render_into(&mut params, dialect))
+    .collect();
+
+  assert_eq!(params.len(), 1);
+  assert!(rendered.iter().all(|sql| sql == "?1"));
 }

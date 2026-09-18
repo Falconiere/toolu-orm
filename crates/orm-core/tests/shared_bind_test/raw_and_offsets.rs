@@ -6,7 +6,7 @@ use toolu_orm_core::expr::{Expr, Scalar, SharedBind, SharedBindList};
 use toolu_orm_core::query_column::{CommonOps, NumericOps, SharedOps};
 use toolu_orm_core::value::Value;
 
-use crate::fixtures::{text, DST_ID, SRC_ID, WEIGHT};
+use crate::fixtures::{text, DST_ID, REL, SRC_ID, WEIGHT};
 
 #[test]
 fn a_raw_fragment_after_a_reuse_takes_the_next_unused_index() {
@@ -127,4 +127,35 @@ fn a_between_beside_a_reuse_keeps_its_own_two_placeholders() {
     params,
     vec![text("candidate"), Value::Integer(1), Value::Integer(9)]
   );
+}
+
+#[test]
+fn a_literal_index_in_a_raw_fragment_cannot_address_a_handle() {
+  let node = SharedBind::new("candidate");
+
+  // `?1` is passed through verbatim — `number_raw_params` only numbers a
+  // *bare* `?` — so a raw fragment cannot name a handle's placeholder: it
+  // names whatever index 1 happens to be. Here the handle took ?2, and the
+  // raw fragment still says ?1, which is the `rel` predicate's value.
+  let (sql, params) = REL
+    .eq("co_changed")
+    .and(SRC_ID.eq_shared(&node))
+    .and(Expr::raw(r#""edges"."dst_id" = ?1"#, Vec::new()))
+    .and(DST_ID.eq_shared(&node))
+    .to_sql_fragment_for(1, Dialect::Sqlite);
+
+  assert_eq!(
+    sql,
+    concat!(
+      r#"((("edges"."rel" = ?1 AND "edges"."src_id" = ?2)"#,
+      r#" AND "edges"."dst_id" = ?1) AND "edges"."dst_id" = ?2)"#
+    )
+  );
+  assert_eq!(params, vec![text("co_changed"), text("candidate")]);
+  // `Scalar::shared` is the supported route: it renders ?2, the handle's own
+  // index, without the caller knowing what that index is.
+  let (shared_sql, _) = Scalar::col(&DST_ID)
+    .eq(Scalar::shared(&node))
+    .to_sql_fragment_for(1, Dialect::Sqlite);
+  assert_eq!(shared_sql, r#""edges"."dst_id" = ?1"#);
 }

@@ -121,3 +121,20 @@ fn the_same_handle_renders_in_scalar_and_predicate_position() {
   assert_eq!(sql, r#"("edges"."src_id" = ?1 AND "edges"."dst_id" = ?1)"#);
   assert_eq!(params, vec![text("file:a.rs")]);
 }
+
+#[test]
+fn a_handle_that_is_never_used_binds_nothing() {
+  let unused = SharedBind::new("never named");
+  let unused_list = SharedBindList::new(["also", "never"]);
+  let used = SharedBind::new("named");
+
+  let (sql, params) = SRC_ID
+    .eq_shared(&used)
+    .to_sql_fragment_for(1, Dialect::Sqlite);
+
+  // Constructing a handle is not a registration: only an occurrence binds.
+  assert_eq!(sql, r#""edges"."src_id" = ?1"#);
+  assert_eq!(params, vec![text("named")]);
+  assert_eq!(unused.value(), &text("never named"));
+  assert_eq!(unused_list.len(), 2);
+}

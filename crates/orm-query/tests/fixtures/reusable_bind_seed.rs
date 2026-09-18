@@ -81,6 +81,17 @@ pub fn mixed_co_change(
   )
 }
 
+/// One orientation only, with handles used exactly once each.
+pub fn one_direction_shared(candidate: &SharedBind, files: &SharedBindList) -> SelectBuilder {
+  co_change_base().filter(SRC_ID.eq_shared(candidate).and(DST_ID.in_shared(files)))
+}
+
+/// [`one_direction_shared`] written with `eq` / `in_list`. A handle used once
+/// must render byte-identically to this.
+pub fn one_direction_owned(candidate: &str, files: &[Value]) -> SelectBuilder {
+  co_change_base().filter(SRC_ID.eq(candidate).and(DST_ID.in_list(files)))
+}
+
 /// The same query written with `eq` / `in_list`, which binds every input twice
 /// — the form the issue reports as unusable past 16,380 paths.
 pub fn owned_co_change(candidate: &str, files: &[Value]) -> SelectBuilder {

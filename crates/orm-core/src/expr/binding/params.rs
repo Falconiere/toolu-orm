@@ -72,10 +72,18 @@ impl BoundParams {
   /// Renders a nested statement whose first placeholder is `start`, appending
   /// only what that statement binds and sharing this buffer's ledger.
   ///
-  /// The clause helpers all number from `len() + 1`, which hardcodes the base
-  /// at 1, so the child stands in for the `start - 1` values already emitted,
-  /// renders, and drops the stand-ins. They are never observed: the helpers
-  /// read `len()` and never the contents.
+  /// Every renderer numbers from [`next_index`](Self::next_index), which
+  /// counts from the buffer's own start, so the frame stands in for the
+  /// `start - 1` values already emitted, renders, and drops the stand-ins.
+  /// They are never observed: the renderers read the length and never the
+  /// contents.
+  ///
+  /// **`start` must be where the frame's values will actually land.** That is
+  /// [`next_index`](Self::next_index) when appending to a live buffer — every
+  /// splice in this crate passes exactly that — or, on an empty buffer, the
+  /// absolute index the caller will splice the result at, which is how
+  /// `Expr::to_sql_fragment_for(start, …)` renders a standalone fragment.
+  /// Any other value numbers placeholders away from the values behind them.
   ///
   /// The ledger travels into the child and back, which is what lets a handle
   /// first used *inside* the nested statement be reused outside it — the index

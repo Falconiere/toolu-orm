@@ -158,7 +158,9 @@ impl SharedBindList {
   /// A new handle over `values`, with an identity no other handle shares.
   ///
   /// Takes anything iterable of anything convertible, so a `Vec<Value>`, a
-  /// `&[&str]` and an array all work without the caller mapping first.
+  /// `Vec<String>` and a `["a", "b"]` array all work without the caller
+  /// mapping first. A `&[&str]` does not: iterating a slice yields `&&str`,
+  /// which is not `Into<Value>` — pass `slice.iter().copied()`.
   #[must_use]
   pub fn new<V: Into<Value>>(values: impl IntoIterator<Item = V>) -> Self {
     Self {

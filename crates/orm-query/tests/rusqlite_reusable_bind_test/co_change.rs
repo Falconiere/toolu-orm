@@ -62,19 +62,25 @@ fn the_owned_form_exceeds_sqlites_variable_limit_on_the_same_input() -> Outcome 
 }
 
 /// A handle used once costs exactly what the owned form costs, so reuse is
-/// never a tax on the simple case.
+/// never a tax on the simple case — and the two forms agree on the rows.
 #[test]
-fn a_single_orientation_lookup_agrees_with_the_shared_one() -> Outcome {
+fn a_one_use_handle_binds_exactly_what_the_owned_form_binds() -> Outcome {
   let conn = setup_db()?;
+  let small: Vec<_> = working_set().into_iter().take(20).collect();
   let candidate = SharedBind::new(CANDIDATE);
-  let files = SharedBindList::new(working_set());
+  let files = SharedBindList::new(small.clone());
 
+  // The same statement shape, with the handles used once each rather than
+  // twice: byte-identical SQL and identical parameters.
+  let shared_once =
+    crate::seed::one_direction_shared(&candidate, &files).to_sql_for(Dialect::Sqlite);
+  let owned_once = crate::seed::one_direction_owned(CANDIDATE, &small).to_sql_for(Dialect::Sqlite);
+  assert_eq!(shared_once, owned_once);
+  assert_eq!(shared_once.1.len(), 24);
+
+  // And the two-orientation forms agree on the answer over the same paths.
   let shared: Vec<WeightRow> = shared_co_change(&candidate, &files).fetch_all(&conn)?;
-  let small = working_set().into_iter().take(20).collect::<Vec<_>>();
   let owned: Vec<WeightRow> = owned_co_change(CANDIDATE, &small).fetch_all(&conn)?;
-
-  // `file:r:7.rs` and `file:r:11.rs` are both inside the first 20 paths, so
-  // the small owned form sees exactly the two edges the shared form sees.
   assert_eq!(shared, owned);
   assert_eq!(shared, vec![WeightRow { weight: 18 }]);
   Ok(())
