@@ -488,6 +488,42 @@ Also available: `to_count_sql_for`, `to_exists_sql_for`,
 `SelectBuilder::raw().column_expr(expr, alias)`, and
 `columns_typed(&[&dyn ColumnRef])`.
 
+**Aliases and compound `ON` clauses.** `TableRef` puts a table in a `FROM` /
+`JOIN` slot under an alias, `TableRef::column` re-qualifies a typed column
+through it, and a `JoinCondition` is an expression tree: column-to-column
+comparisons (`equals`, `not_equals`, `less_than`, `less_or_equal`,
+`greater_than`, `greater_or_equal`) and bound-value predicates combined with
+`and` / `or`. `columns_qualified` and `column_as` project qualified, which is
+what a query joining two tables that both have an `id` needs.
+
+```rust
+use toolu_orm_core::alias::TableRef;
+
+let u = TableRef::aliased("users", "u");
+let p = TableRef::aliased("pipelines", "p");
+
+let (sql, params) = SelectBuilder::from_table(&u)
+  .column_as(&u.column(&users::id), "user_id")
+  .column_as(&p.column(&pipelines::id), "pipeline_id")
+  .left_join(
+    &p,
+    p.column(&pipelines::user_id).equals(&u.column(&users::id))
+      .and(p.column(&pipelines::active).eq(1)),
+  )
+  .filter(u.column(&users::org_id).eq("org123"))
+  .to_sql_for(Dialect::Sqlite);
+// SELECT "u"."id" AS "user_id", "p"."id" AS "pipeline_id" FROM "users" AS "u"
+//   LEFT JOIN "pipelines" AS "p"
+//     ON ("p"."user_id" = "u"."id" AND "p"."active" = ?1)
+//   WHERE "u"."org_id" = ?2
+```
+
+Placeholders are numbered in render order, so `ON` parameters come after the
+select list's (a `column_scalar` projection can bind) and before the `WHERE`
+clause's — in `to_count_sql_for` and `to_exists_sql_for`, which render no select
+list, `ON` starts at 1. Keep a `LEFT JOIN` predicate in the `ON` clause: moving
+it to `filter` drops the unmatched rows.
+
 **Transactions.** Anything that errors inside the closure rolls the whole block back.
 
 ```rust

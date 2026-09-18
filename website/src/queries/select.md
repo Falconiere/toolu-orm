@@ -34,15 +34,19 @@ as parameters, not interpolated.
 | Method | Effect |
 |---|---|
 | `SelectBuilder::new(table)` | Start a select on `table`. `Table::select()` does the same. |
+| `SelectBuilder::from_table(TableRef::aliased(t, a))` | Start a select on `t` under the alias `a` — `FROM "t" AS "a"`. `&str` and `&TableRef` also convert. |
 | `SelectBuilder::raw()` | Start with no `FROM` table — for expression-only selects. |
 | `.columns_raw(&["id", "email"])` | Explicit column list. Without one, the select is `SELECT *`. |
-| `.columns_typed(&[&users::id, &users::email])` | Same, from typed column references. |
+| `.columns_typed(&[&users::id, &users::email])` | Same, from typed column references, under bare names. |
+| `.columns_qualified(&[&users::id, &u.column(&users::id)])` | Same, qualified by table or alias — what a joined query needs. |
+| `.column_as(&f.column(&feedback::id), "f_id")` | Add one qualified column under an output alias. |
 | `.column_expr("COUNT(*)", "n")` | Add a raw expression with an alias. |
 | `.filter(expr)` | Add a predicate. Repeated calls are `AND`-ed. See [Filters](filters.md). |
-| `.join(table, on)` / `.left_join(table, on)` | `INNER` / `LEFT JOIN`, with `on` built by `Column::equals`. |
+| `.join(table, on)` / `.left_join(table, on)` | `INNER` / `LEFT JOIN`. `table` is a `&str` or a `TableRef`; `on` is a `JoinCondition` or an `Expr`, so `a.equals(&b).and(live.eq(1))` works. |
 | `.order_by(users::created_at.desc())` | `ORDER BY`. `asc()` and `desc()` come from `Column`. |
 | `.limit(n)` / `.offset(n)` | Paging, bound as parameters. |
-| `.table_name()` | The table this builder targets. |
+| `.table_name()` | The table this builder targets, never its alias. |
+| `.table_ref()` | The same table, alias included. |
 
 ## Rendering
 

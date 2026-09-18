@@ -118,6 +118,10 @@ name = "scalar_expr_sql_test"
 path = "tests/scalar_expr_sql_test.rs"
 
 [[test]]
+name = "join_alias_sql_test"
+path = "tests/join_alias_sql_test/main.rs"
+
+[[test]]
 name = "first_row_sql_test"
 path = "tests/first_row_sql_test.rs"
 
@@ -195,6 +199,11 @@ path = "tests/libsql_scalar_expr_test/main.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "libsql_joins_test"
+path = "tests/libsql_joins_test.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "fts5_libsql_test"
 path = "tests/fts5_libsql_test.rs"
 required-features = ["libsql"]
@@ -238,6 +247,11 @@ required-features = ["rusqlite"]
 [[test]]
 name = "rusqlite_relational_blob_test"
 path = "tests/rusqlite_relational_blob_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "rusqlite_joins_test"
+path = "tests/rusqlite_joins_test.rs"
 required-features = ["rusqlite"]
 
 [[test]]
@@ -295,6 +309,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_relational_blob_test"
 path = "tests/postgres_relational_blob_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_joins_test"
+path = "tests/postgres_joins_test.rs"
 required-features = ["postgres"]
 
 [[test]]

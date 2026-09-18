@@ -14,6 +14,7 @@
 //! ```
 
 mod builder;
+mod join_clause;
 mod knn;
 mod ordering;
 mod projection;
