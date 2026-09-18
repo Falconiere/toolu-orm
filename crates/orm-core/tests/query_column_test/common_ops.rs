@@ -5,6 +5,7 @@
 //! Tests for Column<T> CommonOps trait methods and Expr combinators.
 
 use toolu_orm_core::column::{Boolean, Integer, Text, Timestamp};
+use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::query_column::{Column, CommonOps, NumericOps};
 use toolu_orm_core::value::Value;
 
@@ -29,7 +30,7 @@ fn column_qualified_format() {
 fn text_column_eq_produces_correct_sql() {
   let col: Column<Text> = Column::new("users", "email");
   let expr = col.eq("alice@example.com");
-  let (sql, params) = expr.to_sql_fragment(1);
+  let (sql, params) = expr.to_sql_fragment_for(1, Dialect::Sqlite);
   assert_eq!(sql, r#""users"."email" = ?1"#);
   assert_eq!(params, vec![Value::from("alice@example.com")]);
 }
@@ -41,7 +42,7 @@ fn column_in_list_produces_correct_sql() {
   let col: Column<Integer> = Column::new("orders", "status");
   let values = vec![Value::from(1i32), Value::from(2i32), Value::from(3i32)];
   let expr = col.in_list(&values);
-  let (sql, params) = expr.to_sql_fragment(1);
+  let (sql, params) = expr.to_sql_fragment_for(1, Dialect::Sqlite);
   assert_eq!(sql, r#""orders"."status" IN (?1, ?2, ?3)"#);
   assert_eq!(
     params,
@@ -51,6 +52,11 @@ fn column_in_list_produces_correct_sql() {
 
 // ── CommonOps::is_null ────────────────────────────────────────────────────
 
+/// Binds nothing, so the rendering is dialect-invariant. This and
+/// `column_is_not_null_produces_correct_sql` are the two tests that keep
+/// calling the dialect-implicit `to_sql_fragment`, which is what proves it
+/// still delegates to `to_sql_fragment_for(_, Dialect::CURRENT)` in both the
+/// default lane (SQLite) and the postgres lane.
 #[test]
 fn column_is_null_produces_no_params() {
   let col: Column<Text> = Column::new("users", "deleted_at");
@@ -69,7 +75,7 @@ fn expr_and_produces_correct_sql_with_param_numbering() {
   let left = col_a.eq("alice");
   let right = col_b.gt(18);
   let combined = left.and(right);
-  let (sql, params) = combined.to_sql_fragment(1);
+  let (sql, params) = combined.to_sql_fragment_for(1, Dialect::Sqlite);
   assert_eq!(sql, r#"("users"."name" = ?1 AND "users"."age" > ?2)"#);
   assert_eq!(params, vec![Value::from("alice"), Value::from(18i32)]);
 }
@@ -81,7 +87,7 @@ fn expr_or_produces_correct_sql_with_param_numbering() {
   let left = col_a.eq("admin");
   let right = col_b.eq("active");
   let combined = left.or(right);
-  let (sql, params) = combined.to_sql_fragment(1);
+  let (sql, params) = combined.to_sql_fragment_for(1, Dialect::Sqlite);
   assert_eq!(sql, r#"("users"."role" = ?1 OR "users"."status" = ?2)"#);
   assert_eq!(params, vec![Value::from("admin"), Value::from("active")]);
 }
@@ -91,7 +97,7 @@ fn expr_or_produces_correct_sql_with_param_numbering() {
 fn column_ne_produces_correct_sql() {
   let col: Column<Text> = Column::new("users", "status");
   let expr = col.ne("banned");
-  let (sql, params) = expr.to_sql_fragment(1);
+  let (sql, params) = expr.to_sql_fragment_for(1, Dialect::Sqlite);
   assert_eq!(sql, r#""users"."status" != ?1"#);
   assert_eq!(params, vec![Value::from("banned")]);
 }
@@ -102,12 +108,13 @@ fn column_not_in_produces_correct_sql() {
   let col: Column<Text> = Column::new("users", "role");
   let values = vec![Value::from("admin"), Value::from("moderator")];
   let expr = col.not_in(&values);
-  let (sql, params) = expr.to_sql_fragment(1);
+  let (sql, params) = expr.to_sql_fragment_for(1, Dialect::Sqlite);
   assert_eq!(sql, r#""users"."role" NOT IN (?1, ?2)"#);
   assert_eq!(params, vec![Value::from("admin"), Value::from("moderator")]);
 }
 
-// CommonOps::is_not_null
+// CommonOps::is_not_null. Binds nothing; see `column_is_null_produces_no_params`
+// for why this one stays on the dialect-implicit entry point.
 #[test]
 fn column_is_not_null_produces_correct_sql() {
   let col: Column<Text> = Column::new("users", "email");

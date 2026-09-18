@@ -125,3 +125,10 @@ jobs:
       # binary must be documented.
       - name: Scenario docs in sync
         run: bash scripts/check-scenario-docs.sh
+
+      # A tests/<dir>/ whose entry file is not main.rs, and a flat test file in
+      # a crate with autotests = false, are both silently never compiled. This
+      # reports any test file no cargo target builds. Needs jq, preinstalled on
+      # ubuntu-latest.
+      - name: Every test file is built by a cargo target
+        run: bash scripts/check-test-targets.sh
