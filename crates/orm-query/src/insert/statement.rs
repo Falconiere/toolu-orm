@@ -2,15 +2,19 @@
 //! numbers their parameters.
 //!
 //! One rule governs the numbering, the same one every other builder in this
-//! workspace follows: each clause derives its own first placeholder index from
-//! the **live** `params.len()` of the statement-wide vector, at the moment it
-//! writes, and pushes its values as it goes. `params.len() + 1` is therefore
-//! the whole computation — a caller never adds an offset on top of it, which
-//! would double-count. Clauses can be added, removed or reordered without
-//! renumbering anything after them.
+//! workspace follows: position lives in the statement-wide
+//! [`BoundParams`](toolu_orm_core::expr::BoundParams), and each clause takes
+//! `next_index()` at the moment it writes. A caller never adds an offset on
+//! top of it, which would double-count, so clauses can be added, removed or
+//! reordered without renumbering anything after them.
+//!
+//! A [`SharedBind`](toolu_orm_core::expr::SharedBind) is the one thing that
+//! may not advance the length: a repeat occurrence renders the index it
+//! already took.
 
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::expr::BoundParams;
 use toolu_orm_core::value::Value;
 
 use super::conflict::{push_legacy_postgres_replace, ConflictMode};
@@ -46,14 +50,15 @@ impl InsertBuilder {
     sql.push_str(keyword);
     sql.push(' ');
     self.push_target(&mut sql);
-    let mut params = self.push_rows(&mut sql, Dialect::Sqlite);
+    let mut params = BoundParams::new();
+    self.push_rows(&mut sql, &mut params, Dialect::Sqlite);
 
     if let ConflictMode::Clause(clause) = &self.conflict_mode {
       clause.push_sql(&mut sql, &mut params, Dialect::Sqlite);
     }
     self.push_returning(&mut sql);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// `INSERT INTO <target> <rows> [<conflict>] [<returning>]`.
@@ -65,7 +70,8 @@ impl InsertBuilder {
 
     sql.push_str("INSERT INTO ");
     self.push_target(&mut sql);
-    let mut params = self.push_rows(&mut sql, Dialect::Postgres);
+    let mut params = BoundParams::new();
+    self.push_rows(&mut sql, &mut params, Dialect::Postgres);
 
     match &self.conflict_mode {
       ConflictMode::None => {},
@@ -77,7 +83,7 @@ impl InsertBuilder {
     }
     self.push_returning(&mut sql);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// Appends the target: `"table"`, or `"database"."table"` when qualified.

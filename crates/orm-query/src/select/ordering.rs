@@ -1,8 +1,7 @@
 //! The `ORDER BY` tail of a SELECT.
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::OrderBy;
-use toolu_orm_core::value::Value;
+use toolu_orm_core::expr::{BoundParams, OrderBy};
 
 use super::SelectBuilder;
 
@@ -23,7 +22,7 @@ impl SelectBuilder {
   pub(super) fn append_order_by(
     &self,
     sql: &mut String,
-    params: &mut Vec<Value>,
+    params: &mut BoundParams,
     dialect: Dialect,
   ) {
     if self.order_bys.is_empty() {
@@ -31,10 +30,7 @@ impl SelectBuilder {
     }
     let mut parts: Vec<String> = Vec::with_capacity(self.order_bys.len());
     for ob in &self.order_bys {
-      let start = params.len() + 1;
-      let (fragment, ob_params) = ob.to_sql_fragment_for(start, dialect);
-      params.extend(ob_params);
-      parts.push(fragment);
+      parts.push(ob.render_into(params, dialect));
     }
     sql.push_str(&format!(" ORDER BY {}", parts.join(", ")));
   }

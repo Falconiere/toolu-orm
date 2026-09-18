@@ -3,6 +3,7 @@
 //! rather than for the rows themselves.
 
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::expr::BoundParams;
 use toolu_orm_core::value::Value;
 
 use crate::where_clause::append_where_for;
@@ -41,7 +42,7 @@ impl SelectBuilder {
     }
 
     let mut sql = String::new();
-    let mut params: Vec<Value> = Vec::new();
+    let mut params = BoundParams::new();
 
     self.push_with_prefix(&mut sql, &mut params, dialect);
     let from_sql = self.render_from_source(&mut params, dialect);
@@ -49,7 +50,7 @@ impl SelectBuilder {
     self.append_joins(&mut sql, &mut params, dialect);
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// Counts the rows of the unpaginated statement through a derived table.
@@ -61,7 +62,7 @@ impl SelectBuilder {
   /// where SQL puts it, and therefore takes the low indices.
   fn to_wrapped_count_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     let mut sql = String::new();
-    let mut params: Vec<Value> = Vec::new();
+    let mut params = BoundParams::new();
 
     self.push_with_prefix(&mut sql, &mut params, dialect);
     let mut inner = String::new();
@@ -70,7 +71,7 @@ impl SelectBuilder {
       "SELECT COUNT(*) FROM ({inner}) AS {COUNT_SUBQUERY_ALIAS}"
     ));
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// [`Self::to_count_sql_for`] against [`Dialect::CURRENT`].
@@ -91,7 +92,7 @@ impl SelectBuilder {
   /// prefix stays outside the `EXISTS`, where SQL puts it.
   pub fn to_exists_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     let mut sql = String::new();
-    let mut params: Vec<Value> = Vec::new();
+    let mut params = BoundParams::new();
     let mut inner = String::new();
 
     self.push_with_prefix(&mut sql, &mut params, dialect);
@@ -107,7 +108,7 @@ impl SelectBuilder {
     }
     sql.push_str(&format!("SELECT EXISTS({inner})"));
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// [`Self::to_exists_sql_for`] against [`Dialect::CURRENT`].

@@ -3,8 +3,7 @@
 
 use toolu_orm_core::alias::QualifiedColumn;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::{Expr, Scalar};
-use toolu_orm_core::value::Value;
+use toolu_orm_core::expr::{BoundParams, Expr, Scalar};
 
 use crate::where_clause::append_conjuncts_for;
 
@@ -64,7 +63,7 @@ impl SelectBuilder {
   pub(super) fn append_group_by(
     &self,
     sql: &mut String,
-    params: &mut Vec<Value>,
+    params: &mut BoundParams,
     dialect: Dialect,
   ) {
     if self.group_bys.is_empty() {
@@ -72,17 +71,14 @@ impl SelectBuilder {
     }
     let mut parts: Vec<String> = Vec::with_capacity(self.group_bys.len());
     for term in &self.group_bys {
-      let start = params.len() + 1;
-      let (fragment, term_params) = term.to_sql_fragment_for(start, dialect);
-      params.extend(term_params);
-      parts.push(fragment);
+      parts.push(term.render_into(params, dialect));
     }
     sql.push_str(&format!(" GROUP BY {}", parts.join(", ")));
   }
 
   /// Appends `HAVING <conjunct> AND …` through the same renderer `WHERE` uses,
   /// so the two clauses cannot drift.
-  pub(super) fn append_having(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
+  pub(super) fn append_having(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     append_conjuncts_for(&self.havings, " HAVING ", sql, params, dialect);
   }
 }

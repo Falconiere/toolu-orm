@@ -1,6 +1,7 @@
 //! [`JoinCondition`] — the predicate of a `JOIN ... ON` clause.
 
 use crate::dialect::Dialect;
+use crate::expr::BoundParams;
 use crate::value::Value;
 
 use super::predicate::Expr;
@@ -52,6 +53,13 @@ impl JoinCondition {
     Self {
       expr: self.expr.or(other.into().expr),
     }
+  }
+
+  /// Renders into `params`, sharing its binding ledger; see
+  /// [`Expr::render_into`].
+  #[must_use]
+  pub fn render_into(&self, params: &mut BoundParams, dialect: Dialect) -> String {
+    self.expr.render_into(params, dialect)
   }
 
   /// SQL fragment with dialect-specific positional parameters starting at

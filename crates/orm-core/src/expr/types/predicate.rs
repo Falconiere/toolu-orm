@@ -1,8 +1,9 @@
 //! The boolean node: [`Expr`], its kinds, and the constructors that build them.
 
 use crate::dialect::Dialect;
+use crate::expr::binding::{BindSource, ListSource};
 use crate::expr::render::render_expr;
-use crate::expr::{Scalar, SelectSource};
+use crate::expr::{BoundParams, Scalar, SelectSource};
 use crate::value::Value;
 
 /// A WHERE-clause expression tree; render with [`Expr::to_sql_fragment_for`].
@@ -15,11 +16,11 @@ pub(crate) enum ExprKind {
   Comparison {
     column: String,
     op: &'static str,
-    value: Value,
+    value: BindSource,
   },
   InList {
     column: String,
-    values: Vec<Value>,
+    values: ListSource,
     negated: bool,
   },
   IsNull {
@@ -74,17 +75,28 @@ pub(crate) enum ExprKind {
 }
 
 impl Expr {
-  pub(crate) fn comparison(column: String, op: &'static str, value: Value) -> Self {
+  /// `value` is either the node's own [`Value`] or a [`SharedBind`] handle —
+  /// both convert, so every existing call site is unchanged.
+  ///
+  /// [`SharedBind`]: crate::expr::SharedBind
+  pub(crate) fn comparison(column: String, op: &'static str, value: impl Into<BindSource>) -> Self {
     Self {
-      kind: ExprKind::Comparison { column, op, value },
+      kind: ExprKind::Comparison {
+        column,
+        op,
+        value: value.into(),
+      },
     }
   }
 
-  pub(crate) fn in_list(column: String, values: Vec<Value>, negated: bool) -> Self {
+  /// `values` is either the node's own `Vec<Value>` or a [`SharedBindList`].
+  ///
+  /// [`SharedBindList`]: crate::expr::SharedBindList
+  pub(crate) fn in_list(column: String, values: impl Into<ListSource>, negated: bool) -> Self {
     Self {
       kind: ExprKind::InList {
         column,
-        values,
+        values: values.into(),
         negated,
       },
     }
@@ -147,12 +159,30 @@ impl Expr {
     }
   }
 
+  /// Renders into `params`, appending what it binds and sharing the buffer's
+  /// binding ledger — so a [`SharedBind`] used here and elsewhere in the same
+  /// statement takes one placeholder.
+  ///
+  /// The fragment numbers from [`BoundParams::next_index`]; a caller passes no
+  /// offset, because position lives in the buffer.
+  ///
+  /// [`SharedBind`]: crate::expr::SharedBind
+  #[must_use]
+  pub fn render_into(&self, params: &mut BoundParams, dialect: Dialect) -> String {
+    render_expr(&self.kind, params, dialect)
+  }
+
   /// Generate SQL fragment with dialect-specific positional parameters
   /// starting at `start`. Returns `(sql_string, params_vec)`.
+  ///
+  /// [`Self::render_into`] into a fresh buffer positioned at `start`, so a
+  /// handle used twice *within* this fragment still shares one placeholder,
+  /// while a handle it shares with another fragment binds in each — a
+  /// standalone fragment owns its own numbering, as it always has.
   pub fn to_sql_fragment_for(&self, start: usize, dialect: Dialect) -> (String, Vec<Value>) {
-    let mut params: Vec<Value> = Vec::new();
-    let sql = render_expr(&self.kind, start, &mut params, dialect);
-    (sql, params)
+    let mut params = BoundParams::new();
+    let sql = params.nested(start, |nested| self.render_into(nested, dialect));
+    (sql, params.into_values())
   }
 
   /// Generate SQL fragment with positional parameters starting at `start`.

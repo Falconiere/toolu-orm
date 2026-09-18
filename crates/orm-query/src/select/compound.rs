@@ -1,7 +1,7 @@
 //! Set operations: two whole statements read as one result set.
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::value::Value;
+use toolu_orm_core::expr::BoundParams;
 
 use super::{Cte, SelectBuilder};
 
@@ -65,7 +65,7 @@ impl SelectBuilder {
   ///
   /// No clause ever leaves a trailing space, so the separator writes its own
   /// on both sides and the result cannot double up.
-  pub(super) fn push_compound(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
+  pub(super) fn push_compound(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     self.push_core(sql, params, dialect);
     for (op, arm) in &self.set_ops {
       sql.push(' ');

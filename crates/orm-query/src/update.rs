@@ -1,7 +1,7 @@
 //! UPDATE query builder with SET clause and filter support.
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::{Expr, Scalar};
+use toolu_orm_core::expr::{BoundParams, Expr, Scalar};
 use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
 
@@ -58,20 +58,18 @@ impl UpdateBuilder {
 
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     let mut sql = format!(r#"UPDATE "{}" SET "#, self.table);
-    let mut params: Vec<Value> = Vec::new();
+    let mut params = BoundParams::new();
 
     let mut parts: Vec<String> = Vec::with_capacity(self.sets.len());
     for (column, value) in &self.sets {
-      let start = params.len() + 1;
-      let (fragment, value_params) = value.to_sql_fragment_for(start, dialect);
-      params.extend(value_params);
+      let fragment = value.render_into(&mut params, dialect);
       parts.push(format!(r#""{column}" = {fragment}"#));
     }
     sql.push_str(&parts.join(", "));
 
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   pub fn to_sql(&self) -> (String, Vec<Value>) {

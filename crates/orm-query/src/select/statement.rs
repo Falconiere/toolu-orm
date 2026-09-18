@@ -2,6 +2,7 @@
 //! numbers their parameters.
 
 use toolu_orm_core::dialect::Dialect;
+use toolu_orm_core::expr::BoundParams;
 use toolu_orm_core::value::Value;
 
 use crate::where_clause::append_where_for;
@@ -24,11 +25,11 @@ impl SelectBuilder {
     limit: Option<i64>,
   ) -> (String, Vec<Value>) {
     let mut sql = String::new();
-    let mut params: Vec<Value> = Vec::new();
+    let mut params = BoundParams::new();
 
     self.push_statement(&mut sql, &mut params, dialect, limit);
 
-    (sql, params)
+    (sql, params.into_values())
   }
 
   /// The whole statement appended to a caller's `sql` and `params`.
@@ -46,7 +47,7 @@ impl SelectBuilder {
   pub(super) fn push_statement(
     &self,
     sql: &mut String,
-    params: &mut Vec<Value>,
+    params: &mut BoundParams,
     dialect: Dialect,
     limit: Option<i64>,
   ) {
@@ -62,7 +63,7 @@ impl SelectBuilder {
   /// One definition, shared by the plain statement and by the derived table a
   /// grouped or distinct count wraps, so the two cannot disagree about what
   /// they count.
-  pub(super) fn push_core(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
+  pub(super) fn push_core(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     self.push_select_head(sql, params, dialect);
     self.append_joins(sql, params, dialect);
     append_where_for(&self.filters, sql, params, dialect);
@@ -79,7 +80,7 @@ impl SelectBuilder {
   pub(super) fn push_select_head(
     &self,
     sql: &mut String,
-    params: &mut Vec<Value>,
+    params: &mut BoundParams,
     dialect: Dialect,
   ) {
     sql.push_str("SELECT ");
@@ -96,8 +97,8 @@ impl SelectBuilder {
   }
 
   /// The `FROM` source, pushing whatever its arguments bind.
-  pub(super) fn render_from_source(&self, params: &mut Vec<Value>, dialect: Dialect) -> String {
-    let start = params.len() + 1;
+  pub(super) fn render_from_source(&self, params: &mut BoundParams, dialect: Dialect) -> String {
+    let start = params.next_index();
     let (fragment, source_params) = self.table.to_sql_fragment_for(start, dialect);
     params.extend(source_params);
     fragment

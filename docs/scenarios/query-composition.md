@@ -2,7 +2,7 @@
 
 **Feature:** `SelectBuilder` gains `with()` (a `WITH` / `WITH RECURSIVE` prefix built from `Cte`), `union()` / `union_all()`, and — through `TableRef::function` — a table-valued `FROM` / `JOIN` source with bound arguments. `Expr` gains `exists` / `not_exists`, and `Scalar` gains `in_subquery` / `not_in_subquery` / `subquery`, each holding a whole `SelectBuilder` through the object-safe `toolu_orm_core::expr::SelectSource` trait. Parameters number correctly across every statement boundary.
 **Drivers:** rusqlite, libsql and Postgres execute the scenarios; `composition_sql_test` and orm-core's `table_function_test` render them per dialect; `facade_only_composition_test` proves the surface composes with `toolu-orm` as a consumer's only dependency.
-**Spec:** issue #110.
+**Spec:** issue #110. A binding shared *across* one of these statement boundaries is [Reusable bound parameters](reusable-bound-parameters.md).
 
 ## What is proven
 

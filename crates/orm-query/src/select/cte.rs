@@ -2,7 +2,7 @@
 
 use toolu_orm_core::alias::{quote_ident, TableRef};
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::value::Value;
+use toolu_orm_core::expr::BoundParams;
 
 use super::SelectBuilder;
 
@@ -68,7 +68,7 @@ impl Cte {
   }
 
   /// `"name"[("col", …)] AS (<body>)`.
-  fn push(&self, sql: &mut String, params: &mut Vec<Value>, dialect: Dialect) {
+  fn push(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     sql.push_str(&quote_ident(&self.name));
     if !self.columns.is_empty() {
       let columns: Vec<String> = self.columns.iter().map(|c| quote_ident(c)).collect();
@@ -102,7 +102,7 @@ impl SelectBuilder {
   pub(super) fn push_with_prefix(
     &self,
     sql: &mut String,
-    params: &mut Vec<Value>,
+    params: &mut BoundParams,
     dialect: Dialect,
   ) {
     let mut ctes: Vec<&Cte> = Vec::new();

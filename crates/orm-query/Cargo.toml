@@ -138,6 +138,13 @@ path = "tests/grouping_sql_test/main.rs"
 name = "composition_sql_test"
 path = "tests/composition_sql_test/main.rs"
 
+# Pure SQL generation for the reusable-binding surface: no driver type in the
+# binary, so it belongs in the feature-less default lane. Its live twins are
+# {rusqlite,libsql,postgres}_reusable_bind_test below.
+[[test]]
+name = "reusable_bind_sql_test"
+path = "tests/reusable_bind_sql_test/main.rs"
+
 # Pure SQL generation for INSERT … SELECT and the database-qualified target:
 # no driver type in the binary, so it belongs in the feature-less default lane.
 # Its live twins are {rusqlite,libsql,postgres}_insert_select_test below.
@@ -242,6 +249,11 @@ path = "tests/libsql_insert_select_test/main.rs"
 required-features = ["libsql"]
 
 [[test]]
+name = "libsql_reusable_bind_test"
+path = "tests/libsql_reusable_bind_test/main.rs"
+required-features = ["libsql"]
+
+[[test]]
 name = "libsql_joins_test"
 path = "tests/libsql_joins_test.rs"
 required-features = ["libsql"]
@@ -333,6 +345,11 @@ path = "tests/rusqlite_composition_test/main.rs"
 required-features = ["rusqlite"]
 
 [[test]]
+name = "rusqlite_reusable_bind_test"
+path = "tests/rusqlite_reusable_bind_test/main.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "rusqlite_connection_executor_test"
 path = "tests/rusqlite_connection_executor_test.rs"
 required-features = ["rusqlite"]
@@ -402,6 +419,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_insert_select_test"
 path = "tests/postgres_insert_select_test/main.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_reusable_bind_test"
+path = "tests/postgres_reusable_bind_test/main.rs"
 required-features = ["postgres"]
 
 [[test]]

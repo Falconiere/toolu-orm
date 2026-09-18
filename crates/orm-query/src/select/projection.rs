@@ -2,8 +2,7 @@
 
 use toolu_orm_core::alias::QualifiedColumn;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::Scalar;
-use toolu_orm_core::value::Value;
+use toolu_orm_core::expr::{BoundParams, Scalar};
 
 use super::SelectBuilder;
 
@@ -58,12 +57,10 @@ impl SelectBuilder {
   /// carrying just one of the two gains no stray comma. The expressions used to
   /// be dropped unless the builder came from [`SelectBuilder::raw`], which
   /// silently discarded an FTS5 `bm25(...)` projection on an ordinary table.
-  pub(super) fn build_select_list(&self, params: &mut Vec<Value>, dialect: Dialect) -> String {
+  pub(super) fn build_select_list(&self, params: &mut BoundParams, dialect: Dialect) -> String {
     let mut parts: Vec<String> = self.columns.clone();
     for (expr, alias) in &self.column_exprs {
-      let start = params.len() + 1;
-      let (fragment, expr_params) = expr.to_sql_fragment_for(start, dialect);
-      params.extend(expr_params);
+      let fragment = expr.render_into(params, dialect);
       parts.push(format!(r#"{fragment} AS "{alias}""#));
     }
     parts.join(", ")

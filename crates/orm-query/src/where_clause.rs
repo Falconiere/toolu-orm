@@ -2,14 +2,13 @@
 //! management.
 
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::Expr;
-use toolu_orm_core::value::Value;
+use toolu_orm_core::expr::{BoundParams, Expr};
 
 /// Appends a `WHERE` clause to `sql` using dialect-specific parameters.
 pub(crate) fn append_where_for(
   filters: &[Expr],
   sql: &mut String,
-  params: &mut Vec<Value>,
+  params: &mut BoundParams,
   dialect: Dialect,
 ) {
   append_conjuncts_for(filters, " WHERE ", sql, params, dialect);
@@ -24,7 +23,7 @@ pub(crate) fn append_conjuncts_for(
   exprs: &[Expr],
   keyword: &str,
   sql: &mut String,
-  params: &mut Vec<Value>,
+  params: &mut BoundParams,
   dialect: Dialect,
 ) {
   if exprs.is_empty() {
@@ -34,13 +33,11 @@ pub(crate) fn append_conjuncts_for(
   sql.push_str(keyword);
   let mut first = true;
   for expr in exprs {
-    let start = params.len() + 1;
-    let (fragment, expr_params) = expr.to_sql_fragment_for(start, dialect);
+    let fragment = expr.render_into(params, dialect);
     if !first {
       sql.push_str(" AND ");
     }
     sql.push_str(&fragment);
-    params.extend(expr_params);
     first = false;
   }
 }
