@@ -27,6 +27,7 @@ Seed on every driver — `memories(id, body, created_at, last_accessed, access_c
 | `set_scalar(&HITS, Scalar::col(&HITS) + Scalar::bind(1))` | `"access_count" = ("access_count" + ?1)` | only the filtered row, +1 then +2 |
 | `Scalar::case_when(…).otherwise(…)` / `.end()` | `CASE WHEN … THEN … ELSE … END` / no `ELSE` | branch value / `NULL` |
 | `Scalar::col(&ID).concat(bind).concat(substr(…))` | `(("id" \|\| ?1) \|\| substr(…))` | `m1:100` |
+| `Scalar::excluded(&BODY)` | `"excluded"."body"` | binds nothing, so the next sibling keeps the offset — the upsert half of [Upsert](upsert.md) |
 | `Scalar::func("drop table users; --", …)` | — | `DbCoreError::InvalidScalarFunction`, no SQL built |
 
 Parameter numbering is the point of the design: every node takes its index from `start + params.len()`, so one statement can bind in its projection, its `SET`, its `WHERE` and its `ORDER BY` and still number `?1..?n` in the order the values are returned. `count()` / `exists()` do not render the projection, so a bound projection contributes no parameter there and the filter still numbers from 1.
@@ -71,6 +72,8 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'b
 | default | scalar_expr_test | functions::nested_arguments_number_left_to_right_from_the_offset |
 | default | scalar_expr_test | leaves::a_bound_leaf_takes_the_offset_it_is_rendered_at |
 | default | scalar_expr_test | leaves::a_column_leaf_renders_qualified_and_binds_nothing |
+| default | scalar_expr_test | leaves::an_excluded_leaf_leaves_its_offset_free_for_the_next_bind |
+| default | scalar_expr_test | leaves::an_excluded_leaf_names_the_proposed_row_and_binds_nothing |
 | default | scalar_expr_test | leaves::a_raw_leaf_numbers_its_placeholders_from_the_offset |
 | default | scalar_expr_test | leaves::a_sql_leaf_passes_its_text_through_unchanged |
 | default | scalar_expr_sql_test | an_order_term_that_binds_is_numbered_after_the_filter |
