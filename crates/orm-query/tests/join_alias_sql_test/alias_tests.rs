@@ -171,8 +171,13 @@ fn qualified_projection_and_output_alias_render_qualified() {
   assert_eq!(bare, r#"SELECT "id", "kind" FROM "code_symbols""#);
 
   // The quoting moved out of the select-list renderer and into the setters, so
-  // what a caller passes renders exactly as it did before — including an input
-  // that was already quoted, which the old renderer quoted a second time too.
+  // a caller's input reaches the same single quoting step it always did.
+  //
+  // `columns_raw` takes bare names. A pre-quoted one is degenerate input, and
+  // the expected string below is deliberately not usable SQL — `""kind""` is
+  // four quote characters, which no engine reads as a column. It is here
+  // because it renders byte for byte what the previous pipeline rendered from
+  // the same input, which is the whole claim: nothing about the output moved.
   let (raw, _) = SelectBuilder::new("code_symbols")
     .columns_raw(&["id", r#""kind""#])
     .to_sql_for(Dialect::Sqlite);
