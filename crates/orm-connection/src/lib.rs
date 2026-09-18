@@ -29,7 +29,10 @@ pub use trait_def::DbConnection;
 pub use libsql_impl::{Database, LibsqlConnection, RemoteConfig};
 
 #[cfg(feature = "rusqlite")]
-pub use rusqlite_impl::RusqliteConnection;
+pub use rusqlite_impl::{
+  AttachedDatabase, IntegrityReport, MaintenanceError, RusqliteConnection, SqliteMaintenance,
+  StorageStats,
+};
 
 #[cfg(feature = "postgres")]
 pub use postgres_impl::{PgConfig, PgConnection, PgDatabase, PgTransaction};

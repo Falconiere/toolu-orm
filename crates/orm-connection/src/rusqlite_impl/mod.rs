@@ -14,6 +14,11 @@
 mod asynchronous;
 mod blocking;
 mod connection;
+mod maintenance;
 mod params;
+mod raw_access;
 
 pub use connection::RusqliteConnection;
+pub use maintenance::{
+  AttachedDatabase, IntegrityReport, MaintenanceError, SqliteMaintenance, StorageStats,
+};
