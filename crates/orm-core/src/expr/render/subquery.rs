@@ -54,6 +54,12 @@ pub(super) fn render_scalar_subquery(
 }
 
 /// The nested statement, numbered from where its siblings left off.
+///
+/// `start + params.len()` is evaluated **at the moment the statement pushes**,
+/// so this is correct for any `params` — empty in `render_exists`, already
+/// holding the left scalar's binds in `render_in_subquery`, or holding
+/// anything a future arm renders first. That is the same rule every node in
+/// this module follows; see [`render_scalar`](super::render_scalar).
 fn splice(
   query: &dyn SelectSource,
   start: usize,
