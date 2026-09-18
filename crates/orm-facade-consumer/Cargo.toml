@@ -32,6 +32,12 @@ path = "tests/facade_only_test.rs"
 name = "facade_only_from_row_test"
 path = "tests/facade_only_from_row_test.rs"
 
+# Scalar expressions through the facade. Its own binary so `facade_only_test`
+# stays under the 250-line cap.
+[[test]]
+name = "facade_only_scalar_test"
+path = "tests/facade_only_scalar_test.rs"
+
 # Compile-proof that macro-generated public items carry docs: the binary is
 # `#![deny(missing_docs)]` and exports one of each table macro from a `pub mod`.
 [[test]]

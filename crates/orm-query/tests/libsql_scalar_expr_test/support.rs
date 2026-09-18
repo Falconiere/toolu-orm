@@ -1,4 +1,4 @@
-//! Shared setup for the rusqlite scalar-expression suite.
+//! Shared setup for the libsql scalar-expression suite.
 
 use toolu_orm_core::error::DbCoreError;
 use toolu_orm_core::expr::Scalar;

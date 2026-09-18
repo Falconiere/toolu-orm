@@ -3,9 +3,11 @@
 //! # Public API
 //!
 //! Tests: `#[table]` schema and companion column module, the generated
-//! builders, scalar expressions and `LIKE … ESCAPE`, `#[fts5_table]`, a
-//! `#[view]` struct, `#[derive(ColumnEnum)]`, and `#[derive(Relational)]`
-//! decoding a real JSON row.
+//! builders, `#[fts5_table]`, a `#[view]` struct, `#[derive(ColumnEnum)]`, and
+//! `#[derive(Relational)]` decoding a real JSON row.
+//!
+//! Scalar expressions and `LIKE … ESCAPE` have their own binary,
+//! `facade_only_scalar_test`, which keeps this file under the line cap.
 //!
 //! This file deliberately does **not** glob `toolu_orm::prelude`. This package
 //! depends on `toolu-orm` alone, so `toolu_orm_core`, `toolu_orm_query`,
@@ -16,8 +18,7 @@
 use toolu_orm::core::column::{EnumSchema, Integer, Text, Vector};
 use toolu_orm::core::dialect::Dialect;
 use toolu_orm::core::error::DbCoreError;
-use toolu_orm::core::expr::{like_pattern_literal, Scalar};
-use toolu_orm::core::query_column::{CommonOps, TextOps};
+use toolu_orm::core::query_column::CommonOps;
 use toolu_orm::core::relational_row::FromRelationalRow;
 use toolu_orm::core::serde_json::{self, Value};
 use toolu_orm::core::table::TableSchema;
@@ -144,33 +145,6 @@ fn generated_builders_reach_the_query_crate() {
 
   assert_eq!(sql, r#"SELECT "id", "email" FROM "facade_only_users""#);
   assert!(params.is_empty());
-}
-
-#[test]
-fn scalar_expressions_compose_through_the_facade() -> Result<(), DbCoreError> {
-  // Rendered for an explicit dialect: `to_sql()` follows `Dialect::CURRENT`,
-  // which is Postgres (`$N`) in the postgres lane and SQLite (`?N`) elsewhere,
-  // and this asserts the placeholder text.
-  let bumped = Scalar::col(&facade_only_users::age) + Scalar::bind(1);
-  let (sql, params) = FacadeOnlyUser::select()
-    .columns_raw(&["id"])
-    .column_scalar(bumped, "next_age")
-    .filter(
-      facade_only_users::email
-        .like_escape(format!("%{}%", like_pattern_literal("a_b", '\\')), '\\'),
-    )
-    .order_by(Scalar::func("lower", vec![Scalar::col(&facade_only_users::email)])?.asc())
-    .to_sql_for(Dialect::Sqlite);
-
-  assert_eq!(
-    sql,
-    r#"SELECT "id", ("facade_only_users"."age" + ?1) AS "next_age" FROM "facade_only_users" "#
-      .to_owned()
-      + r#"WHERE "facade_only_users"."email" LIKE ?2 ESCAPE ?3 "#
-      + r#"ORDER BY lower("facade_only_users"."email") ASC"#
-  );
-  assert_eq!(params.len(), 3);
-  Ok(())
 }
 
 #[test]

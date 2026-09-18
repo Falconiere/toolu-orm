@@ -1,5 +1,6 @@
-//! The rusqlite scalar-expression scenarios against in-memory libsql
-//! (libsql-only lane), so both SQLite drivers are held to the same results.
+//! The scalar-expression scenarios against in-memory libsql (libsql-only
+//! lane): the same cases `rusqlite_scalar_expr_test` runs, asserted on the
+//! same seeded rows, so both SQLite drivers are held to one result.
 
 #[path = "../fixtures/libsql_memories_db.rs"]
 pub mod db;

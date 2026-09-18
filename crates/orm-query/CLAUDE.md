@@ -14,7 +14,7 @@ Type-safe query builders for toolu-orm — Select, Insert, Update, Delete with f
 - `impl_filter!` and `impl_execute!` macros reduce boilerplate across builders
 - `SelectBuilder` supports raw mode (`SelectBuilder::raw()`) for custom queries
 - WHERE clause parameter indexing starts from `start` offset for composability
-- Every clause renders into one `params` vec in statement order — select list, WHERE, ORDER BY, LIMIT/OFFSET — so a `Scalar` can bind in any of them and the numbering stays correct
+- Every clause renders into one `params` vec in statement order — SelectBuilder: select list, WHERE, ORDER BY, LIMIT/OFFSET; UpdateBuilder: SET then WHERE; InsertBuilder: the VALUES list in column order — so a `Scalar` can bind in any of them and the numbering stays correct
 
 ## Key Modules
 - `select/builder.rs` — SelectBuilder (columns, joins, filters, limit, offset)
