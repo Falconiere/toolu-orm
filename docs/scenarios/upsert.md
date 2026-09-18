@@ -42,6 +42,8 @@ RETURNING "id"
 
 Postgres gets that same clause rather than an approximation: only the placeholder style changes. The legacy `or_replace()` keeps its per-dialect divergence, documented above and unchanged.
 
+A conflict mode may also sit on an `INSERT … SELECT` rather than a `VALUES` list, where SQLite needs the source wrapped so its parser cannot read `ON CONFLICT` as a join's `ON`; see [INSERT … SELECT and database-qualified names](insert-select.md).
+
 ## What is proven
 
 - Inserting `("u1", "Ann")` then `("u1", "Bea")` with `or_replace` leaves exactly one row named `Bea` on all three drivers; Postgres reports 1 affected row for the `DO UPDATE`.

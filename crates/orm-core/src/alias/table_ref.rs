@@ -1,4 +1,5 @@
-//! [`TableRef`] — what a `FROM` / `JOIN` slot names, optionally under an alias.
+//! [`TableRef`] — what a `FROM` / `JOIN` / `INSERT INTO` slot names, optionally
+//! inside a database and optionally under an alias.
 
 use crate::dialect::Dialect;
 use crate::error::DbCoreError;
@@ -20,10 +21,16 @@ use super::table_function::{render_call, TableSource};
 /// `TableRef::aliased("memories", "old")` renders `"memories" AS "old"`, where
 /// the whole string in one identifier — `"memories old"` — names nothing.
 ///
+/// [`in_database`](Self::in_database) is the same reasoning: a dotted string is
+/// *one* identifier, so it must be a separate part to render
+/// `"main"."indexed_files"`.
+///
 /// `Eq` is deliberately not derived: a function source holds [`Value`]
 /// arguments, and `Value::Real` holds an `f64`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TableRef {
+  /// The database (SQLite) or schema (Postgres) the name is resolved in.
+  database: Option<String>,
   table: String,
   alias: Option<String>,
   source: TableSource,
@@ -34,6 +41,7 @@ impl TableRef {
   /// `SelectBuilder::with`.
   pub fn new(table: impl Into<String>) -> Self {
     Self {
+      database: None,
       table: table.into(),
       alias: None,
       source: TableSource::Relation,
@@ -43,6 +51,7 @@ impl TableRef {
   /// The relation under `alias`, which is what its columns are qualified by.
   pub fn aliased(table: impl Into<String>, alias: impl Into<String>) -> Self {
     Self {
+      database: None,
       table: table.into(),
       alias: Some(alias.into()),
       source: TableSource::Relation,
@@ -84,6 +93,7 @@ impl TableRef {
       });
     }
     Ok(Self {
+      database: None,
       table: name.to_owned(),
       alias: None,
       source: TableSource::Function(args),
@@ -99,12 +109,41 @@ impl TableRef {
     self
   }
 
+  /// The same source resolved inside `database`: `"old"."indexed_files"`.
+  ///
+  /// **The engines spell this identically and mean different things**, and
+  /// nothing here translates: on SQLite the first part is an *attachment*
+  /// schema — `main`, `temp`, or a name `ATTACH DATABASE … AS …` bound on this
+  /// connection, addressing another file — while on Postgres it is a
+  /// *namespace* schema inside one database. A later call replaces an earlier
+  /// one.
+  ///
+  /// ```
+  /// use toolu_orm_core::alias::TableRef;
+  /// use toolu_orm_core::dialect::Dialect;
+  ///
+  /// let old = TableRef::new("indexed_files").in_database("old");
+  /// assert_eq!(old.to_sql_fragment_for(1, Dialect::Sqlite).0, r#""old"."indexed_files""#);
+  /// // Columns are still qualified by the table, never by the database.
+  /// assert_eq!(old.qualifier(), "indexed_files");
+  /// ```
+  #[must_use]
+  pub fn in_database(mut self, database: impl Into<String>) -> Self {
+    self.database = Some(database.into());
+    self
+  }
+
   /// The base name, never the alias — the table, the CTE, or the function.
   ///
   /// This is the name an error message should carry, because it is what the
   /// caller named.
   pub fn table(&self) -> &str {
     &self.table
+  }
+
+  /// The database or schema this source is resolved in, when there is one.
+  pub fn database(&self) -> Option<&str> {
+    self.database.as_deref()
   }
 
   /// The alias, when there is one.
@@ -115,7 +154,10 @@ impl TableRef {
   /// What columns of this source are qualified by: the alias, else the name.
   ///
   /// SQL hides the original name once a source is aliased, so this is the only
-  /// qualifier the rest of the statement may use.
+  /// qualifier the rest of the statement may use. The **database is never part
+  /// of it**: both engines resolve the two-part `"indexed_files"."repo"`
+  /// against a `FROM "old"."indexed_files"` item, so a column reference needs
+  /// no third part and [`AliasedColumn`] needs no new shape.
   pub fn qualifier(&self) -> &str {
     self.alias.as_deref().unwrap_or(&self.table)
   }
@@ -126,10 +168,17 @@ impl TableRef {
   /// A relation binds nothing and returns an empty vector; a function returns
   /// its arguments in bind order. A `FROM` slot is a clause like any other,
   /// numbering from what the clauses rendered before it already emitted.
+  ///
+  /// The shape is `[<"database">.]<base>[ AS <"alias">]`, each part quoted on
+  /// its own so a dot never ends up inside an identifier.
   pub fn to_sql_fragment_for(&self, start: usize, dialect: Dialect) -> (String, Vec<Value>) {
-    let (base, params) = match &self.source {
+    let (name, params) = match &self.source {
       TableSource::Relation => (quote_ident(&self.table), Vec::new()),
       TableSource::Function(args) => render_call(&self.table, args, start, dialect),
+    };
+    let base = match &self.database {
+      Some(database) => format!("{}.{name}", quote_ident(database)),
+      None => name,
     };
     match &self.alias {
       Some(alias) => (format!("{base} AS {}", quote_ident(alias)), params),

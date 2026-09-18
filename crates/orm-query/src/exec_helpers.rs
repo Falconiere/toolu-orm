@@ -54,8 +54,9 @@ pub(crate) use impl_execute;
 /// `SelectBuilder`, and share its contract: a statement that returns no row —
 /// no `RETURNING` clause, or a conflict clause that took the `DO NOTHING`
 /// branch — makes `fetch_optional` `None` and `fetch_one`
-/// `QueryError::NotFound`. The builder must expose its `table` field to the
-/// module this expands in, for that error.
+/// `QueryError::NotFound`. The builder must expose a `table_name()` method for
+/// that error, so a target carrying a database qualifier still reports the
+/// bare table it named.
 macro_rules! impl_returning_fetch {
   ($builder:ty, $op:literal) => {
     #[cfg(any(
@@ -103,7 +104,7 @@ macro_rules! impl_returning_fetch {
           .fetch_optional::<T>(exec)
           .await?
           .ok_or_else(|| $crate::QueryError::NotFound {
-            table: self.table.clone(),
+            table: self.table_name().to_owned(),
           })
       }
     }
@@ -153,7 +154,7 @@ macro_rules! impl_returning_fetch {
         self
           .fetch_optional::<T>(exec)?
           .ok_or_else(|| $crate::QueryError::NotFound {
-            table: self.table.clone(),
+            table: self.table_name().to_owned(),
           })
       }
     }
