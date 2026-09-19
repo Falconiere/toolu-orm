@@ -140,12 +140,16 @@ fn expr_json_extract_like_produces_correct_sql() {
   assert_eq!(params, vec![Value::from("%alice%")]);
 }
 
-// Raw expr does not re-number already-numbered params
+// Raw expr numbers an already-numbered param from the fragment's own base
 #[test]
-fn expr_raw_does_not_renumber_already_numbered_params() {
-  let params = vec![Value::from("active")];
-  let expr = Expr::raw("status = ?1", params);
-  let (sql, out_params) = expr.to_sql_fragment_for(1, Dialect::Sqlite);
-  assert_eq!(sql, "status = ?1");
+fn expr_raw_numbers_an_already_numbered_param_from_the_offset() {
+  let expr = Expr::raw("status = ?1", vec![Value::from("active")]);
+
+  let (first, out_params) = expr.to_sql_fragment_for(1, Dialect::Sqlite);
+  assert_eq!(first, "status = ?1");
   assert_eq!(out_params, vec![Value::from("active")]);
+
+  // `?1` is the fragment's first value wherever the fragment lands (#131).
+  let (offset, _) = expr.to_sql_fragment_for(3, Dialect::Sqlite);
+  assert_eq!(offset, "status = ?3");
 }

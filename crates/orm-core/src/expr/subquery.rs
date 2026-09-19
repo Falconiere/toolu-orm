@@ -3,11 +3,12 @@
 //!
 //! The builder that renders a `SELECT` lives in `toolu-orm-query`, which
 //! depends on this crate, so a subquery node cannot name it directly. Nor can
-//! it hold pre-rendered SQL: [`Expr::raw`](crate::expr::Expr::raw) passes an
-//! already-numbered `?N` through unchanged, so a statement rendered in advance
-//! would keep the indices it was born with. An object-safe trait here,
-//! implemented over there, is how [`QualifiedColumn`](crate::alias::QualifiedColumn)
-//! already solves this for columns.
+//! it hold pre-rendered SQL: a statement rendered in advance is already
+//! dialect-specific and carries its own binding ledger, neither of which
+//! [`Expr::raw`](crate::expr::Expr::raw) can recover by renumbering text. An
+//! object-safe trait here, implemented over there, is how
+//! [`QualifiedColumn`](crate::alias::QualifiedColumn) already solves this for
+//! columns.
 
 use crate::dialect::Dialect;
 use crate::expr::BoundParams;

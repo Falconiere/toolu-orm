@@ -1,8 +1,8 @@
 # Expression fragments
 
 **Feature:** `Expr::to_sql_fragment_for(start, dialect)` renders a WHERE fragment whose placeholders continue from `start`, so builders can chain filters, joins, and raw SQL without renumbering. SQLite gets `?N`, Postgres gets `$N`.
-**Drivers:** both dialects, pure SQL generation (no database). The same operators are executed against real rows in [Filters](filters.md).
-**Spec:** AC-11.
+**Drivers:** both dialects. The numbering itself is pure SQL generation (no database); the fragment-relative `?N` rule of issue #131 is additionally executed against real rows on libsql, rusqlite and Postgres. The same operators are executed against real rows in [Filters](filters.md).
+**Spec:** AC-11, issues #113 and #131.
 
 ## What is proven
 
@@ -17,10 +17,51 @@
 | `in_list([])` | `1 = 0` | `1 = 0` | 0 |
 | `not_in([])` | `1 = 1` | `1 = 1` | 0 |
 | `cmp.and(Expr::raw("... ?", [v]))` | `"repo" = ?1 AND ... ?2` | `"repo" = $1 AND ... $2` | 2, in order |
+| `cmp.and(Expr::raw("x = ?1 OR y = ?1", [v]))` | `"repo" = ?1 AND x = ?2 OR y = ?2` | `... x = $2 OR y = $2` | 2 — the fragment binds one |
 
 The empty-list rows pin a fix made by this program: the renderer used to emit `IN ()`, which Postgres rejects with SQLSTATE 42601 (SQLite silently treated it as false). Drizzle renders the same constants.
 
 The `Expr::raw` row pins the fix for issue #113: a raw fragment nested inside `and`/`or` used to number its bare `?` placeholders from the caller's `start` alone, colliding with placeholders already emitted by earlier siblings in the same tree, instead of continuing from `start + <params already emitted>`.
+
+### A numbered `?N` is fragment-relative (issue #131)
+
+#113 fixed the bare `?`. The numbered form kept its literal index, so a fragment
+was correct only when it happened to render first:
+
+```rust
+Expr::raw("x = ?1", vec![v]).to_sql_fragment_for(3, Dialect::Sqlite);
+// before: ("x = ?1", [v])   the value landed at index 3 — the predicate compared another clause's value
+// after:  ("x = ?3", [v])
+```
+
+A fragment is a frame. `base` is the index its first value takes, and every
+number in its text — written or implied — is shifted by `base - 1`:
+
+| Written | Means | At base 4 |
+|---|---|---|
+| `?N`, `N >= 1` | the fragment's own `N`-th value | `?N` → `?{N+3}` |
+| the same `N` twice | one parameter read twice, bound once | `?4 … ?4` |
+| a bare `?` | one more than the largest number assigned so far — SQLite's own rule for anonymous parameters | `"?1 … ?"` → `?4 … ?5` |
+| `?0` | nothing: indices are 1-based | left verbatim, so the engine refuses to prepare |
+| a digit run no `usize` can hold or shift | nothing | left verbatim |
+
+The values a fragment binds never changed: it still binds exactly what it was
+given, once, in order, whatever the text references. So a fragment that names
+more placeholders than it supplies values is an authoring bug in either form —
+the index shifts with the frame and then addresses a later clause's value, or
+none — and `SharedBind` / `Scalar::shared` remain the only way to name a value
+another predicate bound.
+
+**Breaking change.** A fragment written against 0.8.x that relied on `?N` being
+an absolute statement index now renders a different index. Replace it with the
+bare form (`?`), or with a handle when the intent was cross-predicate reuse.
+
+Executed proof lives in `{libsql,rusqlite,postgres}_raw_fragment_test`: a
+`SELECT` whose raw fragment is not first returns the rows that match the value
+the fragment bound. Before the fix the same query returned **zero** rows on
+libsql (it compared `src_id` against the `rel` value), and Postgres rejected the
+bind outright — *bind message supplies 2 parameters, but prepared statement
+requires 1*.
 
 ### The typed-column surface
 
@@ -35,7 +76,7 @@ The `Expr::raw` row pins the fix for issue #113: a raw fragment nested inside `a
 | `Expr::and` / `or` | parentheses, and left-to-right parameter numbering |
 | `start` offsets | a plain fragment and a nested `and` both number from `start`, not from 1 |
 | `Expr::json_extract` | `json_extract("records"."data", '$.key')` carrying `eq` and `like` |
-| `Expr::raw` | bare `?` renumbered from the buffer's position; an already-numbered `?N` left alone |
+| `Expr::raw` | bare `?` renumbered from the buffer's position; `?N` renumbered from it too, as the fragment's own `N`-th value |
 | `Column::asc` / `desc` | an `OrderBy` rendering `ASC` / `DESC` |
 | `Column::equals` | a column-to-column `JoinCondition` that binds nothing |
 
@@ -46,7 +87,10 @@ The suite existed from the start but was never compiled: its entry file was `mod
 ## How to run
 
 ```sh
-cargo nextest run -p toolu-orm-core -E 'binary(expr_offset_and_nesting_test) | binary(expr_test) | binary(expr_raw_bind_index_test) | binary(query_column_test)'
+cargo nextest run -p toolu-orm-core -E 'binary(expr_offset_and_nesting_test) | binary(expr_test) | binary(expr_raw_bind_index_test) | binary(expr_raw_numbered_index_test) | binary(query_column_test)'
+cargo nextest run -p toolu-orm-query --features libsql -E 'binary(libsql_raw_fragment_test)'
+cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec -E 'binary(rusqlite_raw_fragment_test)'
+TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'binary(postgres_raw_fragment_test)'
 ```
 
 ## Tests
@@ -73,6 +117,24 @@ cargo nextest run -p toolu-orm-core -E 'binary(expr_offset_and_nesting_test) | b
 | default | expr_raw_bind_index_test | raw_nested_two_levels_in_and_or |
 | default | expr_raw_bind_index_test | non_default_start_offsets_compose_with_prior_params |
 | default | expr_raw_bind_index_test | zero_param_raw_sibling_does_not_reserve_an_index |
+| default | expr_raw_numbered_index_test | a_bare_only_fragment_renders_exactly_as_it_did_before |
+| default | expr_raw_numbered_index_test | a_bare_placeholder_takes_one_more_than_the_largest_number_assigned |
+| default | expr_raw_numbered_index_test | a_bare_placeholder_left_with_no_room_stays_verbatim |
+| default | expr_raw_numbered_index_test | a_digit_run_too_large_for_an_index_stays_verbatim_and_never_panics |
+| default | expr_raw_numbered_index_test | a_number_after_a_bare_placeholder_can_name_it |
+| default | expr_raw_numbered_index_test | a_number_may_address_an_earlier_value_out_of_reading_order |
+| default | expr_raw_numbered_index_test | a_numbered_fragment_after_a_typed_predicate_compares_its_own_value |
+| default | expr_raw_numbered_index_test | a_numbered_placeholder_at_base_one_is_unchanged |
+| default | expr_raw_numbered_index_test | a_numbered_placeholder_takes_the_index_its_value_actually_lands_on |
+| default | expr_raw_numbered_index_test | a_scalar_fragment_is_numbered_from_its_own_base |
+| default | expr_raw_numbered_index_test | a_scalar_fragment_reuses_one_value_across_two_occurrences |
+| default | expr_raw_numbered_index_test | an_index_past_the_supplied_values_is_shifted_like_any_other |
+| default | expr_raw_numbered_index_test | an_index_whose_shift_would_overflow_stays_verbatim |
+| default | expr_raw_numbered_index_test | index_zero_is_not_a_placeholder_and_stays_verbatim |
+| default | expr_raw_numbered_index_test | one_number_used_twice_renders_one_index_and_binds_one_value |
+| default | expr_raw_numbered_index_test | postgres_renders_the_same_frame_with_dollar_placeholders |
+| default | expr_raw_numbered_index_test | the_mixed_fragment_shifts_whole_at_an_offset |
+| default | expr_raw_numbered_index_test | two_numbers_address_the_two_values_in_order |
 | default | query_column_test | common_ops::column_new_stores_table_and_name |
 | default | query_column_test | common_ops::column_qualified_format |
 | default | query_column_test | common_ops::text_column_eq_produces_correct_sql |
@@ -105,4 +167,13 @@ cargo nextest run -p toolu-orm-core -E 'binary(expr_offset_and_nesting_test) | b
 | default | query_column_test | text_and_special_ops::expr_json_extract_eq_produces_correct_sql |
 | default | query_column_test | text_and_special_ops::expr_json_extract_like_produces_correct_sql |
 | default | query_column_test | text_and_special_ops::expr_raw_replaces_bare_question_marks_with_numbered_params |
-| default | query_column_test | text_and_special_ops::expr_raw_does_not_renumber_already_numbered_params |
+| default | query_column_test | text_and_special_ops::expr_raw_numbers_an_already_numbered_param_from_the_offset |
+| libsql-only | libsql_raw_fragment_test | a_reused_number_in_a_later_fragment_reads_its_own_value |
+| libsql-only | libsql_raw_fragment_test | the_statement_that_ran_names_the_fragments_own_index_twice |
+| libsql-only | libsql_raw_fragment_test | two_numbers_out_of_reading_order_bound_the_right_way_round |
+| rusqlite-only | rusqlite_raw_fragment_test | a_bare_placeholder_after_a_numbered_one_takes_the_next_value |
+| rusqlite-only | rusqlite_raw_fragment_test | a_reused_number_in_a_later_fragment_reads_its_own_value |
+| rusqlite-only | rusqlite_raw_fragment_test | two_numbers_out_of_reading_order_bound_the_right_way_round |
+| postgres | postgres_raw_fragment_test | a_bare_placeholder_after_a_numbered_one_takes_the_next_value |
+| postgres | postgres_raw_fragment_test | a_reused_number_in_a_later_fragment_reads_its_own_value |
+| postgres | postgres_raw_fragment_test | two_numbers_out_of_reading_order_bound_the_right_way_round |

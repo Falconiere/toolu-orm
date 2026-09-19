@@ -258,6 +258,12 @@ name = "libsql_joins_test"
 path = "tests/libsql_joins_test.rs"
 required-features = ["libsql"]
 
+# Issue #131: a raw fragment's own ?N, executed where the fragment is not first.
+[[test]]
+name = "libsql_raw_fragment_test"
+path = "tests/libsql_raw_fragment_test.rs"
+required-features = ["libsql"]
+
 [[test]]
 name = "libsql_upsert_test"
 path = "tests/libsql_upsert_test/main.rs"
@@ -312,6 +318,11 @@ required-features = ["rusqlite"]
 [[test]]
 name = "rusqlite_joins_test"
 path = "tests/rusqlite_joins_test.rs"
+required-features = ["rusqlite"]
+
+[[test]]
+name = "rusqlite_raw_fragment_test"
+path = "tests/rusqlite_raw_fragment_test.rs"
 required-features = ["rusqlite"]
 
 [[test]]
@@ -399,6 +410,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_joins_test"
 path = "tests/postgres_joins_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_raw_fragment_test"
+path = "tests/postgres_raw_fragment_test.rs"
 required-features = ["postgres"]
 
 [[test]]
