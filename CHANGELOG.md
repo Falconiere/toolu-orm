@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1](https://github.com/Falconiere/toolu-orm/compare/v0.8.0...v0.8.1) - 2026-09-19
+
+### `toolu-orm-cli`
+
+#### Other
+- *(macros,cli,query,ci)* enforce the 250-line file cap ([#126](https://github.com/Falconiere/toolu-orm/pull/126)) ([#134](https://github.com/Falconiere/toolu-orm/pull/134))
+
+### `toolu-orm-query`
+
+#### Fixed
+- *(core,connection,query)* select the FromRow decoder from orm-core's unified features ([#124](https://github.com/Falconiere/toolu-orm/pull/124)) ([#133](https://github.com/Falconiere/toolu-orm/pull/133))
+
+#### Other
+- *(macros,cli,query,ci)* enforce the 250-line file cap ([#126](https://github.com/Falconiere/toolu-orm/pull/126)) ([#134](https://github.com/Falconiere/toolu-orm/pull/134))
+
+### `toolu-orm-macros`
+
+#### Other
+- *(macros,cli,query,ci)* enforce the 250-line file cap ([#126](https://github.com/Falconiere/toolu-orm/pull/126)) ([#134](https://github.com/Falconiere/toolu-orm/pull/134))
+
+### `toolu-orm-connection`
+
+#### Fixed
+- *(core,connection,query)* select the FromRow decoder from orm-core's unified features ([#124](https://github.com/Falconiere/toolu-orm/pull/124)) ([#133](https://github.com/Falconiere/toolu-orm/pull/133))
+
+### `toolu-orm-core`
+
+#### Fixed
+- *(core,connection,query)* select the FromRow decoder from orm-core's unified features ([#124](https://github.com/Falconiere/toolu-orm/pull/124)) ([#133](https://github.com/Falconiere/toolu-orm/pull/133))
+- *(core,ci)* build the dead query_column test suite and guard unbuilt test files ([#125](https://github.com/Falconiere/toolu-orm/pull/125)) ([#130](https://github.com/Falconiere/toolu-orm/pull/130))
+
 ## [0.8.0](https://github.com/Falconiere/toolu-orm/compare/v0.7.0...v0.8.0) - 2026-09-18
 
 ### `toolu-orm-cli`
