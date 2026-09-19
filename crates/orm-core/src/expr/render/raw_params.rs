@@ -12,7 +12,8 @@ use crate::dialect::Dialect;
 /// - `?N` (`N >= 1`) addresses the fragment's own `N`-th value; the same `N`
 ///   twice is one parameter referenced twice.
 /// - A bare `?` takes one more than the largest number assigned so far, which
-///   is SQLite's own rule for anonymous parameters.
+///   is SQLite's own rule for anonymous parameters — unless no `usize` can
+///   hold that successor, when it too stays verbatim.
 /// - `?0`, and a digit run that no `usize` can hold or shift, are not
 ///   placeholders: emitted verbatim, so the engine refuses to prepare rather
 ///   than answer with the wrong value. An over-count shifts like any other
