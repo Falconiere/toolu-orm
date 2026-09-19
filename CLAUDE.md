@@ -20,7 +20,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - orm-core emits `DEP_TOOLU_ORM_CORE_HAS_*` build metadata (`links = "toolu_orm_core"`) so orm-cli's `build.rs` can see which features Cargo actually unified. That mechanism is for crates that must *implement* `FromRow` for their own types (`orm-cli`'s `migrate/store/applied.rs`, `migrate/pragma_row.rs`) and so cannot delegate to a helper.
 
 ## Tests
-- Test files are flat: `crates/<crate>/tests/<name>_test.rs`. Shared setup lives in `tests/fixtures/*.rs` (no `#[test]` there) and is wired in with `#[path = "fixtures/<file>.rs"] pub mod <name>;` (`pub mod`, so unused fixture items do not trip `dead_code`; `#[allow]` is banned).
+- Test files are flat: `crates/<crate>/tests/<name>_test.rs`, until one reaches the 250-line cap; then it becomes `tests/<name>_test/` whose entry file is `main.rs` — never `mod.rs`, which cargo never compiles (`scripts/check-test-targets.sh`) — holding only `mod` declarations, `#[path]` fixture wiring and `//!` docs, with the binary's own setup in a local `support.rs`. The binary name does not change, but `cargo nextest list` then prints `<module>::<test>`, so `docs/scenarios` rows must be module-qualified. Shared setup lives in `tests/fixtures/*.rs` (no `#[test]` there) and is wired in with `#[path = "fixtures/<file>.rs"] pub mod <name>;` (`pub mod`, so unused fixture items do not trip `dead_code`; `#[allow]` is banned).
 - Every test runs against a real database: in-memory libsql, in-memory rusqlite, or the live Postgres from `docker-compose.test.yaml` (`docker compose -f docker-compose.test.yaml up -d --wait`, then `TEST_DB_PORT=5434`). Postgres tests own a schema each and fail hard when the server is absent; never skip.
 - Every `[[test]]` target with `required-features` must have a CI lane that satisfies it (see Quality gate). Verify with `cargo nextest list` per lane, not by counting `#[test]`.
 - Every test scenario has a page in `docs/scenarios/` with a `## Tests` table naming its tests. `scripts/check-scenario-docs.sh` fails when a listed test is missing or a test in a scenario binary is undocumented, so a new or renamed test means a doc update in the same change.
@@ -42,7 +42,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Use `cargo nextest run`, never `cargo test`.
 
 ## Quality gate
-Four lanes plus four checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight and `scripts/check-driver-matrix.sh` compiles the driver-dependent crates against all eight (plus six where orm-core carries a driver its dependent does not). `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares.
+Four lanes plus five checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight and `scripts/check-driver-matrix.sh` compiles the driver-dependent crates against all eight (plus six where orm-core carries a driver its dependent does not). `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares. `scripts/check-file-length.sh` fails when any `*.rs` file under `crates/` — `src/` and `tests/` alike — is longer than 250 lines, which no clippy lint can express.
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -61,4 +61,5 @@ bash scripts/check-derive-matrix.sh
 bash scripts/check-driver-matrix.sh
 bash scripts/check-scenario-docs.sh
 bash scripts/check-test-targets.sh
+bash scripts/check-file-length.sh
 ```

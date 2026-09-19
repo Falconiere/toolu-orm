@@ -18,7 +18,9 @@ src/
 ├── paths.rs                     # Absolute, consumer-resolved crate paths
 ├── view.rs                      # #[view] attribute processing
 ├── parse/
-│   ├── column_parsing.rs        # Parse #[column(...)] attributes
+│   ├── column_parsing.rs        # Struct fields -> column definitions
+│   ├── column_attrs.rs          # Read and strip #[column(...)] attributes
+│   ├── column_type_spec.rs      # Field type -> TypeSpec (Varchar<N>, Char<N>)
 │   └── index_parsing.rs         # Parse #[index] / #[unique_index]
 └── expand/
     ├── schema_expansion.rs      # Generate TableSchema impl

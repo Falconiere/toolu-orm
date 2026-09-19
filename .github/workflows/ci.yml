@@ -139,3 +139,10 @@ jobs:
       # ubuntu-latest.
       - name: Every test file is built by a cargo target
         run: bash scripts/check-test-targets.sh
+
+      # CLAUDE.md caps every file at 250 lines, and nothing else can enforce
+      # it: clippy.toml's too-many-lines-threshold bounds functions, and
+      # [workspace.lints] cannot express a per-file limit. Covers src/ and
+      # tests/ alike — see the script's header for why.
+      - name: No Rust file over the 250-line cap
+        run: bash scripts/check-file-length.sh

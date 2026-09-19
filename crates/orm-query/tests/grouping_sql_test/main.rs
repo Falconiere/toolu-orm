@@ -7,4 +7,5 @@
 
 mod count_tests;
 mod fixtures;
+mod numbering_tests;
 mod render_tests;
