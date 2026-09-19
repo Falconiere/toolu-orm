@@ -119,6 +119,7 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'b
 | default | expr_raw_bind_index_test | zero_param_raw_sibling_does_not_reserve_an_index |
 | default | expr_raw_numbered_index_test | a_bare_only_fragment_renders_exactly_as_it_did_before |
 | default | expr_raw_numbered_index_test | a_bare_placeholder_takes_one_more_than_the_largest_number_assigned |
+| default | expr_raw_numbered_index_test | a_bare_placeholder_left_with_no_room_stays_verbatim |
 | default | expr_raw_numbered_index_test | a_digit_run_too_large_for_an_index_stays_verbatim_and_never_panics |
 | default | expr_raw_numbered_index_test | a_number_after_a_bare_placeholder_can_name_it |
 | default | expr_raw_numbered_index_test | a_number_may_address_an_earlier_value_out_of_reading_order |

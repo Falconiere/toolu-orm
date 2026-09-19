@@ -17,6 +17,14 @@ use crate::dialect::Dialect;
 ///   placeholders: emitted verbatim, so the engine refuses to prepare rather
 ///   than answer with the wrong value. An over-count shifts like any other
 ///   number — see [`crate::expr::Expr::raw`] for that hazard.
+///
+/// `start` is 1-based and both call sites pass [`BoundParams::next_index`],
+/// which is `len() + 1` and so never 0; the saturating subtraction below is the
+/// same guard [`BoundParams::nested`] uses, and renders a 0 as base 1 rather
+/// than wrapping.
+///
+/// [`BoundParams::next_index`]: crate::expr::BoundParams::next_index
+/// [`BoundParams::nested`]: crate::expr::BoundParams::nested
 pub(super) fn number_raw_params(sql: &str, start: usize, dialect: Dialect) -> String {
   let mut result = String::with_capacity(sql.len() + 8);
   let offset = start.saturating_sub(1);

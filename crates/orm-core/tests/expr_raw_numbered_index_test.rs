@@ -204,3 +204,17 @@ fn an_index_whose_shift_would_overflow_stays_verbatim() {
   assert_eq!(sql, near_max);
   assert_eq!(params, vec![text("needle")]);
 }
+
+#[test]
+fn a_bare_placeholder_left_with_no_room_stays_verbatim() {
+  // At base 1 there is nothing to shift, so `?usize::MAX` renders as written
+  // and becomes the largest number assigned — which leaves the bare `?` after
+  // it no successor a `usize` can hold. It stays verbatim rather than wrapping
+  // to a fabricated index; the statement is already unpreparable at that
+  // number, and no engine is handed a number the fragment did not mean.
+  let text_with_gap = format!("a = ?{} AND b = ?", usize::MAX);
+  let (sql, params) = Expr::raw(text_with_gap.clone(), vec![text("a"), text("b")])
+    .to_sql_fragment_for(1, Dialect::Sqlite);
+  assert_eq!(sql, text_with_gap);
+  assert_eq!(params, vec![text("a"), text("b")]);
+}
