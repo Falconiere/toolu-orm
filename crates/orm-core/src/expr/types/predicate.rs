@@ -138,6 +138,20 @@ impl Expr {
 
   // ── Public API ────────────────────────────────────────────────────────────
 
+  /// SQL text whose placeholders bind `params`, renumbered for wherever the
+  /// fragment lands in the statement.
+  ///
+  /// A bare `?` takes the next free index, and `?N` addresses *this fragment's*
+  /// `N`-th value — `"a = ?1 OR b = ?1"` with one value binds it once and reads
+  /// it twice. Both forms are offset by the fragment's own position, so a
+  /// placeholder always names the value it was written for (issue #131).
+  ///
+  /// Writing more placeholders than `params` supplies is an authoring bug in
+  /// either form: the index shifts with the fragment and then addresses a later
+  /// clause's value, or none. `?0` is not a placeholder — indices are 1-based —
+  /// so it is left verbatim and the engine refuses to prepare. Sharing a value
+  /// across *separate* predicates is [`SharedBind`](crate::expr::SharedBind)'s
+  /// job; no literal index can name its placeholder.
   pub fn raw(sql: impl Into<String>, params: Vec<Value>) -> Self {
     Self {
       kind: ExprKind::Raw {

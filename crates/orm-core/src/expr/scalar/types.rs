@@ -111,16 +111,18 @@ impl Scalar {
   /// SQL text that binds nothing — an identifier, a literal, or a call this
   /// crate already rendered, such as `bm25("posts")` or a `vec0` distance.
   ///
-  /// The text still goes through placeholder renumbering, so a bare `?` in it
-  /// would take an index without supplying a value: pass such a fragment to
-  /// [`Scalar::raw`] with its values instead.
+  /// The text still goes through placeholder renumbering, so a `?` or a `?N`
+  /// in it would take an index without supplying a value: pass such a fragment
+  /// to [`Scalar::raw`] with its values instead.
   #[must_use]
   pub fn sql(sql: impl Into<String>) -> Self {
     Self::raw(sql, Vec::new())
   }
 
-  /// SQL text whose bare `?` placeholders bind `params`, renumbered for the
-  /// position this node ends up in — the scalar twin of [`crate::expr::Expr::raw`].
+  /// SQL text whose placeholders bind `params`, renumbered for the position
+  /// this node ends up in — the scalar twin of [`crate::expr::Expr::raw`],
+  /// with the same rule: a bare `?` takes the next free index and `?N`
+  /// addresses this fragment's own `N`-th value.
   #[must_use]
   pub fn raw(sql: impl Into<String>, params: Vec<Value>) -> Self {
     Self {

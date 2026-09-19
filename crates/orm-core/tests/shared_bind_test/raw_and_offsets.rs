@@ -130,17 +130,17 @@ fn a_between_beside_a_reuse_keeps_its_own_two_placeholders() {
 }
 
 #[test]
-fn a_literal_index_in_a_raw_fragment_cannot_address_a_handle() {
+fn a_literal_index_in_a_raw_fragment_addresses_its_own_values() {
   let node = SharedBind::new("candidate");
 
-  // `?1` is passed through verbatim — `number_raw_params` only numbers a
-  // *bare* `?` — so a raw fragment cannot name a handle's placeholder: it
-  // names whatever index 1 happens to be. Here the handle took ?2, and the
-  // raw fragment still says ?1, which is the `rel` predicate's value.
+  // Since issue #131 `?1` names the *fragment's* first value, not the
+  // statement's: this fragment renders third, so it says ?3 and compares
+  // against the value it bound. It still cannot name a handle's placeholder —
+  // the handle took ?2, and no index the fragment can write means "that one".
   let (sql, params) = REL
     .eq("co_changed")
     .and(SRC_ID.eq_shared(&node))
-    .and(Expr::raw(r#""edges"."dst_id" = ?1"#, Vec::new()))
+    .and(Expr::raw(r#""edges"."dst_id" = ?1"#, vec![text("other")]))
     .and(DST_ID.eq_shared(&node))
     .to_sql_fragment_for(1, Dialect::Sqlite);
 
@@ -148,14 +148,42 @@ fn a_literal_index_in_a_raw_fragment_cannot_address_a_handle() {
     sql,
     concat!(
       r#"((("edges"."rel" = ?1 AND "edges"."src_id" = ?2)"#,
-      r#" AND "edges"."dst_id" = ?1) AND "edges"."dst_id" = ?2)"#
+      r#" AND "edges"."dst_id" = ?3) AND "edges"."dst_id" = ?2)"#
     )
   );
-  assert_eq!(params, vec![text("co_changed"), text("candidate")]);
-  // `Scalar::shared` is the supported route: it renders ?2, the handle's own
-  // index, without the caller knowing what that index is.
+  assert_eq!(
+    params,
+    vec![text("co_changed"), text("candidate"), text("other")]
+  );
+  // `Scalar::shared` is the supported route to a handle's index: it renders
+  // the handle's own placeholder without the caller knowing what it is.
   let (shared_sql, _) = Scalar::col(&DST_ID)
     .eq(Scalar::shared(&node))
     .to_sql_fragment_for(1, Dialect::Sqlite);
   assert_eq!(shared_sql, r#""edges"."dst_id" = ?1"#);
+}
+
+#[test]
+fn a_numbered_raw_fragment_after_a_reuse_takes_the_next_unused_index() {
+  let node = SharedBind::new("candidate");
+
+  // The second `eq_shared` binds nothing, so the fragment's base is 2 and its
+  // own `?1` — written twice for one value — renders ?2 at both occurrences.
+  let (sql, params) = SRC_ID
+    .eq_shared(&node)
+    .and(DST_ID.eq_shared(&node))
+    .and(Expr::raw(
+      r#"("edges"."weight" > ?1 OR "edges"."weight" < -?1)"#,
+      vec![Value::Integer(5)],
+    ))
+    .to_sql_fragment_for(1, Dialect::Sqlite);
+
+  assert_eq!(
+    sql,
+    concat!(
+      r#"(("edges"."src_id" = ?1 AND "edges"."dst_id" = ?1)"#,
+      r#" AND ("edges"."weight" > ?2 OR "edges"."weight" < -?2))"#
+    )
+  );
+  assert_eq!(params, vec![text("candidate"), Value::Integer(5)]);
 }

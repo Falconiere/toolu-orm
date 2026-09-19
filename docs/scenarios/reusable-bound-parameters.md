@@ -87,7 +87,7 @@ Position lives in `BoundParams`: each node takes `next_index()` as it writes, an
 | Subquery, first use **inside** | the outer clause reuses the index the subquery allocated |
 | Subquery, first use **outside** | the subquery reuses the outer index |
 | Derived-table count wrap | numbers from `?1` again and shares inside itself |
-| `Expr::raw` / `Scalar::raw` | a raw `?` after a reuse takes the next *unused* index; a literal `?N` still passes through verbatim and cannot address a handle |
+| `Expr::raw` / `Scalar::raw` | a raw `?` after a reuse takes the next *unused* index; since #131 a literal `?N` is shifted the same way, so it addresses the fragment's own values and still cannot name a handle's placeholder |
 | `UPDATE` `SET` ↔ `WHERE`, `DELETE`, `INSERT … VALUES`, `INSERT … SELECT` ↔ `ON CONFLICT` | one parameter each, with the rows read back |
 | A `SelectSource` implemented outside this workspace | it may not override the defaulted `to_select_sql_into`, so its statement renders with its own ledger and a handle used on both sides binds **twice** — one extra parameter, correct SQL, and never a wrong index |
 
@@ -152,7 +152,8 @@ Every SQL assertion names its dialect through `to_sql_for(Dialect::…)`; `to_sq
 | default | shared_bind_test | nesting::every_rendered_index_is_backed_by_a_bound_value |
 | default | shared_bind_test | nesting::the_same_predicate_renders_dollar_placeholders_on_postgres |
 | default | shared_bind_test | raw_and_offsets::a_between_beside_a_reuse_keeps_its_own_two_placeholders |
-| default | shared_bind_test | raw_and_offsets::a_literal_index_in_a_raw_fragment_cannot_address_a_handle |
+| default | shared_bind_test | raw_and_offsets::a_literal_index_in_a_raw_fragment_addresses_its_own_values |
+| default | shared_bind_test | raw_and_offsets::a_numbered_raw_fragment_after_a_reuse_takes_the_next_unused_index |
 | default | shared_bind_test | raw_and_offsets::a_raw_fragment_after_a_reuse_takes_the_next_unused_index |
 | default | shared_bind_test | raw_and_offsets::a_raw_fragment_before_a_reuse_still_owns_the_low_indices |
 | default | shared_bind_test | raw_and_offsets::a_shared_list_and_an_owned_list_of_the_same_values_stay_apart |
