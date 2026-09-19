@@ -14,6 +14,9 @@ use crate::error::DbCoreError;
 /// Returns [`DbCoreError::RowMapping`] when the row cannot be decoded into `T`.
 #[cfg(feature = "libsql")]
 pub fn from_libsql_row<T: FromRow>(row: &libsql::Row) -> Result<T, DbCoreError> {
+  // The two arms partition `feature = "libsql"` exactly -- and this function
+  // exists only under it, as does the module. `any(postgres, rusqlite)` and its
+  // negation leave no gap and no overlap, so a third arm would be unreachable.
   #[cfg(all(feature = "libsql", any(feature = "postgres", feature = "rusqlite"),))]
   {
     T::from_libsql_row(row)
