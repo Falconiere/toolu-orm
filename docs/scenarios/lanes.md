@@ -11,9 +11,17 @@
 
 Between them these four lanes give orm-core only four of the eight driver
 combinations — libsql, postgres+libsql, rusqlite and postgres — so the other
-four shapes of `FromRow` are never exercised by a lane. `bash
-scripts/check-derive-matrix.sh` covers the gap by compiling `#[derive(FromRow)]`
-against all eight (see [FromRow derive](from-row-derive.md)).
+four shapes of `FromRow` are never exercised by a lane. Two compile-only checks
+cover the gap:
+
+- `bash scripts/check-derive-matrix.sh` compiles `#[derive(FromRow)]` against all
+  eight (see [FromRow derive](from-row-derive.md)).
+- `bash scripts/check-driver-matrix.sh` compiles the driver-dependent *crates* —
+  orm-connection, orm-query, orm-cli and the `toolu-orm` facade — against all
+  eight, plus six cases where orm-core carries a driver its dependent does not
+  (see [Driver feature unification](driver-feature-unification.md)). The derive
+  matrix never builds those crates, which is how issue #124 shipped a
+  `toolu-orm-query --features rusqlite,libsql` that did not compile.
 
 Before this program, only the first two lanes ran. The four suites below existed but could not compile (`E0407: method from_pg_row is not a member of trait FromRow`): they implemented the two-driver shape while their `required-features` resolved to one driver. They now implement `from_row` and run on their lane.
 

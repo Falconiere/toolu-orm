@@ -9,11 +9,12 @@
 //! `rusqlite_prepared_statement_cache_test`).
 
 use toolu_orm_connection::{DbConnectionBlocking, DbError, RusqliteConnection};
-use toolu_orm_core::row::FromRow;
+use toolu_orm_core::row::{from_rusqlite_row, FromRow};
 use toolu_orm_core::value::Value;
 
 use crate::QueryError;
 
+/// Synchronous execute/query for a `rusqlite::Connection`.
 pub trait Executor {
   /// # Errors
   ///
@@ -49,7 +50,10 @@ impl Executor for rusqlite::Connection {
     let mut rows = stmt.query(param_refs.as_slice())?;
     let mut results = Vec::new();
     while let Some(row) = rows.next()? {
-      results.push(T::from_row(row)?);
+      // `from_rusqlite_row` rather than a `FromRow` method: only
+      // `toolu-orm-core` sees which driver features Cargo unified onto it
+      // (issue #124).
+      results.push(from_rusqlite_row(row)?);
     }
     Ok(results)
   }

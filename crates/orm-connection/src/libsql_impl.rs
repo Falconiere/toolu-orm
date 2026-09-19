@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::error::DbError;
 use crate::trait_def::DbConnection;
-use toolu_orm_core::row::FromRow;
+use toolu_orm_core::row::{FromRow, from_libsql_row};
 use toolu_orm_core::value::Value;
 
 /// Configuration for synced remote replica.
@@ -145,14 +145,10 @@ impl DbConnection for LibsqlConnection {
       .await
       .map_err(|e| DbError::Query(e.to_string()))?
     {
-      #[cfg(all(feature = "libsql", any(feature = "postgres", feature = "rusqlite"),))]
-      results.push(T::from_libsql_row(&row).map_err(DbError::from)?);
-      #[cfg(all(
-        feature = "libsql",
-        not(feature = "postgres"),
-        not(feature = "rusqlite"),
-      ))]
-      results.push(T::from_row(&row).map_err(DbError::from)?);
+      // `from_libsql_row` rather than a `FromRow` method: the method that exists
+      // depends on the features Cargo unified onto `toolu-orm-core`, which this
+      // crate's own flags do not report (issue #124).
+      results.push(from_libsql_row(&row).map_err(DbError::from)?);
     }
     Ok(results)
   }

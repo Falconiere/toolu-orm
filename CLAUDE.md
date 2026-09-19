@@ -16,7 +16,8 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Consumers activate the drivers they need on every crate they depend on.
 - `FromRow` changes shape per driver set: one driver on orm-core gives `from_row(&Row)`; two or more give `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`. `#[derive(FromRow)]` follows that shape — it emits one decoder per driver and hands all of them to `toolu_orm_core::impl_derived_from_row!`, whose eight definitions are `#[cfg]`-gated on orm-core's own features (`crates/orm-core/src/row/derived.rs`). Deriving it therefore never pins a suite to a lane. Hand-written impls stay supported and stay covered (orm-cli's `migrate/store.rs`, orm-connection's rusqlite fixtures, orm-query's `integration_test`).
 - orm-query compiles its executor, transaction, and fetch code only when exactly one driver feature is active (`cfg_single_backend!`), which is why the libsql-only and rusqlite-only lanes exist.
-- orm-core emits `DEP_TOOLU_ORM_CORE_HAS_*` build metadata (`links = "toolu_orm_core"`) so orm-cli's `build.rs` can see which features Cargo actually unified.
+- Crates that only *call* `FromRow` never name one of its methods: they go through `toolu_orm_core::row::from_{postgres,libsql,rusqlite}_row`, whose `#[cfg]`s are evaluated while compiling orm-core and so read the unified set by construction. Selecting a method from a crate's own feature flags is a proxy, and it drifts the moment one crate forwards a driver feature to orm-core but not to its sibling (issue #124).
+- orm-core emits `DEP_TOOLU_ORM_CORE_HAS_*` build metadata (`links = "toolu_orm_core"`) so orm-cli's `build.rs` can see which features Cargo actually unified. That mechanism is for crates that must *implement* `FromRow` for their own types (`orm-cli`'s `migrate/store/applied.rs`, `migrate/pragma_row.rs`) and so cannot delegate to a helper.
 
 ## Tests
 - Test files are flat: `crates/<crate>/tests/<name>_test.rs`. Shared setup lives in `tests/fixtures/*.rs` (no `#[test]` there) and is wired in with `#[path = "fixtures/<file>.rs"] pub mod <name>;` (`pub mod`, so unused fixture items do not trip `dead_code`; `#[allow]` is banned).
@@ -41,7 +42,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Use `cargo nextest run`, never `cargo test`.
 
 ## Quality gate
-Four lanes plus three checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight. `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares.
+Four lanes plus four checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight and `scripts/check-driver-matrix.sh` compiles the driver-dependent crates against all eight (plus six where orm-core carries a driver its dependent does not). `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares.
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -57,6 +58,7 @@ cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec
 cargo clippy -p toolu-orm-cli --no-default-features --features rusqlite --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-cli --no-default-features --features rusqlite
 bash scripts/check-derive-matrix.sh
+bash scripts/check-driver-matrix.sh
 bash scripts/check-scenario-docs.sh
 bash scripts/check-test-targets.sh
 ```

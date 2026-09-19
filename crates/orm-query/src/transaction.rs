@@ -78,7 +78,11 @@ impl crate::executor::Executor for Transaction {
       .await?;
     let mut results = Vec::new();
     while let Some(row) = rows.next().await? {
-      results.push(T::from_row(&row)?);
+      // Spelled out rather than imported: every `use` in this file needs the
+      // same three-line driver `#[cfg]`. `from_libsql_row` rather than a
+      // `FromRow` method because only `toolu-orm-core` sees which driver
+      // features Cargo unified onto it (issue #124).
+      results.push(toolu_orm_core::row::from_libsql_row(&row)?);
     }
     Ok(results)
   }
@@ -86,6 +90,7 @@ impl crate::executor::Executor for Transaction {
 
 // ── TransactionExt for libsql::Connection ────────────────────────────────────
 
+/// Runs a closure inside a `libsql` transaction, committing or rolling back.
 #[cfg(all(
   feature = "libsql",
   not(feature = "rusqlite"),

@@ -7,7 +7,7 @@ use super::connection::RusqliteConnection;
 use super::params::to_sql_params;
 use crate::blocking_trait_def::DbConnectionBlocking;
 use crate::error::DbError;
-use toolu_orm_core::row::FromRow;
+use toolu_orm_core::row::{FromRow, from_rusqlite_row};
 use toolu_orm_core::value::Value;
 
 /// `execute_sql` and `query_map` reuse the connection's bounded statement
@@ -46,15 +46,12 @@ impl DbConnectionBlocking for RusqliteConnection {
     // failure keeps its own message and lands in `DbError::RowMapping`, the way
     // the libsql backend reports it; routing it through a rusqlite error would
     // need a column index and type this layer does not know.
+    //
+    // `from_rusqlite_row` rather than a `FromRow` method: the method that exists
+    // depends on the features Cargo unified onto `toolu-orm-core`, which this
+    // crate's own flags do not report (issue #124).
     while let Some(row) = rows.next().map_err(|e| DbError::Query(e.to_string()))? {
-      #[cfg(all(feature = "rusqlite", any(feature = "postgres", feature = "libsql"),))]
-      results.push(T::from_rusqlite_row(row).map_err(DbError::from)?);
-      #[cfg(all(
-        feature = "rusqlite",
-        not(feature = "postgres"),
-        not(feature = "libsql"),
-      ))]
-      results.push(T::from_row(row).map_err(DbError::from)?);
+      results.push(from_rusqlite_row(row).map_err(DbError::from)?);
     }
     Ok(results)
   }
