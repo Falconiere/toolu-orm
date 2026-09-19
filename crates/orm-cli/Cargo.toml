@@ -42,7 +42,7 @@ required-features = ["libsql", "postgres"]
 
 [[test]]
 name = "generate_test"
-path = "tests/generate_test.rs"
+path = "tests/generate_test/main.rs"
 
 [[test]]
 name = "migrations_table_ddl_test"
@@ -81,7 +81,7 @@ required-features = ["libsql"]
 
 [[test]]
 name = "vec0_loop_sqlite_test"
-path = "tests/vec0_loop_sqlite_test.rs"
+path = "tests/vec0_loop_sqlite_test/main.rs"
 required-features = ["libsql"]
 
 [[test]]
@@ -121,7 +121,7 @@ required-features = ["libsql"]
 
 [[test]]
 name = "migrate_embedded_test"
-path = "tests/migrate_embedded_test.rs"
+path = "tests/migrate_embedded_test/main.rs"
 required-features = ["libsql"]
 
 # Needs a live Postgres (docker-compose.test.yaml).
@@ -138,7 +138,7 @@ required-features = ["libsql", "postgres"]
 
 [[test]]
 name = "migrate_embedded_baseline_test"
-path = "tests/migrate_embedded_baseline_test.rs"
+path = "tests/migrate_embedded_baseline_test/main.rs"
 required-features = ["libsql"]
 
 # Needs a live Postgres on TEST_DB_PORT (5434 in CI). Does not start Docker.

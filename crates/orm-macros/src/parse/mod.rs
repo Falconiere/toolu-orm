@@ -15,8 +15,10 @@
 //! let indexes = parse_index_attrs(&mut item_struct)?;
 //! ```
 
+mod column_attrs;
 mod column_flags;
 mod column_parsing;
+mod column_type_spec;
 mod index_parsing;
 mod pk_validation;
 mod primary_key_parsing;
@@ -24,7 +26,9 @@ pub mod relation_parsing;
 mod table_attrs;
 mod vec0_column;
 
-pub use column_parsing::{parse_struct, strip_column_attrs, ColumnInput, TypeSpec};
+pub use column_attrs::strip_column_attrs;
+pub use column_parsing::{parse_struct, ColumnInput};
+pub use column_type_spec::TypeSpec;
 pub use index_parsing::{parse_index_attrs, IndexInput, TableInput};
 pub use pk_validation::{reject_mixed_primary_keys, validate_autoincrement};
 pub use primary_key_parsing::parse_primary_key_attr;

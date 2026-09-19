@@ -17,7 +17,9 @@ Proc macros for toolu-orm — `#[table]`, `#[derive(FromRow)]`, `#[derive(Column
 
 ## Key Modules
 - `lib.rs` — Entry point: 3 proc macros
-- `parse/column_parsing.rs` — Parse `#[column(...)]` attributes
+- `parse/column_parsing.rs` — Walk struct fields into column definitions
+- `parse/column_attrs.rs` — Read the `#[column(...)]` keys, and strip the attribute before re-emission
+- `parse/column_type_spec.rs` — The field's Rust type as a `TypeSpec` (`Varchar<N>`, `Char<N>`)
 - `parse/index_parsing.rs` — Parse `#[index]`/`#[unique_index]` attributes
 - `expand/schema_expansion.rs` — Generate TableSchema impl + constants
 - `expand/columns_expansion.rs` — Generate Column\<T\> constants module

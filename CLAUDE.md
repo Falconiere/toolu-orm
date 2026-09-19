@@ -42,7 +42,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Use `cargo nextest run`, never `cargo test`.
 
 ## Quality gate
-Four lanes plus four checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight and `scripts/check-driver-matrix.sh` compiles the driver-dependent crates against all eight (plus six where orm-core carries a driver its dependent does not). `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares.
+Four lanes plus five checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight and `scripts/check-driver-matrix.sh` compiles the driver-dependent crates against all eight (plus six where orm-core carries a driver its dependent does not). `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares. `scripts/check-file-length.sh` fails when any `*.rs` file under `crates/` — `src/` and `tests/` alike — is longer than 250 lines, which no clippy lint can express.
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -61,4 +61,5 @@ bash scripts/check-derive-matrix.sh
 bash scripts/check-driver-matrix.sh
 bash scripts/check-scenario-docs.sh
 bash scripts/check-test-targets.sh
+bash scripts/check-file-length.sh
 ```

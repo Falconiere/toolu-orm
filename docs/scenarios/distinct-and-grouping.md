@@ -97,12 +97,12 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-query --features postgres -E 'b
 | default | grouping_sql_test | render_tests::distinct_is_idempotent |
 | default | grouping_sql_test | render_tests::distinct_renders_before_the_select_list_and_after_it_the_page |
 | default | grouping_sql_test | render_tests::every_aggregate_projection_renders_in_one_select_list |
-| default | grouping_sql_test | render_tests::every_binding_clause_numbers_in_render_order |
-| default | grouping_sql_test | render_tests::having_is_numbered_after_the_where_clause |
+| default | grouping_sql_test | numbering_tests::every_binding_clause_numbers_in_render_order |
+| default | grouping_sql_test | numbering_tests::having_is_numbered_after_the_where_clause |
 | default | grouping_sql_test | render_tests::several_grouping_terms_render_in_call_order |
 | default | grouping_sql_test | render_tests::several_having_conjuncts_join_with_and |
 | default | grouping_sql_test | render_tests::the_raw_escape_hatch_still_projects_and_groups |
-| default | grouping_sql_test | render_tests::the_same_statement_numbers_with_dollar_placeholders_on_postgres |
+| default | grouping_sql_test | numbering_tests::the_same_statement_numbers_with_dollar_placeholders_on_postgres |
 | default | facade_only_grouping_test | a_distinct_listing_composes_through_the_facade |
 | default | facade_only_grouping_test | a_grouped_count_wraps_a_derived_table_through_the_facade |
 | default | facade_only_grouping_test | a_grouped_report_composes_through_the_facade |
