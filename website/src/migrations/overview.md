@@ -1,8 +1,9 @@
 # The migration loop
 
 Migrations are generated from the diff between the last snapshot and your current
-`SchemaRegistry`, written as plain SQL, and applied by name order with an
-integrity check. Three functions cover the whole cycle.
+`SchemaRegistry`, written as plain SQL, and applied in journal order with an
+integrity check. Three functions cover the basic cycle. `toolu-orm-cli` is a
+library; you wire these functions into your application's tooling.
 
 ```rust
 use toolu_orm_cli::{generate::run_generate, migrate::run_migrate, status::get_status};
@@ -16,12 +17,15 @@ let wrote: Option<String> =
 // Some("0002_add_posts.sql"), or None when the schema did not change
 ```
 
-`run_generate` reads `_journal.json`, loads the snapshot of the newest entry,
+Create the output directory before calling `run_generate`; it does not create
+missing directories. It reads `_journal.json`, searches backwards through its
+entries for the latest snapshot that still exists,
 diffs it against the registry, and — only if there is a difference — writes three
 things: the numbered `.sql` file, its `.snapshot.json`, and a new journal entry
 holding the file's SHA-256.
 
-The file number is `max(existing) + 1`, zero-padded to four digits. The dialect
+The file number is one above the largest numeric filename prefix in the
+journal (or 1 for an empty journal), padded to at least four digits. The dialect
 argument decides the SQL that is written, so a project targeting both databases
 generates into two directories.
 
@@ -34,15 +38,22 @@ it is safe to run in a build script or a small `bin/`.
 let applied: u32 = run_migrate(&conn, "migrations", Dialect::Postgres).await?;
 ```
 
-`run_migrate` creates the `_migrations` bookkeeping table if needed, reads the
-applied set from it, verifies each pending file's hash against the journal, and
-runs the pending files in journal order — which is the order they were
-generated, and therefore their number order. Each file executes inside its own
+`run_migrate` creates the `_migrations` bookkeeping table if needed and validates
+already-applied journal entries against the recorded hashes and surviving SQL
+files. It then verifies each pending file's hash as it reaches it and runs it in
+journal entry order, without sorting names. Each file executes inside its own
 `BEGIN` / `COMMIT`: a statement that fails rolls that file back and stops the
 run, leaving earlier files applied and recorded.
 
-Files with several statements separate them with a `--> statement-breakpoint`
-line:
+If the journal is missing or has no entries, the runner scans `.sql` files in
+lexicographic filename order, skips recorded names, and executes each file as a
+batch. This legacy path records an empty hash and provides no content integrity
+check. A nonempty journal is authoritative: unlisted files do not run. See
+[Journal and snapshots](journal-snapshots.md) for hash validation limits.
+
+Generated files separate statements with a `--> statement-breakpoint` line.
+Journaled and embedded migrations split on that marker; each chunk may also
+contain multiple semicolon-separated statements:
 
 ```sql
 CREATE TABLE "posts" (
@@ -52,6 +63,12 @@ CREATE TABLE "posts" (
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_posts_author" ON "posts" ("author_id");
 ```
+
+The runner owns the transaction boundary. For SQLite rebuilds that request
+`PRAGMA foreign_keys = OFF`, it suspends enforcement before `BEGIN` and restores
+the caller's `foreign_keys` and `legacy_alter_table` settings afterwards. If
+foreign keys were enabled initially, it also checks `foreign_key_check` before
+commit and rolls back on violations.
 
 ## Ship the migrations inside the binary
 
@@ -81,9 +98,9 @@ splitting, and the same one transaction per migration. A database migrated from
 a directory and one migrated from the equivalent list are indistinguishable, so
 a project can switch sources between releases without re-running anything.
 
-Embedding does not weaken the integrity check, it strengthens it. On disk the
-`.sql` can be edited after install; here the bytes are frozen at compile time,
-and the shipping project can catch an un-re-hashed edit in its own test suite:
+The SQL bytes are fixed at compile time. Applied entries are checked against
+their recorded hashes before pending entries run, and the shipping project can
+also check every declared hash in its own test suite:
 
 ```rust
 #[test]
@@ -133,7 +150,13 @@ The rules worth knowing:
   count is how many rows were newly written.
 - The inserts share one transaction: a baseline either lands whole or not at all.
 - Baselining asserts that the database really is at that version; nothing is
-  introspected to verify it.
+  introspected to verify it, and neither SQL bodies nor existing recorded hashes
+  are validated by the baseline call. A later migration run validates history.
+
+For an embedded list, use `mark_applied_embedded` or
+`mark_applied_through_embedded` with the same arguments, replacing the directory
+with `&[EmbeddedMigration]`. The list supplies order and declared hashes; the
+baseline does not execute or verify its SQL.
 
 ## Status
 
@@ -143,25 +166,62 @@ println!("applied: {:?}", status.applied);
 println!("pending: {:?}", status.pending);
 ```
 
-`MigrationStatus` is two `Vec<String>` of file names — what the database has
-recorded, and what is on disk but not yet applied.
+`MigrationStatus` has two `Vec<String>` fields. `applied` follows database record
+order; `pending` is every unrecorded `.sql` filename on disk, sorted by name.
+Directory status scans files even when a journal exists, so it can list files
+that a journaled migration run would ignore. It creates `_migrations` if needed
+but does not check hashes or schema state.
+
+`get_status_embedded(&conn, MIGRATIONS, dialect).await?` uses list order for
+pending names and rejects duplicate names. It also reports names without
+verifying SQL hashes.
+
+## Without an async runtime
+
+Every migration, baseline, and status API above has a blocking counterpart for
+`&impl DbConnectionBlocking`. Append `_blocking` to the function name, including
+after `_embedded`, and omit `.await`:
+
+```rust
+use toolu_orm_cli::{migrate::run_migrate_blocking, status::get_status_blocking};
+use toolu_orm_core::rusqlite;
+use toolu_orm_connection::RusqliteConnection;
+use toolu_orm_core::dialect::Dialect;
+
+let conn = RusqliteConnection::from_connection(rusqlite::Connection::open("app.db")?);
+let applied = run_migrate_blocking(&conn, "migrations", Dialect::Sqlite)?;
+let status = get_status_blocking(&conn, "migrations", Dialect::Sqlite)?;
+```
+
+For a rusqlite-only dependency on `toolu-orm-cli`, set `default-features = false`
+and `features = ["rusqlite"]`; its default driver feature is `libsql`.
 
 ## What the diff can express
 
-The diff produces a list of `Operation`s, which `generate_sql_for` renders per
-dialect:
+`diff` returns `Result<Vec<Operation>, DbCoreError>`, and `generate_sql_for`
+renders successful operations per dialect:
 
 | Group | Operations |
 |---|---|
 | Tables | `CreateTable`, `DropTable`, `RenameTable` |
-| Columns | `AddColumn`, `DropColumn`, `RenameColumn`, `AlterColumn` (type, default, nullability, uniqueness) |
+| Columns | `AddColumn`, `DropColumn`, `RenameColumn`, `AlterColumn` (type, default, nullability, uniqueness, primary key, autoincrement, composite primary key) |
 | Indexes | `CreateIndex`, `DropIndex` |
 | Constraints | `AddForeignKey`, `DropForeignKey`, `AddCheckConstraint`, `DropCheckConstraint` |
 | Enums | `CreateEnum`, `AlterEnum`, `DropEnum` |
+| FTS5 | `RecreateFts5FromContent`, `CreateFts5SyncTriggers`, `DropFts5SyncTriggers` |
 
-Because the output is a file, the review question is the usual one: read the SQL
-in the pull request. Nothing is applied at generation time and nothing is
-rewritten later.
+An operation does not guarantee executable SQL for both dialects. SQLite
+column alterations trigger one create/copy/drop/rename rebuild per table,
+including its declared indexes. Standalone foreign-key and CHECK changes render
+comments requiring hand-written migration SQL. Postgres primary-key and
+autoincrement alterations also render comments. SQLite virtual-table DDL is
+commented out for Postgres. Inspect the generated file before applying it.
+
+Unsupported virtual-table changes return `DbCoreError::VirtualTableChange`.
+Eligible external-content FTS5 tables can be recreated and rebuilt from their
+content table; other virtual-table changes need a hand-written migration.
+The registry does not register named enum definitions; the enum operations are
+a lower-level SQL-generation surface, not automatic generation from Rust enums.
 
 ## Wiring it into a binary
 

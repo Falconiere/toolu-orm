@@ -2,7 +2,10 @@
 //!
 //! ## Features
 //!
-//! Enable exactly one backend per consumer:
+//! No backend is enabled by default. Enable one or more as needed; each
+//! implementation is independently feature-gated. Query-builder execution in
+//! `toolu-orm-query` separately requires exactly one driver on that crate:
+//!
 //! - `libsql`    -- async libsql (Turso embedded replica)
 //! - `rusqlite`  -- sync rusqlite (native `DbConnectionBlocking`, wrapped with
 //!   spawn_blocking for `DbConnection`)

@@ -2,7 +2,7 @@
 
 **Feature:** `#[derive(FromRow)]` maps a row into a struct positionally (each field read at its own index, in declaration order) and exposes `REQUIRED_COLUMNS`, so `select_for::<T>()` selects exactly the columns `T` needs, in the order it decodes them.
 **Drivers:** all of them, in whatever shape `toolu-orm-core`'s unified features gave the trait. One driver yields `from_row`; two or more yield one real decoder per driver. The derive reaches that shape through `toolu_orm_core::impl_derived_from_row!`, whose eight `#[cfg]`-gated definitions are compiled with `toolu-orm-core`'s own features (`crates/orm-core/src/row/derived.rs`), which is what lets a derive expanded in a consumer crate follow features it cannot see.
-**Spec:** AC-18, plus `docs/toolu/specs/2026-09-07-fromrow-derive-driver-set-design.md` ([#17](https://github.com/Falconiere/toolu-orm/issues/17)).
+**Spec:** AC-18 and [#17](https://github.com/Falconiere/toolu-orm/issues/17).
 
 ## What is proven
 

@@ -25,9 +25,10 @@ impl SetOp {
 impl SelectBuilder {
   /// `<self> UNION <other>` — the merged rows, duplicates collapsed.
   ///
-  /// This is what terminates a recursive walk over a cyclic graph: a node
-  /// already in the working set is not re-expanded. Use
-  /// [`Self::union_all`] when duplicates matter and the input cannot cycle.
+  /// Deduplication compares whole projected rows. A recursive walk that also
+  /// projects an increasing depth can revisit the same node at a new depth;
+  /// it still needs a depth bound or another explicit cycle guard. Use
+  /// [`Self::union_all`] when duplicates should be retained.
   ///
   /// The arm contributes its select list, source, joins, `WHERE`, `GROUP BY`
   /// and `HAVING`. Its `ORDER BY`, `LIMIT` and `OFFSET` are **not** rendered —

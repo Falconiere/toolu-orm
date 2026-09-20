@@ -26,12 +26,13 @@ fn first_row_limit(limit_val: Option<i64>) -> i64 {
 }
 
 impl SelectBuilder {
-  /// [`Self::to_sql_for`] bounded to at most one row.
+  /// [`Self::to_sql_for`] with a first-row limit, preserving negative limits.
   ///
   /// Identical to `to_sql_for` — same select list, joins, `WHERE` and its
   /// parameters, `ORDER BY`, `OFFSET` — except that the `LIMIT` is always
-  /// present and never asks for more than one row. Parameters are pushed as
-  /// their placeholders are written, so the numbering stays self-consistent.
+  /// present. Absent or positive limits become `1`; `0` stays empty. Explicit
+  /// negative limits stay unbounded on SQLite and are rejected on Postgres.
+  /// Parameters are pushed as their placeholders are written.
   pub fn to_first_row_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     self.to_sql_with_limit(dialect, Some(first_row_limit(self.limit_val)))
   }

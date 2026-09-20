@@ -1,6 +1,6 @@
 # Bounded first-row fetch
 
-**Feature:** `fetch_one` and `fetch_optional` send a query bounded to at most one row (`SelectBuilder::to_first_row_sql`), so the database stops producing rows the caller will never see and at most one row is ever decoded.
+**Feature:** `fetch_one` and `fetch_optional` send a query bounded to at most one row (`SelectBuilder::to_first_row_sql`), when the original limit is absent or nonnegative. An explicit negative limit is preserved: it is unbounded on SQLite and rejected on Postgres.
 **Drivers:** libsql, rusqlite, Postgres.
 **Issue:** [#87](https://github.com/Falconiere/toolu-orm/issues/87).
 

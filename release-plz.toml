@@ -1,5 +1,5 @@
 # release-plz: on every push to main it opens/updates a release PR (workspace
-# version bump + CHANGELOG.md). Merging that PR publishes the six crates to
+# version bump + CHANGELOG.md). Merging that PR publishes the seven publishable crates to
 # crates.io in dependency order, then pushes one `vX.Y.Z` tag and one GitHub
 # Release. Workflow: .github/workflows/release-plz.yml.
 

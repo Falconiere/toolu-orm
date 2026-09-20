@@ -19,7 +19,7 @@ macro_rules! impl_async_fetch {
     impl super::super::SelectBuilder {
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the underlying query or row mapping fails.
+      /// Returns [`crate::QueryError`] when the underlying query or row mapping fails.
       pub async fn fetch_all<T: toolu_orm_core::row::FromRow + Send>(
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
@@ -30,11 +30,12 @@ macro_rules! impl_async_fetch {
 
       /// Sends the bounded query of
       /// [`to_first_row_sql`](Self::to_first_row_sql), so the database returns
-      /// at most one row and at most one row is ever decoded.
+      /// at most one row unless an explicit negative limit was supplied
+      /// (unbounded on SQLite, rejected on Postgres).
       ///
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the query fails, mapping fails, or no row is found.
+      /// Returns [`crate::QueryError`] when the query fails, mapping fails, or no row is found.
       pub async fn fetch_one<T: toolu_orm_core::row::FromRow + Send>(
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
@@ -47,7 +48,7 @@ macro_rules! impl_async_fetch {
       ///
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the query or row mapping fails.
+      /// Returns [`crate::QueryError`] when the query or row mapping fails.
       pub async fn fetch_optional<T: toolu_orm_core::row::FromRow + Send>(
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
@@ -56,7 +57,7 @@ macro_rules! impl_async_fetch {
         Ok(results.into_iter().next())
       }
 
-      /// At most one decoded row, for the two first-row fetch methods.
+      /// Runs the first-row query, preserving explicit negative limits.
       async fn fetch_first_row<T: toolu_orm_core::row::FromRow + Send>(
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
@@ -67,7 +68,7 @@ macro_rules! impl_async_fetch {
 
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the count query fails or the scalar row is missing.
+      /// Returns [`crate::QueryError`] when the count query fails or the scalar row is missing.
       pub async fn count(
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
@@ -79,7 +80,7 @@ macro_rules! impl_async_fetch {
 
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the exists query or scalar mapping fails.
+      /// Returns [`crate::QueryError`] when the exists query or scalar mapping fails.
       pub async fn exists(
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
@@ -109,7 +110,7 @@ macro_rules! impl_sync_fetch {
     impl super::super::SelectBuilder {
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the underlying query or row mapping fails.
+      /// Returns [`crate::QueryError`] when the underlying query or row mapping fails.
       pub fn fetch_all<T: toolu_orm_core::row::FromRow>(
         &self,
         exec: &impl $crate::executor::Executor,
@@ -120,11 +121,12 @@ macro_rules! impl_sync_fetch {
 
       /// Sends the bounded query of
       /// [`to_first_row_sql`](Self::to_first_row_sql), so the database returns
-      /// at most one row and at most one row is ever decoded.
+      /// at most one row unless an explicit negative limit was supplied
+      /// (unbounded on SQLite, rejected on Postgres).
       ///
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the query fails, mapping fails, or no row is found.
+      /// Returns [`crate::QueryError`] when the query fails, mapping fails, or no row is found.
       pub fn fetch_one<T: toolu_orm_core::row::FromRow>(
         &self,
         exec: &impl $crate::executor::Executor,
@@ -137,7 +139,7 @@ macro_rules! impl_sync_fetch {
       ///
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the query or row mapping fails.
+      /// Returns [`crate::QueryError`] when the query or row mapping fails.
       pub fn fetch_optional<T: toolu_orm_core::row::FromRow>(
         &self,
         exec: &impl $crate::executor::Executor,
@@ -146,7 +148,7 @@ macro_rules! impl_sync_fetch {
         Ok(results.into_iter().next())
       }
 
-      /// At most one decoded row, for the two first-row fetch methods.
+      /// Runs the first-row query, preserving explicit negative limits.
       fn fetch_first_row<T: toolu_orm_core::row::FromRow>(
         &self,
         exec: &impl $crate::executor::Executor,
@@ -157,7 +159,7 @@ macro_rules! impl_sync_fetch {
 
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the count query fails or the scalar row is missing.
+      /// Returns [`crate::QueryError`] when the count query fails or the scalar row is missing.
       pub fn count(
         &self,
         exec: &impl $crate::executor::Executor,
@@ -169,7 +171,7 @@ macro_rules! impl_sync_fetch {
 
       /// # Errors
       ///
-      /// Returns [`QueryError`] when the exists query or scalar mapping fails.
+      /// Returns [`crate::QueryError`] when the exists query or scalar mapping fails.
       pub fn exists(
         &self,
         exec: &impl $crate::executor::Executor,

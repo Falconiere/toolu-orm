@@ -49,8 +49,8 @@ string that happens to look like hex is never mistaken for bytes. A column
 declared binary that is not `BLOB` / `bytea` is the caller's error: SQLite hexes
 the value's UTF-8 bytes, Postgres rejects `encode(text, 'hex')`.
 
-Cost: a decoded binary value is a JSON array of byte numbers, so the relation
-column is several times the blob's size on the wire. Large payloads are better
+Cost: binary values travel as hex strings (two characters per byte), plus JSON
+framing. Decoding expands them into JSON arrays of byte numbers in memory. Large payloads are better
 fetched with a separate query.
 
 ## What is proven

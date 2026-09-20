@@ -1,11 +1,11 @@
 # rusqlite
 
 ```toml
-toolu-orm-core       = { version = "0.1", default-features = false, features = ["rusqlite"] }
-toolu-orm-macros     = { version = "0.1", features = ["rusqlite"] }
-toolu-orm-query      = { version = "0.1", features = ["rusqlite"] }
-toolu-orm-connection = { version = "0.1", features = ["rusqlite"] }
-toolu-orm-cli        = { version = "0.1", default-features = false, features = ["rusqlite"] }
+toolu-orm-core       = { version = "0.9", default-features = false, features = ["rusqlite"] }
+toolu-orm-macros     = { version = "0.9", features = ["rusqlite"] }
+toolu-orm-query      = { version = "0.9", features = ["rusqlite"] }
+toolu-orm-connection = { version = "0.9", features = ["rusqlite"] }
+toolu-orm-cli        = { version = "0.9", default-features = false, features = ["rusqlite"] }
 ```
 
 rusqlite is bundled, so there is no system SQLite to install.
@@ -14,6 +14,7 @@ rusqlite is bundled, so there is no system SQLite to install.
 
 ```rust
 use toolu_orm_connection::RusqliteConnection;
+use toolu_orm_core::rusqlite;
 
 let conn = RusqliteConnection::open("data/app.db").await?;
 let mem  = RusqliteConnection::open_in_memory().await?;
@@ -57,17 +58,19 @@ prove that path (`vec0_sqlite_vec_live_test`).
 SQLite's administration statements are not DML, so no builder reaches them:
 `VACUUM`, `ATTACH`, `DETACH` and `PRAGMA` name schemas and files rather than
 tables and columns. `SqliteMaintenance` is the typed replacement for building
-them as strings, and it works on a **borrowed** connection — it never opens a
-database, never begins a transaction, and never takes ownership, so your
+them as strings, and it works on a **borrowed `rusqlite::Connection`** — it never
+opens a database, never begins a transaction, and never takes ownership, so your
 connection and your transactions stay yours.
 
 ```rust
 use std::path::Path;
 use toolu_orm_connection::SqliteMaintenance;
 
+let raw = rusqlite::Connection::open("data/app.db")?;
+
 // A validated pre-upgrade snapshot.
-conn.vacuum_into(Path::new("/var/app/snapshot.db"))?;
-let snapshot = conn.attach_database(Path::new("/var/app/snapshot.db"), "snapshot")?;
+raw.vacuum_into(Path::new("/var/app/snapshot.db"))?;
+let snapshot = raw.attach_database(Path::new("/var/app/snapshot.db"), "snapshot")?;
 let report = snapshot.quick_check()?;
 snapshot.detach()?;
 if !report.is_ok() {
@@ -75,17 +78,17 @@ if !report.is_ok() {
 }
 
 // Storage statistics.
-let stats = conn.storage_stats()?;
+let stats = raw.storage_stats()?;
 println!("{} bytes over {} pages", stats.bytes(), stats.page_count);
 ```
 
-`attach_database` returns a guard. The `DETACH` happens on every exit path,
+`attach_database` returns a guard. The guard attempts `DETACH` on every exit path,
 including the `?` that abandons a half-finished copy, so the error branch you
 used to have to write is gone:
 
 ```rust
-let old = conn.attach_database(&archive, "old")?;
-conn.execute("INSERT INTO t SELECT * FROM old.t", [])?;  // a failure here still detaches
+let old = raw.attach_database(&archive, "old")?;
+raw.execute("INSERT INTO t SELECT * FROM old.t", [])?;   // a failure still drops the guard
 old.detach()?;                                           // explicit, and reports its own error
 ```
 
@@ -97,15 +100,15 @@ Four things are worth knowing:
   parameter there — so it is rendered, always double-quoted with interior `"`
   doubled. `attach_database(path, "we\"ird")` attaches the database it names.
 - **Every read names its schema.** A bare `PRAGMA quick_check` checks *all*
-  attached databases, so `conn.quick_check()` issues `PRAGMA main.quick_check`
+  attached databases, so `raw.quick_check()` issues `PRAGMA main.quick_check`
   and means your main database whatever is attached. The guard's own
   `quick_check` / `page_count` / `page_size` / `storage_stats` are its
   counterparts for one attachment.
 - **Failures keep their type.** `MaintenanceError::Sqlite` holds the
-  `rusqlite::Error`, result code included. Only two refusals are this API's own —
-  an empty schema name and one containing a NUL byte — and neither sends a
-  statement. An integrity problem is not an error at all: it comes back as a
-  report whose `is_ok()` is false.
+  `rusqlite::Error`, result code included. `NonUtf8Path` rejects a path that is
+  not UTF-8; `InvalidSchemaName` rejects an empty schema name or one containing
+  a NUL byte. These validations send no statement. An integrity problem comes
+  back as a report whose `is_ok()` is false.
 - **`Drop` cannot report.** A detach that fails while being dropped is logged at
   `warn`. Call `detach()` when you need to see it — SQLite refuses to detach a
   database your own open transaction has written to.
@@ -157,7 +160,13 @@ and returns. No `spawn_blocking`, no runtime:
 
 ```rust
 use toolu_orm_connection::{DbConnectionBlocking, RusqliteConnection};
+use toolu_orm_core::rusqlite;
 use toolu_orm_core::value::Value;
+
+#[derive(toolu_orm_macros::FromRow)]
+pub struct User {
+  pub id: String,
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   // `from_connection` is sync and infallible, so nothing here is async.
@@ -181,9 +190,8 @@ the driver is usable from a plain `fn` — a CLI no longer builds a runtime just
 reach the database, and a handler that already runs its store work inside its own
 `spawn_blocking` no longer pays a second thread hop.
 
-libsql and Postgres do **not** implement `DbConnectionBlocking`: they talk to a
-server and are genuinely async, so a blocking wrapper there would only hide a
-`block_on`.
+libsql and Postgres do **not** implement `DbConnectionBlocking`; their ORM
+adapters expose async operations, including for local libsql databases.
 
 The async `DbConnection` impl is unchanged and still available on the same type —
 it now delegates to these blocking methods inside `spawn_blocking`, so the two
@@ -203,22 +211,22 @@ that may be stuck mid-transaction.
 
 ## The builders are synchronous here
 
-The `Executor` impl is on `rusqlite::Connection` itself, and it is sync. With the
-`rusqlite` feature there is nothing to await:
+Both `rusqlite::Connection` and `RusqliteConnection` implement the synchronous
+`Executor`. With only the `rusqlite` driver feature enabled on `toolu-orm-query`,
+there is nothing to await:
 
 ```rust
-// Your own raw connection. `from_connection` only goes inwards and it takes
-// ownership, so a connection handed to the wrapper is no longer yours to use
-// here — open this one separately.
-let sqlite_conn = rusqlite::Connection::open("data/app.db")?;
+// The same wrapper can run migrations, status, and query builders.
+let conn = RusqliteConnection::from_connection(rusqlite::Connection::open("data/app.db")?);
+toolu_orm_cli::migrate::run_migrate_blocking(&conn, "migrations", Dialect::Sqlite)?;
 
 let n = InsertBuilder::new("users")
   .set(&users::id, "u_1")
-  .execute(&sqlite_conn)?;                // no .await
+  .execute(&conn)?;                       // no .await
 
 let rows: Vec<User> = UsersTable::select_for::<User>()
   .filter(users::id.eq("u_1"))
-  .fetch_all(&sqlite_conn)?;              // no .await
+  .fetch_all(&conn)?;                     // no .await
 ```
 
 This is the one driver where migrations, status, and builders share one wrapper:

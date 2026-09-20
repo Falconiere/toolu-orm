@@ -6,7 +6,7 @@ One dependency pulls in the whole stack behind one version and one feature list:
 
 ```toml
 [dependencies]
-toolu-orm = { version = "0.1", features = ["libsql"] }
+toolu-orm = { version = "0.9", features = ["libsql"] }
 tokio     = { version = "1", features = ["rt-multi-thread", "macros"] }
 # add toolu-orm-cli too if you generate or apply migrations — see below
 ```
@@ -19,7 +19,7 @@ proc macros:
 | `toolu_orm::core` | `toolu-orm-core` | schema, columns, expressions, snapshots, journal, `Dialect` |
 | `toolu_orm::query` | `toolu-orm-query` | select / insert / update / delete builders, executor, transactions |
 | `toolu_orm::connection` | `toolu-orm-connection` | `DbConnection` and the driver adapters |
-| `toolu_orm::{table, FromRow, Relational, ColumnEnum}` | `toolu-orm-macros` | the proc macros |
+| `toolu_orm::{table, fts5_table, vec0_table, FromRow, Relational, ColumnEnum}` | `toolu-orm-macros` | the proc macros |
 
 ### Importing the macros
 
@@ -56,7 +56,7 @@ migrations from your own binary — despite the name it is a plain library crate
 with no `[[bin]]`, so there is nothing to `cargo install`:
 
 ```toml
-toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm-cli = { version = "0.9", default-features = false, features = ["libsql"] }
 ```
 
 ## Depending on the crates directly
@@ -67,16 +67,20 @@ to `toolu-orm-core`:
 
 ```toml
 [dependencies]
-toolu-orm-core       = { version = "0.1", default-features = false, features = ["libsql"] }
-toolu-orm-macros     = { version = "0.1", features = ["libsql"] }
-toolu-orm-query      = { version = "0.1", features = ["libsql"] }
-toolu-orm-connection = { version = "0.1", features = ["libsql"] }
-toolu-orm-cli        = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm-core       = { version = "0.9", default-features = false, features = ["libsql"] }
+toolu-orm-macros     = { version = "0.9", features = ["libsql"] }
+toolu-orm-query      = { version = "0.9", features = ["libsql"] }
+toolu-orm-connection = { version = "0.9", features = ["libsql"] }
+toolu-orm-cli        = { version = "0.9", default-features = false, features = ["libsql"] }
 ```
 
-Only `toolu-orm-core` and `toolu-orm-macros` are mandatory. The expansions
-resolve to `::toolu_orm_core` / `::toolu_orm_query` here, since those are the
-direct dependencies.
+For `#[table]`, `#[fts5_table]` or `#[vec0_table]`, include core, macros **and
+query** in your application's `Cargo.toml`: the code expanded into your application
+names query-builder types. This is a consumer dependency, not an implementation
+dependency of the proc-macro crate. `FromRow` and
+`ColumnEnum` alone need only core and macros. Connections and migrations are
+optional. The expansions resolve to `::toolu_orm_core` / `::toolu_orm_query`
+here, since those are direct dependencies.
 
 ## Driver features
 
@@ -87,10 +91,12 @@ direct dependencies.
 | `postgres` | [tokio-postgres](https://crates.io/crates/tokio-postgres) + [deadpool-postgres](https://crates.io/crates/deadpool-postgres) | async pool, rustls TLS |
 
 On the facade, one feature drives every re-exported crate. Naming the crates
-directly means **enabling the drivers you need on every one of them** — Cargo
-unifies features across the graph, and the generated code changes shape with the
-active set, so a driver enabled on one crate but not another is a compile error,
-not a runtime surprise.
+directly means enabling the drivers on the crates whose driver APIs you use.
+Use matching feature lists as above for a complete stack. Cargo unifies features
+on `toolu-orm-core`; derives and connection row helpers follow that unified set.
+For SQLite query execution, keep core and query on the same single driver:
+query's libsql/rusqlite scalar decoders still implement the single-driver
+`FromRow` shape. Adding a driver only to core can therefore break that build.
 
 `toolu-orm-core` and `toolu-orm-cli` default to `libsql`, which is why they are
 pulled in with `default-features = false` above when you want a different driver.
@@ -101,8 +107,14 @@ The facade and the other crates have no default driver.
 `toolu-orm-query` compiles its executor, transaction and fetch code only when
 **exactly one** driver feature is active. With two drivers on, the builders and
 their `to_sql_for` rendering still work, but `.execute()`, `fetch_all` and
-friends are not compiled. Applications pick one driver; only the ORM's own test
-matrix runs several.
+friends are not compiled. The same applies with no driver enabled. Choose one
+query driver for normal execution; core and connection can support multiple.
+
+`sqlite-vec` is an additional feature on `toolu-orm-query` and
+`toolu-orm-connection`, but the facade does not forward it. Add the relevant
+direct dependency to enable it. On query it also enables `rusqlite`; on
+connection, enable `rusqlite` separately. Declaring a `#[vec0_table]` schema
+alone does not register the SQLite extension.
 
 ## `#[derive(FromRow)]` and the driver set
 
@@ -110,14 +122,18 @@ The `FromRow` trait changes shape with the active driver set:
 
 | Drivers on `toolu-orm-core` | Method the trait asks for |
 |---|---|
+| none | no row method; only `REQUIRED_COLUMNS` |
 | exactly one | `from_row(&Row)` |
-| two or more | `from_pg_row`, `from_libsql_row`, `from_rusqlite_row` |
+| two or more | one method per enabled driver: `from_pg_row`, `from_libsql_row`, `from_rusqlite_row` |
+
+The `none` case requires disabling `toolu-orm-core`'s default features and
+ensuring no dependency enables a driver on core.
 
 `#[derive(FromRow)]` follows that table, so it compiles on every combination
 including a single driver. See [Row mapping](../schema/row-mapping.md).
 
 ## Toolchain
 
-Rust 1.94, pinned in `rust-toolchain.toml`. Nothing else to install: migrations
+Rust 1.94.1, pinned in `rust-toolchain.toml`. Migrations
 are generated from your own binary, so there is no separate CLI to keep in sync
 with the library.

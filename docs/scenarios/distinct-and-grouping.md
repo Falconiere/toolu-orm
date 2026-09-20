@@ -38,7 +38,12 @@ Seed on every driver — `source_files(id, source_id, path, status, size_bytes)`
 
 ### Grouped-count semantics
 
-`count()` means **how many rows the unpaginated query returns**. That already described the ungrouped case; with `GROUP BY` the returned rows are *groups*, so the count is the number of groups, and `HAVING` participates because it removes groups.
+`count()` counts source rows after joins and filters for a simple query,
+replacing its projection. With `GROUP BY`, `DISTINCT` or a compound query, it
+instead counts result rows: groups, distinct rows or the compound result.
+`HAVING` participates in a grouped count because it removes groups. An
+ungrouped aggregate projection alone does not trigger this wrapping; the
+helper still counts source rows, not the aggregate query's one result row.
 
 Appending `GROUP BY` to a bare `SELECT COUNT(*)` would return one row per group, and reading the first of them would report the size of whichever group came first. So a grouped — or `DISTINCT` — builder counts a derived table instead:
 
@@ -48,7 +53,8 @@ SELECT COUNT(*) FROM (SELECT "status", COUNT(*) AS "n" FROM "source_files" GROUP
 
 The inner statement keeps the select list (it is what `DISTINCT` deduplicates on, and it may bind), every join, `WHERE`, `GROUP BY` and `HAVING`; only `ORDER BY` and pagination are dropped, exactly as they always were. The derived table is always aliased, because Postgres requires it and SQLite accepts it.
 
-On the seed above, `count()` over `GROUP BY status` is **3** — asserted against both traps: not 7 (the raw rows) and not 4 (the largest group). `count()` over the distinct-path listing is **3**, not 6. The wrap applies **only** when `distinct || !group_bys.is_empty()`, so every existing builder renders byte-identical count SQL.
+On the seed above, `count()` over `GROUP BY status` is **3** — asserted against both traps: not 7 (the raw rows) and not 4 (the largest group). `count()` over the distinct-path listing is **3**, not 6. The wrap applies when `distinct || !group_bys.is_empty() || is_compound()`;
+see [Query composition](query-composition.md) for compound counts.
 
 `exists()` needs no wrap: `SELECT 1 … GROUP BY x HAVING …` yields one row per surviving group, so `EXISTS` is true iff a group survives. `DISTINCT` is deliberately not rendered there — deduplicating `SELECT 1` cannot change whether a row exists.
 

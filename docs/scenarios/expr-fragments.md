@@ -16,8 +16,8 @@
 | `a.and(b).or(c)` | `(("a" = ?3 AND "b" = ?4) OR "c" = ?5)` | `$3 $4 $5` | 3, in order |
 | `in_list([])` | `1 = 0` | `1 = 0` | 0 |
 | `not_in([])` | `1 = 1` | `1 = 1` | 0 |
-| `cmp.and(Expr::raw("... ?", [v]))` | `"repo" = ?1 AND ... ?2` | `"repo" = $1 AND ... $2` | 2, in order |
-| `cmp.and(Expr::raw("x = ?1 OR y = ?1", [v]))` | `"repo" = ?1 AND x = ?2 OR y = ?2` | `... x = $2 OR y = $2` | 2 — the fragment binds one |
+| `cmp.and(Expr::raw("... ?", [v]))` | `("repo" = ?3 AND ... ?4)` | `("repo" = $3 AND ... $4)` | 2, in order |
+| `cmp.and(Expr::raw("x = ?1 OR y = ?1", [v]))` | `("repo" = ?3 AND x = ?4 OR y = ?4)` | `... x = $4 OR y = $4` | 2 — the fragment binds one |
 
 The empty-list rows pin a fix made by this program: the renderer used to emit `IN ()`, which Postgres rejects with SQLSTATE 42601 (SQLite silently treated it as false). Drizzle renders the same constants.
 

@@ -2,7 +2,7 @@
 
 **Feature:** `Expr::table_match` and `Fts5Ops::matches` put the `MATCH` operator in `filter(...)`; `fts5::bm25` / `rank` / `snippet` / `highlight` render the auxiliary functions as `Fts5Fn`, usable through `SelectBuilder::column_expr` as a named output and through `order_by`. [Virtual tables (FTS5)](virtual-tables.md) declares the index this reads.
 **Drivers:** libsql and rusqlite (SQLite only). On Postgres every constructor refuses.
-**Spec:** [FTS5 query surface](../toolu/specs/2026-09-07-fts5-query-surface-design.md), AC-1 … AC-10.
+**Coverage:** FTS5 query surface, AC-1 … AC-10.
 
 ## What is proven
 

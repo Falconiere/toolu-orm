@@ -54,8 +54,8 @@ pub fn walk_step(max_depth: i64) -> SelectBuilder {
     .filter(walk.column(&WALK_DEPTH).lt(max_depth))
 }
 
-/// The recursive CTE: `anchor UNION step`, where `UNION` collapsing a node
-/// already reached is what terminates a cyclic graph.
+/// The recursive CTE: `anchor UNION step`. The step's depth predicate
+/// terminates cycles; `UNION` only deduplicates identical node-and-depth rows.
 pub fn walk_cte(anchor: SelectBuilder, max_depth: i64) -> Cte {
   Cte::new("walk", anchor.union(walk_step(max_depth)))
     .columns(&["kind", "id", "depth"])

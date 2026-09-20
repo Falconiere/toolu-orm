@@ -17,7 +17,11 @@ Seed on every driver:
 | `code_symbols(id, repo, path)` | `c1/r1/src/a.rs`, `c2/r1/src/b.rs`, `c3/r2/src/a.rs` |
 | `code_vec(symbol_id, note)` | `c1/v1`, `c2/v2`, `c3/v3` |
 
-Every claim has a *discriminating* answer: the cycle would loop forever without `UNION`, so the depth limit alone decides the result (`0 → 1` node, `2 → 3`, `3 → 4`); the two NULLs separate `NOT EXISTS` from `NOT IN` twice over; and the two `code_symbols` branches overlap on exactly one id, so `UNION` (3) differs from `UNION ALL` (4) and from either arm (2).
+The recursive walk terminates because `WHERE depth < max_hops` bounds it
+(`0 → 1` node, `2 → 3`, `3 → 4`). `UNION` deduplicates complete rows: revisiting
+a node at a different depth is a new row, so `UNION` alone would not terminate
+this cycle. The two NULLs separate `NOT EXISTS` from `NOT IN`; the overlapping
+`code_symbols` branches distinguish `UNION` (3 rows) from `UNION ALL` (4).
 
 ### The recursive graph walk
 
@@ -51,7 +55,7 @@ SELECT "walk"."id" AS "id", MIN("walk"."depth") AS "depth" FROM "walk"
 | `max_hops` | Rows | What it proves |
 |---|---|---|
 | `0` | `a 0` | the seed alone |
-| `2` | `a 0`, `b 1`, `c 2` | the walk **returns** — `UNION` collapses `c → a`, so the cycle does not loop |
+| `2` | `a 0`, `b 1`, `c 2` | the depth predicate stops expansion at `c`, before revisiting `a` |
 | `3` | `+ d 3` | the previous result was bounded by the limit, not by the graph |
 | `5` | same as `3` | `d` has no outgoing edge, and `a` — reachable again through the cycle — still reports `MIN(depth) = 0` |
 
@@ -122,7 +126,13 @@ WITH "hits" AS (SELECT … WHERE … = ?1) SELECT ?2 AS "tag", … FROM json_eac
 
 `SelectSource::to_select_sql_for(start, dialect)` is asserted directly at `start = 1, 2, 7`: the rendered placeholder follows `start` and the returned vector holds **only** the values that statement binds — the offset frame's stand-ins never leave the function.
 
-The rule is one line: **every clause takes its first index from the live `params.len()` of the statement-wide vector and pushes its values as it writes them.** A CTE body and a set-operation arm render into that same vector, so a nested statement continues the count instead of restarting it. `SelectSource::to_select_sql_for(start, dialect)` is the one place that needs an explicit base, and it opens an *offset frame* — pre-fill the vector with the `start - 1` values already emitted, render, split the tail back off — which is the identical computation because the helpers read only `params.len()`.
+Every clause renders through a statement-wide `BoundParams` and takes new indices
+from `params.next_index()` (`len() + 1`). CTEs, set-operation arms and subqueries
+share its binding ledger, so shared handles keep their indices across nested
+statements. `SelectSource::to_select_sql_into` participates in that ledger;
+`to_select_sql_for(start, dialect)` renders a standalone fragment.
+`BoundParams::nested` supplies `start - 1` stand-ins and removes them afterward,
+returning only newly bound values.
 
 The derived-table count keeps its #109 behavior of rebuilding from `?1`, because nothing precedes it; the `WITH` prefix is the one thing that renders outside the wrap and therefore takes the low indices.
 
@@ -137,9 +147,13 @@ The derived-table count keeps its #109 behavior of rebuilding from `?1`, because
 - **Arms are not type-checked.** Mismatched column counts or types are reported by the engine, not by the builder.
 - **`TableRef` no longer derives `Eq`** (it still derives `Debug`, `Clone` and `PartialEq`): a function source holds `Value` arguments, and `Value::Real` holds an `f64`.
 
-### For issue #114
+### INSERT … SELECT
 
-`INSERT … SELECT` needs nothing new: render `INSERT INTO "t" ("a", "b") `, call `SelectSource::to_select_sql_for(params.len() + 1, dialect)` on the source builder, append the returned SQL **unparenthesised**, and extend the parameter vector. The returned statement is already complete and already numbered from the given offset, `WITH` prefix and `UNION` arms included.
+`InsertBuilder::select` uses this composition support to insert a whole SELECT
+result without reading it into Rust. The source shares the statement's
+`BoundParams`, including shared handles reused by `ON CONFLICT`. See
+[INSERT … SELECT](insert-select.md) for the API, database-qualified targets and
+the wrapper used to disambiguate SQLite's explicit `ON CONFLICT` clause.
 
 ## How to run
 
