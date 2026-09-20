@@ -219,7 +219,7 @@ fn days_in_month(year: i32, month: u32) -> Result<u32, DbCoreError> {
 
 fn is_leap(year: i32) -> bool {
   let divisible = |n: i32| year.rem_euclid(n) == 0;
-  divisible(4) && !divisible(100) || divisible(400)
+  (divisible(4) && !divisible(100)) || divisible(400)
 }
 
 /// Days since 1970-01-01. Howard Hinnant's civil-from-days inverse.
