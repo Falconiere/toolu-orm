@@ -75,6 +75,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+The `Text` primary key explicitly declares `not_null`: an ordinary SQLite
+text primary key does not itself enforce `NOT NULL`.
+
 ## What the macro generated
 
 `#[table]` expanded into everything used above:

@@ -27,6 +27,11 @@ pub struct PipelineRun {
 }
 ```
 
+This example uses the default non-STRICT mode for ordinary SQLite compatibility;
+see [Column types](column-types.md) before opting into `strict = true`. Supply
+an application-generated UUID string with `.set(&pipeline_runs::id, id)` when
+inserting; this declaration does not generate IDs in the database.
+
 The struct itself keeps its fields (the marker types are stripped of their
 `#[column]` attributes); everything else is generated next to it.
 
@@ -50,7 +55,7 @@ pipeline_runs::status;       // Column<Text>
 
 | Attribute | Effect |
 |---|---|
-| `#[table(name = "…")]` | The SQL table name. Required — use a Rust identifier such as `pipeline_runs`, because it also names the generated column module. |
+| `#[table(name = "…")]` | The required SQL table-name string. Its contents must be a valid Rust identifier, such as `"pipeline_runs"`, because they also name the generated column module. |
 | `#[table(name = "…", strict = true)]` | Emits a SQLite `STRICT` table using the ORM's Turso extension type names. Check engine support for those types; Postgres ignores this flag. See [Column types](column-types.md). |
 | `#[primary_key(col_a, col_b)]` | Table-level composite primary key. Cannot be combined with `#[column(primary_key)]`. |
 | `#[index("name", col_a, col_b)]` | Secondary index. Repeatable. Use `desc(col)` for a descending column. |

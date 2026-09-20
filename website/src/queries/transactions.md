@@ -73,8 +73,9 @@ tx.commit().await?;
 
 ## rusqlite
 
-Use the driver's transaction on a mutable raw `rusqlite::Connection`. Dereference
-it to the connection when passing it to a builder:
+Use the driver's transaction on a mutable raw `rusqlite::Connection`. Pass
+`&*tx` to a builder: `*tx` dereferences the transaction to its connection, and
+`&` borrows that connection:
 
 ```rust
 let tx = sqlite_conn.transaction()?;

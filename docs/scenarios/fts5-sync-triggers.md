@@ -1,6 +1,6 @@
 # FTS5 synchronization triggers
 
-**Feature:** `Fts5Table::sync_content()` / `#[fts5_table(..., sync_content = true)]` records an `Fts5Sync` on `TableDef` and `SnapshotTable`; the diff creates, drops and replaces the three triggers SQLite needs to keep an external-content FTS5 index correct, and puts them back whenever either table is recreated.
+**Feature:** `Fts5Table::sync_content()` / `#[fts5_table(..., sync_content = true)]` records an [`Fts5Sync`](../../crates/orm-core/src/fts5/sync.rs#L26) on `TableDef` and `SnapshotTable`; the diff creates, drops and replaces the three triggers SQLite needs to keep an external-content FTS5 index correct, and puts them back whenever either table is recreated.
 **Drivers:** libsql and rusqlite (SQLite only). On Postgres both operations emit a skip comment.
 **Reading one:** this page owns the write side; [FTS5 queries](fts5-queries.md) searches the index, and [Virtual tables (FTS5)](virtual-tables.md) declares it.
 

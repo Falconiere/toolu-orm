@@ -29,7 +29,9 @@ The trait is feature-gated on `toolu-orm-core`:
 | `libsql` + `rusqlite` | `from_libsql_row`, `from_rusqlite_row` |
 | all three | `from_pg_row`, `from_libsql_row`, `from_rusqlite_row` |
 
-An application runs one driver, so `from_row` is the usual shape.
+Applications that execute queries usually select one driver, so `from_row`
+is the usual shape. With no drivers, schema and SQL-rendering builds retain
+`REQUIRED_COLUMNS` but cannot decode database rows.
 `#[derive(FromRow)]` follows this table: it expands to whichever shape the
 drivers on `toolu-orm-core` gave the trait, including the no-driver shape. Field
 types still need to support decoding on every enabled driver.
@@ -83,7 +85,9 @@ need no build script and no feature flags on the derive.
 returns the field's own type (`FieldTy -> Result<FieldTy, E>`), so it normalizes
 or rejects rather than converting between types. `f`'s error becomes the same
 `RowMapping` message, naming the column. `f` must be a simple function name in
-scope; a path such as `module::normalize_email` is not accepted.
+scope; a path such as `module::normalize_email` is not accepted. For a function
+in another module, first import it with `use module::normalize_email;`, then
+use `#[from_row(with = "normalize_email")]`.
 
 ```rust
 use toolu_orm_core::error::DbCoreError;
@@ -109,7 +113,8 @@ pub struct Contact {
 Still supported, and the way out when a field type the active driver cannot
 decode needs a real conversion — libsql's `FromValue` is a sealed trait, so
 only its own set of types can decode there. Four lines per column, and no macro
-between you and the driver:
+between you and the driver. The `libsql` name below is the driver crate
+re-exported by core when its `libsql` feature is enabled:
 
 ```rust
 use toolu_orm_core::{error::DbCoreError, libsql, row::FromRow};

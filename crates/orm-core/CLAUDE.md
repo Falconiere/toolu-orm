@@ -8,6 +8,7 @@ Foundation crate for toolu-orm — core types, schema definitions, snapshot/diff
 - Features: `libsql` (default), `rusqlite`, `postgres`; all eight combinations compile
 
 ## Crate-Specific Rules
+- Enabled driver crates are re-exported as `libsql`, `rusqlite` and `tokio_postgres`, so consumers can name driver types without a separate direct dependency.
 - `FromRow` uses `from_row` with one driver, driver-specific methods with multiple drivers, and no decoder with none. Its shape follows the features unified on orm-core; callers use the `row::from_*_row` helpers.
 - `Value` bridges ORM values to libsql, rusqlite and Postgres parameters
 - `Column<T>` uses PhantomData marker types for type-safe operations (CommonOps, TextOps, NumericOps)

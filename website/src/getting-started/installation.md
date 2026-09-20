@@ -75,7 +75,9 @@ toolu-orm-cli        = { version = "0.9", default-features = false, features = [
 ```
 
 For `#[table]`, `#[fts5_table]` or `#[vec0_table]`, include core, macros **and
-query**: each attribute generates query-builder factories. `FromRow` and
+query** in your application's `Cargo.toml`: the code expanded into your application
+names query-builder types. This is a consumer dependency, not an implementation
+dependency of the proc-macro crate. `FromRow` and
 `ColumnEnum` alone need only core and macros. Connections and migrations are
 optional. The expansions resolve to `::toolu_orm_core` / `::toolu_orm_query`
 here, since those are direct dependencies.
@@ -123,6 +125,9 @@ The `FromRow` trait changes shape with the active driver set:
 | none | no row method; only `REQUIRED_COLUMNS` |
 | exactly one | `from_row(&Row)` |
 | two or more | one method per enabled driver: `from_pg_row`, `from_libsql_row`, `from_rusqlite_row` |
+
+The `none` case requires disabling `toolu-orm-core`'s default features and
+ensuring no dependency enables a driver on core.
 
 `#[derive(FromRow)]` follows that table, so it compiles on every combination
 including a single driver. See [Row mapping](../schema/row-mapping.md).

@@ -39,12 +39,14 @@ pub struct PipelineRun {
 "status" TEXT NOT NULL DEFAULT ('pending') CHECK("status" IN ('pending', 'running', 'success', 'failed'))
 ```
 
-This is `TEXT` plus `CHECK` on both dialects, including Postgres. The derive
-does not implement row decoding or `Into<Value>`; bind the stored string and
+This is `TEXT` plus `CHECK` on both dialects, including Postgres. `ColumnEnum`
+does not create or register native Postgres enum types. The derive does not
+implement row decoding or `Into<Value>`; bind the stored string and
 decode a string (or write a custom `FromRow` implementation).
 
-Adding a variant changes the detected `CHECK`, but check-only changes on SQLite
-currently render migration comments and require a manual table rebuild. On
+**Migration limitation:** adding a variant changes the detected `CHECK`, but
+check-only changes on SQLite currently render migration comments and require a
+manual table rebuild. On
 Postgres, generated CHECK alteration SQL needs review: inline checks are not
 given the column-name constraint identifiers used by the diff, and stored
 `CHECK(...)` text is wrapped again. Correct the SQL before applying it. The
@@ -91,7 +93,9 @@ the core crate's Serde re-export. They do **not** implement `FromRow`, and the
 for a generated view before passing it to `select_for::<UserPublic>()`, or
 declare a separate row struct with `#[derive(FromRow)]`.
 
-The current view mapping is:
+The generated Rust field mapping below is the same for every dialect. It is
+not a driver decoding compatibility table; for example, `Timestamp` always
+generates `i64`, even though Postgres `TIMESTAMPTZ` does not decode as `i64`:
 
 | Declared table field | View field |
 |---|---|

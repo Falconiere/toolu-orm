@@ -27,6 +27,7 @@ use toolu_orm_core::column::{BigInt, BigSerial, Blob, Boolean, Char, Date, Integ
 | `Numeric` | `Numeric` | `REAL` on SQLite. |
 
 ```rust
+use toolu_orm_core::column::{Char, Text, Uuid, Varchar};
 use toolu_orm_macros::table;
 
 #[table(name = "accounts")]
@@ -42,7 +43,7 @@ pub struct Accounts {
 }
 ```
 
-For SQLite, `strict = true` selects the Turso extension names from `as_sql()`;
+For SQLite, `strict = true` selects the Turso extension names from `ColumnType::as_sql()`;
 otherwise the generator uses ordinary SQLite storage types. Stock SQLite STRICT
 tables do not accept extension names such as `uuid`, `boolean`, `timestamp` or
 `varchar(64)`. Use supported core types (`Text`, `Integer`, `Real`, `Blob`) when
@@ -51,8 +52,12 @@ ignores `strict`.
 
 `ColumnType::Array(Box<ColumnType>)` is available for programmatic schema
 definitions: it renders a native array type on Postgres and `TEXT` on SQLite.
-There is no `Array` marker or `#[table]` array syntax. `Vector` is a separate
-marker for `#[vec0_table]`, where `#[column(dim = N)]` supplies the dimension;
+There is no `Array` marker or `#[table]` array syntax.
+
+### Virtual-table marker
+
+`Vector` is a separate marker for `#[vec0_table]`, not ordinary `#[table]`
+columns. It requires `#[column(dim = N)]` to supply the dimension;
 see [Virtual tables](tables.md#virtual-tables).
 
 ## `Value` — what actually gets bound

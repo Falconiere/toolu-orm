@@ -102,13 +102,13 @@ and reinserts the conflicting row, which can reset omitted columns and cascade
 deletions. Use `.returning(&column)` with `fetch_one`, `fetch_optional`, or
 `fetch_all` to read inserted or updated values.
 
-See the [query guides](../../website/src/queries/select.md) and the tested
-scenarios for [scalar expressions](../../docs/scenarios/scalar-expressions.md),
-[grouping](../../docs/scenarios/distinct-and-grouping.md),
-[query composition](../../docs/scenarios/query-composition.md),
-[reusable bindings](../../docs/scenarios/reusable-bound-parameters.md),
-[upsert](../../docs/scenarios/upsert.md), and
-[INSERT … SELECT](../../docs/scenarios/insert-select.md).
+See the [query guides](https://github.com/Falconiere/toolu-orm/blob/main/website/src/queries/select.md) and the tested
+scenarios for [scalar expressions](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/scalar-expressions.md),
+[grouping](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/distinct-and-grouping.md),
+[query composition](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/query-composition.md),
+[reusable bindings](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/reusable-bound-parameters.md),
+[upsert](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/upsert.md), and
+[INSERT … SELECT](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/insert-select.md).
 
 ## Development
 

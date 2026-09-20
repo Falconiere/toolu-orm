@@ -61,8 +61,8 @@ Additional APIs:
   embedded functions the suffix follows `_embedded`, such as
   `run_migrate_embedded_blocking`.
 
-See the [migration guide](../../website/src/migrations/overview.md) and
-[journal documentation](../../website/src/migrations/journal-snapshots.md) for
+See the [migration guide](https://github.com/Falconiere/toolu-orm/blob/main/website/src/migrations/overview.md) and
+[journal documentation](https://github.com/Falconiere/toolu-orm/blob/main/website/src/migrations/journal-snapshots.md) for
 integrity errors and validation limits.
 
 ## Development

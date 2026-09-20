@@ -45,6 +45,8 @@ struct PostWithAuthor {
 The attribute's `columns` list maps JSON array positions to field names. It must
 match the builder's target column order. Related structs derive `Deserialize`;
 their field declaration order is irrelevant because decoding uses those names.
+Here `PostSummary` has `id: String` and `title: String`, and `AuthorRow` has
+`id: String` and `name: String`; both derive `Deserialize`.
 `many_to_many` supports decoding a supplied array of related rows, but the query
 builders do not generate a join through its `through` table automatically.
 
