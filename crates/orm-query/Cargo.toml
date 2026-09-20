@@ -393,6 +393,11 @@ path = "tests/postgres_mutations_test.rs"
 required-features = ["postgres"]
 
 [[test]]
+name = "postgres_codec_test"
+path = "tests/postgres_codec_test.rs"
+required-features = ["postgres"]
+
+[[test]]
 name = "postgres_reads_test"
 path = "tests/postgres_reads_test.rs"
 required-features = ["postgres"]

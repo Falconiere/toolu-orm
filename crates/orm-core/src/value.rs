@@ -2,6 +2,17 @@
 
 use crate::error::DbCoreError;
 
+/// Which Postgres JSON type a [`Value::Json`](Value::Json) payload binds as.
+///
+/// SQLite stores either one as text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JsonStorage {
+  /// Postgres `json`.
+  Json,
+  /// Postgres `jsonb`.
+  Jsonb,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
   Null,
@@ -9,7 +20,28 @@ pub enum Value {
   Real(f64),
   Text(String),
   Blob(Vec<u8>),
+  /// Postgres `boolean`. SQLite binds `0` or `1` via [`Value::sqlite_stored`].
+  Boolean(bool),
+  /// Unix-epoch seconds for a Postgres `timestamptz`. SQLite binds the integer.
+  TimestampEpoch(i64),
+  /// RFC3339 text for a Postgres `timestamptz`. SQLite binds the text.
+  TimestampText(String),
+  /// JSON text. `storage` selects `json` or `jsonb` on Postgres; SQLite binds the text.
+  Json {
+    text: String,
+    storage: JsonStorage,
+  },
+  /// UUID text. Postgres sends the binary uuid; SQLite binds the text.
+  Uuid(String),
+  /// Decimal text for Postgres `numeric`. SQLite binds the text.
+  Numeric(String),
 }
+
+#[path = "value_sqlite.rs"]
+mod sqlite_stored;
+
+#[cfg(any(feature = "libsql", feature = "rusqlite"))]
+use sqlite_stored::SqliteForm;
 
 impl Value {
   /// An embedding as the little-endian `f32` bytes a `vec0` `float[N]`
@@ -106,12 +138,12 @@ impl<T: Into<Value>> From<Option<T>> for Value {
 #[cfg(feature = "libsql")]
 impl From<Value> for libsql::Value {
   fn from(v: Value) -> Self {
-    match v {
-      Value::Null => libsql::Value::Null,
-      Value::Integer(n) => libsql::Value::Integer(n),
-      Value::Real(f) => libsql::Value::Real(f),
-      Value::Text(s) => libsql::Value::Text(s),
-      Value::Blob(b) => libsql::Value::Blob(b),
+    match v.sqlite_form() {
+      SqliteForm::Null => libsql::Value::Null,
+      SqliteForm::Integer(n) => libsql::Value::Integer(n),
+      SqliteForm::Real(f) => libsql::Value::Real(f),
+      SqliteForm::Text(s) => libsql::Value::Text(s.to_owned()),
+      SqliteForm::Blob(b) => libsql::Value::Blob(b.to_owned()),
     }
   }
 }
@@ -132,97 +164,29 @@ impl From<libsql::Value> for Value {
 #[cfg(feature = "rusqlite")]
 impl rusqlite::types::ToSql for Value {
   fn to_sql(&self) -> rusqlite::Result<rusqlite::types::ToSqlOutput<'_>> {
-    match self {
-      Value::Null => Ok(rusqlite::types::ToSqlOutput::Owned(
+    match self.sqlite_form() {
+      SqliteForm::Null => Ok(rusqlite::types::ToSqlOutput::Owned(
         rusqlite::types::Value::Null,
       )),
-      Value::Integer(n) => Ok(rusqlite::types::ToSqlOutput::Owned(
-        rusqlite::types::Value::Integer(*n),
+      SqliteForm::Integer(n) => Ok(rusqlite::types::ToSqlOutput::Owned(
+        rusqlite::types::Value::Integer(n),
       )),
-      Value::Real(f) => Ok(rusqlite::types::ToSqlOutput::Owned(
-        rusqlite::types::Value::Real(*f),
+      SqliteForm::Real(f) => Ok(rusqlite::types::ToSqlOutput::Owned(
+        rusqlite::types::Value::Real(f),
       )),
-      Value::Text(s) => Ok(rusqlite::types::ToSqlOutput::Owned(
-        rusqlite::types::Value::Text(s.clone()),
+      SqliteForm::Text(s) => Ok(rusqlite::types::ToSqlOutput::Owned(
+        rusqlite::types::Value::Text(s.to_owned()),
       )),
-      Value::Blob(b) => Ok(rusqlite::types::ToSqlOutput::Owned(
-        rusqlite::types::Value::Blob(b.clone()),
+      SqliteForm::Blob(b) => Ok(rusqlite::types::ToSqlOutput::Owned(
+        rusqlite::types::Value::Blob(b.to_owned()),
       )),
     }
   }
 }
 
 #[cfg(feature = "postgres")]
-mod pg_conversions {
-  use postgres_types::ToSql;
-
-  use super::Value;
-
-  /// Type-agnostic SQL NULL accepted by any Postgres column type.
-  #[derive(Debug)]
-  struct PgNull;
-
-  impl postgres_types::ToSql for PgNull {
-    fn to_sql(
-      &self,
-      _ty: &postgres_types::Type,
-      _out: &mut bytes::BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Send + Sync>> {
-      Ok(postgres_types::IsNull::Yes)
-    }
-
-    fn accepts(_ty: &postgres_types::Type) -> bool {
-      true
-    }
-
-    postgres_types::to_sql_checked!();
-  }
-
-  /// Text value that also accepts Postgres UUID columns.
-  ///
-  /// When the target column is UUID, parses the string and writes binary format.
-  /// For all other text-compatible types, delegates to the standard `String` impl.
-  #[derive(Debug)]
-  struct FlexibleText(String);
-
-  impl postgres_types::ToSql for FlexibleText {
-    fn to_sql(
-      &self,
-      ty: &postgres_types::Type,
-      out: &mut bytes::BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Send + Sync>> {
-      if *ty == postgres_types::Type::UUID {
-        let uuid: uuid::Uuid = self.0.parse()?;
-        uuid.to_sql(ty, out)
-      } else {
-        self.0.to_sql(ty, out)
-      }
-    }
-
-    fn accepts(ty: &postgres_types::Type) -> bool {
-      *ty == postgres_types::Type::UUID || <String as postgres_types::ToSql>::accepts(ty)
-    }
-
-    postgres_types::to_sql_checked!();
-  }
-
-  /// Convert a slice of [`Value`] into boxed [`ToSql`] trait objects for
-  /// `tokio_postgres::Client::query` / `execute`.
-  pub fn to_pg_params(params: &[Value]) -> Vec<Box<dyn ToSql + Sync + Send>> {
-    params
-      .iter()
-      .map(|v| -> Box<dyn ToSql + Sync + Send> {
-        match v {
-          Value::Null => Box::new(PgNull),
-          Value::Integer(n) => Box::new(*n),
-          Value::Real(f) => Box::new(*f),
-          Value::Text(s) => Box::new(FlexibleText(s.clone())),
-          Value::Blob(b) => Box::new(b.clone()),
-        }
-      })
-      .collect()
-  }
-}
+#[path = "value_pg.rs"]
+mod pg_conversions;
 
 #[cfg(feature = "postgres")]
 pub use pg_conversions::to_pg_params;

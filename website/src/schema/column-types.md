@@ -62,27 +62,31 @@ see [Virtual tables](tables.md#virtual-tables).
 
 ## `Value` — what actually gets bound
 
-Parameters are bound as `toolu_orm_core::value::Value`, a five-variant enum:
+Parameters are bound as `toolu_orm_core::value::Value`. Untyped values are
+`Null`, `Integer`, `Real`, `Text` and `Blob`. `Into<Value>` is implemented for
+`&str`, `String`, `i32`, `i64`, `f64`, `bool` (as `0` / `1`), `Vec<u8>`, and
+`Option<T>` where `T: Into<Value>` (`None` becomes `Value::Null`). So
+`.set(&users::email, "a@b.c")` and `.filter(users::attempts.gt(3i32))` take
+plain Rust values. `From<bool>` stays an integer, and an integer column given
+`true` still binds `1`.
 
-```rust
-pub enum Value {
-  Null,
-  Integer(i64),
-  Real(f64),
-  Text(String),
-  Blob(Vec<u8>),
-}
-```
+A bind made through `Column<Boolean>`, `Column<Timestamp>`, `Column<Json>`,
+`Column<Jsonb>`, `Column<Uuid>` or `Column<Numeric>` retags that value before
+the driver sees it. The same `Value` is stored for both engines; SQLite maps
+the tag back to an integer or text when it binds.
 
-`Into<Value>` is implemented for `&str`, `String`, `i32`, `i64`, `f64`, `bool`
-(as `0` / `1`), `Vec<u8>`, and `Option<T>` where `T: Into<Value>` (`None` becomes
-`Value::Null`). So `.set(&users::email, "a@b.c")` and
-`.filter(users::attempts.gt(3i32))` take plain Rust values.
+| Marker | What you pass | Postgres parameter | SQLite parameter |
+|---|---|---|---|
+| `Boolean` | `bool`, or `0` / `1` | `boolean` | integer `0` / `1` |
+| `Timestamp` | unix-epoch `i64`, or RFC3339 text | `timestamptz` | the integer, or the text |
+| `Json` / `Jsonb` | JSON text | `json` / `jsonb` | the text |
+| `Uuid` | UUID text | `uuid` | the text |
+| `Numeric` | decimal text, an integer, or a finite float | `numeric` | text |
 
-The marker constrains which builder methods are available; it does not validate
-or convert bound values to the SQL type. For example, `bool` becomes an integer
-parameter, not a native Postgres boolean parameter. A value accepted by the
-Rust builder can still fail the driver's SQL type checks at execution time.
+A UUID, timestamp, JSON value or numeric that cannot be encoded is refused
+before the driver is asked to send it. `LIKE` is not retagged: its argument is
+a pattern, not a uuid or a timestamp. Untyped `Expr::raw` and an integer column
+still send `int8`.
 
 `TextOps` is implemented for `Text`, `Uuid`, `Date`, `Time` and `Varchar<N>`;
 `NumericOps` for `Integer`, `Real`, `BigInt`, `SmallInt`, `Timestamp`, `Date`

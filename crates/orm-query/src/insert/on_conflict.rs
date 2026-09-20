@@ -3,7 +3,7 @@
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Scalar};
-use toolu_orm_core::query_column::Column;
+use toolu_orm_core::query_column::{tag_column_bind, Column};
 use toolu_orm_core::value::Value;
 
 /// What the clause does once its target matches.
@@ -81,8 +81,8 @@ impl OnConflict {
   }
 
   /// `DO UPDATE SET "<col>" = ?N` — one bound value.
-  pub fn set<T>(self, col: &Column<T>, val: impl Into<Value>) -> Self {
-    self.assign(col.name, Scalar::bind(val))
+  pub fn set<T: 'static>(self, col: &Column<T>, val: impl Into<Value>) -> Self {
+    self.assign(col.name, Scalar::bind(tag_column_bind::<T>(val.into())))
   }
 
   /// `DO UPDATE SET "<col>" = <scalar>` — a computed assignment.

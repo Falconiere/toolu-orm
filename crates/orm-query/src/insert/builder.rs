@@ -6,7 +6,7 @@
 
 use toolu_orm_core::alias::TableRef;
 use toolu_orm_core::expr::Scalar;
-use toolu_orm_core::query_column::Column;
+use toolu_orm_core::query_column::{tag_column_bind, Column};
 use toolu_orm_core::value::Value;
 
 use crate::where_clause::cfg_single_backend;
@@ -67,9 +67,11 @@ impl InsertBuilder {
   }
 
   /// `"<column>"` bound to one value.
-  pub fn set<T>(mut self, col: &Column<T>, val: impl Into<Value>) -> Self {
+  pub fn set<T: 'static>(mut self, col: &Column<T>, val: impl Into<Value>) -> Self {
     self.columns.push(col.name.to_owned());
-    self.values.push(Scalar::bind(val));
+    self
+      .values
+      .push(Scalar::bind(tag_column_bind::<T>(val.into())));
     self
   }
 

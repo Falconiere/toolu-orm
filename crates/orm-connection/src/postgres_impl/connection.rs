@@ -139,7 +139,7 @@ async fn pg_execute_sql(
   sql: &str,
   params: Vec<Value>,
 ) -> Result<u64, DbError> {
-  let boxed = to_pg_params(&params);
+  let boxed = to_pg_params(&params).map_err(|error| DbError::Query(error.to_string()))?;
   let refs = pg_param_refs(&boxed);
   let stmt = pg_prepare(client, sql).await?;
   let affected = client
@@ -154,7 +154,7 @@ async fn pg_query_map<T: FromRow + Send + 'static>(
   sql: &str,
   params: Vec<Value>,
 ) -> Result<Vec<T>, DbError> {
-  let boxed = to_pg_params(&params);
+  let boxed = to_pg_params(&params).map_err(|error| DbError::Query(error.to_string()))?;
   let refs = pg_param_refs(&boxed);
   let stmt = pg_prepare(client, sql).await?;
   let rows = client

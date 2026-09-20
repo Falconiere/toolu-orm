@@ -114,6 +114,12 @@ pub enum DbCoreError {
   #[error("\"{name}\" cannot be a table function name: it must match [A-Za-z_][A-Za-z0-9_]*")]
   InvalidTableFunction { name: String },
 
+  /// A tagged Postgres parameter that cannot be encoded: a UUID or timestamp
+  /// that does not parse, JSON that is not JSON, or a numeric that is not a
+  /// decimal.
+  #[error("cannot bind a {kind} parameter: {reason}")]
+  InvalidParameter { kind: &'static str, reason: String },
+
   #[error("failed to read journal: {0}")]
   JournalRead(String),
 

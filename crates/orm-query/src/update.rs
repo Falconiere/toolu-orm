@@ -2,7 +2,7 @@
 
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Expr, Scalar};
-use toolu_orm_core::query_column::Column;
+use toolu_orm_core::query_column::{tag_column_bind, Column};
 use toolu_orm_core::value::Value;
 
 use crate::where_clause::{append_where_for, cfg_single_backend, impl_filter};
@@ -32,8 +32,11 @@ impl UpdateBuilder {
   }
 
   /// `"<column>" = ?N` — one bound value.
-  pub fn set<T>(mut self, col: &Column<T>, val: impl Into<Value>) -> Self {
-    self.sets.push((col.name.to_owned(), Scalar::bind(val)));
+  pub fn set<T: 'static>(mut self, col: &Column<T>, val: impl Into<Value>) -> Self {
+    self.sets.push((
+      col.name.to_owned(),
+      Scalar::bind(tag_column_bind::<T>(val.into())),
+    ));
     self
   }
 
