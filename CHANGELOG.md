@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `toolu-orm-query`
 
 #### Added
+- *(query)* return updated rows and guard conflict updates ([#141](https://github.com/Falconiere/toolu-orm/pull/141))
+
+### `toolu-orm-query`
+
+#### Added
 - *(core,query)* bind Postgres parameters from the column type ([#139](https://github.com/Falconiere/toolu-orm/pull/139))
 
 ### `toolu-orm-connection`
