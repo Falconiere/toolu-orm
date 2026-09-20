@@ -1,14 +1,14 @@
-//! UPDATE query builder with SET clause and filter support.
+//! UPDATE query builder with SET clause, filter support and `RETURNING`.
 
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Expr, Scalar};
 use toolu_orm_core::query_column::{tag_column_bind, Column};
 use toolu_orm_core::value::Value;
 
-use crate::where_clause::{append_where_for, cfg_single_backend, impl_filter};
+use crate::where_clause::{append_returning, append_where_for, cfg_single_backend, impl_filter};
 
 cfg_single_backend! {
-  use crate::exec_helpers::impl_execute;
+  use crate::exec_helpers::{impl_execute, impl_returning_fetch};
 }
 
 // ── UpdateBuilder ─────────────────────────────────────────────────────────────
@@ -18,6 +18,8 @@ pub struct UpdateBuilder {
   /// Assigned column name and the scalar it is set to, in call order.
   sets: Vec<(String, Scalar)>,
   filters: Vec<Expr>,
+  /// Column names projected by `RETURNING`, in call order.
+  returning: Vec<String>,
 }
 
 impl_filter!(UpdateBuilder);
@@ -28,7 +30,13 @@ impl UpdateBuilder {
       table: table.to_owned(),
       sets: Vec::new(),
       filters: Vec::new(),
+      returning: Vec::new(),
     }
+  }
+
+  /// The target table, which is what `QueryError::NotFound` carries.
+  pub fn table_name(&self) -> &str {
+    &self.table
   }
 
   /// `"<column>" = ?N` — one bound value.
@@ -59,6 +67,19 @@ impl UpdateBuilder {
     self
   }
 
+  /// Appends one column to `RETURNING "a", "b"`, in call order.
+  ///
+  /// Rendered last and unqualified, which both engines accept, and it binds
+  /// nothing. Read the projected rows with `fetch_one` / `fetch_optional` /
+  /// `fetch_all` rather than `execute`: rusqlite refuses to `execute` a
+  /// row-producing statement. A filter that matches nothing produces no row,
+  /// so `fetch_optional` returns `None` and `fetch_one` is
+  /// `QueryError::NotFound`.
+  pub fn returning<T>(mut self, col: &Column<T>) -> Self {
+    self.returning.push(col.name.to_owned());
+    self
+  }
+
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     let mut sql = format!(r#"UPDATE "{}" SET "#, self.table);
     let mut params = BoundParams::new();
@@ -71,6 +92,7 @@ impl UpdateBuilder {
     sql.push_str(&parts.join(", "));
 
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
+    append_returning(&self.returning, &mut sql);
 
     (sql, params.into_values())
   }
@@ -82,4 +104,5 @@ impl UpdateBuilder {
 
 cfg_single_backend! {
   impl_execute!(UpdateBuilder, "UPDATE");
+  impl_returning_fetch!(UpdateBuilder, "UPDATE");
 }

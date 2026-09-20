@@ -14,6 +14,7 @@ test, update its page.
 | Scenario | What it proves |
 |---|---|
 | [Upsert](upsert.md) | `or_replace` / `or_ignore` on all three drivers (`INSERT OR REPLACE`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`). |
+| [Mutation parity](mutation-parity.md) | `RETURNING` on `UPDATE` and `DELETE`, plus `ON CONFLICT` index predicates and update guards. `ORDER BY`/`LIMIT` on those statements stay out: bundled SQLite is not built with `SQLITE_ENABLE_UPDATE_DELETE_LIMIT`. |
 | [Relational loads](relational-loads.md) | `with_many` / `with_one` fetch parent and children in one statement, including empty and null relations and declared binary (`BLOB` / `bytea`) columns. |
 | [Value round-trip](value-round-trip.md) | Every `Value` variant binds as a parameter and reads back unchanged. |
 | [Fetch semantics](fetch-semantics.md) | `fetch_one` / `fetch_optional` / `count` / `exists` and their empty, single, and multi-row behavior. |

@@ -1,13 +1,14 @@
-//! DELETE query builder with dialect-aware SQL generation.
+//! DELETE query builder with dialect-aware SQL generation and `RETURNING`.
 
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Expr};
+use toolu_orm_core::query_column::Column;
 use toolu_orm_core::value::Value;
 
-use crate::where_clause::{append_where_for, cfg_single_backend, impl_filter};
+use crate::where_clause::{append_returning, append_where_for, cfg_single_backend, impl_filter};
 
 cfg_single_backend! {
-  use crate::exec_helpers::impl_execute;
+  use crate::exec_helpers::{impl_execute, impl_returning_fetch};
 }
 
 // ── DeleteBuilder ─────────────────────────────────────────────────────────────
@@ -15,6 +16,8 @@ cfg_single_backend! {
 pub struct DeleteBuilder {
   table: String,
   filters: Vec<Expr>,
+  /// Column names projected by `RETURNING`, in call order.
+  returning: Vec<String>,
 }
 
 impl_filter!(DeleteBuilder);
@@ -24,7 +27,26 @@ impl DeleteBuilder {
     Self {
       table: table.to_owned(),
       filters: Vec::new(),
+      returning: Vec::new(),
     }
+  }
+
+  /// The target table, which is what `QueryError::NotFound` carries.
+  pub fn table_name(&self) -> &str {
+    &self.table
+  }
+
+  /// Appends one column to `RETURNING "a", "b"`, in call order.
+  ///
+  /// Rendered last and unqualified, which both engines accept, and it binds
+  /// nothing. Read the projected rows with `fetch_one` / `fetch_optional` /
+  /// `fetch_all` rather than `execute`: rusqlite refuses to `execute` a
+  /// row-producing statement. A filter that matches nothing produces no row,
+  /// so `fetch_optional` returns `None` and `fetch_one` is
+  /// `QueryError::NotFound`. The projected values are the removed row.
+  pub fn returning<T>(mut self, col: &Column<T>) -> Self {
+    self.returning.push(col.name.to_owned());
+    self
   }
 
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
@@ -33,6 +55,7 @@ impl DeleteBuilder {
 
     sql.push_str(&format!(r#"DELETE FROM "{}""#, self.table));
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
+    append_returning(&self.returning, &mut sql);
 
     (sql, params.into_values())
   }
@@ -44,4 +67,5 @@ impl DeleteBuilder {
 
 cfg_single_backend! {
   impl_execute!(DeleteBuilder, "DELETE");
+  impl_returning_fetch!(DeleteBuilder, "DELETE");
 }

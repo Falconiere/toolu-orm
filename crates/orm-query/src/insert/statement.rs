@@ -19,6 +19,7 @@ use toolu_orm_core::value::Value;
 
 use super::conflict::{push_legacy_postgres_replace, ConflictMode};
 use super::InsertBuilder;
+use crate::where_clause::append_returning;
 
 impl InsertBuilder {
   /// The whole statement for `dialect`, with its parameters in bind order.
@@ -109,10 +110,6 @@ impl InsertBuilder {
   /// Rendered last and unqualified, which both engines accept, and it binds
   /// nothing — so it takes no `params` argument.
   fn push_returning(&self, sql: &mut String) {
-    if self.returning.is_empty() {
-      return;
-    }
-    let cols: Vec<String> = self.returning.iter().map(|c| quote_ident(c)).collect();
-    sql.push_str(&format!(" RETURNING {}", cols.join(", ")));
+    append_returning(&self.returning, sql);
   }
 }
