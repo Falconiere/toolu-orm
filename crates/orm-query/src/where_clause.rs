@@ -1,6 +1,7 @@
 //! `WHERE` and `HAVING` clause rendering, and dialect-aware parameter
 //! management.
 
+use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Expr};
 
@@ -40,6 +41,17 @@ pub(crate) fn append_conjuncts_for(
     sql.push_str(&fragment);
     first = false;
   }
+}
+
+/// Appends ` RETURNING "a", "b"` when `columns` is non-empty.
+///
+/// The list is unqualified, which both engines accept, and it binds nothing.
+pub(crate) fn append_returning(columns: &[String], sql: &mut String) {
+  if columns.is_empty() {
+    return;
+  }
+  let cols: Vec<String> = columns.iter().map(|c| quote_ident(c)).collect();
+  sql.push_str(&format!(" RETURNING {}", cols.join(", ")));
 }
 
 // ── impl_filter ───────────────────────────────────────────────────────────────

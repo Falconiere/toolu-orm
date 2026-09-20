@@ -124,6 +124,13 @@ path = "tests/scalar_expr_sql_test.rs"
 name = "upsert_sql_test"
 path = "tests/upsert_sql_test/main.rs"
 
+# Pure SQL generation for UPDATE/DELETE RETURNING and the ON CONFLICT WHERE
+# clauses. No driver type, so it belongs in the feature-less default lane.
+# Its live twins are rusqlite_mutation_parity_test and postgres_mutation_parity_test.
+[[test]]
+name = "mutation_parity_sql_test"
+path = "tests/mutation_parity_sql_test.rs"
+
 # Pure SQL generation for DISTINCT / GROUP BY / HAVING and the grouped count:
 # no driver type in the binary, so it belongs in the feature-less default lane.
 # Its live twins are {rusqlite,libsql,postgres}_grouping_test below.
@@ -341,6 +348,11 @@ path = "tests/rusqlite_upsert_test/main.rs"
 required-features = ["rusqlite"]
 
 [[test]]
+name = "rusqlite_mutation_parity_test"
+path = "tests/rusqlite_mutation_parity_test/main.rs"
+required-features = ["rusqlite"]
+
+[[test]]
 name = "rusqlite_insert_select_test"
 path = "tests/rusqlite_insert_select_test/main.rs"
 required-features = ["rusqlite"]
@@ -425,6 +437,11 @@ required-features = ["postgres"]
 [[test]]
 name = "postgres_upsert_test"
 path = "tests/postgres_upsert_test.rs"
+required-features = ["postgres"]
+
+[[test]]
+name = "postgres_mutation_parity_test"
+path = "tests/postgres_mutation_parity_test.rs"
 required-features = ["postgres"]
 
 [[test]]

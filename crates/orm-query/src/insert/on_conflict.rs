@@ -1,15 +1,14 @@
-//! [`OnConflict`] — an explicit `ON CONFLICT (…) DO NOTHING | DO UPDATE SET …`.
+//! [`OnConflict`] — `ON CONFLICT (…) [WHERE …] DO NOTHING | DO UPDATE SET … [WHERE …]`.
 
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
-use toolu_orm_core::expr::{BoundParams, Scalar};
+use toolu_orm_core::expr::{BoundParams, Expr, Scalar};
 use toolu_orm_core::query_column::{tag_column_bind, Column};
 use toolu_orm_core::value::Value;
 
+use crate::where_clause::append_conjuncts_for;
+
 /// What the clause does once its target matches.
-///
-/// Private, so a later feature (a `DO UPDATE … WHERE` guard, a constraint
-/// target) can add a variant without breaking the published surface.
 enum ConflictAction {
   DoNothing,
   /// Assigned column name and the scalar it is set to, in call order.
@@ -17,7 +16,7 @@ enum ConflictAction {
 }
 
 /// A conflict target and the action to take on it, spelled the same way on
-/// SQLite and Postgres: `ON CONFLICT ("a", "b") DO UPDATE SET "c" = …`.
+/// SQLite and Postgres: `ON CONFLICT ("a", "b") WHERE … DO UPDATE SET "c" = … WHERE …`.
 ///
 /// This is the form to reach for instead of
 /// [`or_replace`](super::InsertBuilder::or_replace): `INSERT OR REPLACE`
@@ -55,6 +54,11 @@ enum ConflictAction {
 pub struct OnConflict {
   target: Vec<String>,
   action: ConflictAction,
+  /// Partial-index predicate, rendered between the target and `DO`.
+  target_where: Vec<Expr>,
+  /// `DO UPDATE` guard. Rendered only for that action; [`Self::do_nothing`]
+  /// clears it.
+  update_where: Vec<Expr>,
 }
 
 impl OnConflict {
@@ -64,6 +68,8 @@ impl OnConflict {
     Self {
       target: vec![col.name.to_owned()],
       action: ConflictAction::DoNothing,
+      target_where: Vec::new(),
+      update_where: Vec::new(),
     }
   }
 
@@ -74,9 +80,37 @@ impl OnConflict {
     self
   }
 
-  /// `DO NOTHING`, discarding every assignment recorded so far.
+  /// `ON CONFLICT (…) WHERE <expr>` — another conjunct of the partial-index
+  /// predicate, `AND`-joined in call order.
+  ///
+  /// The predicate is what names a partial unique index: it has to be that
+  /// index's own expression (`deleted = 0`, not a bound parameter standing in
+  /// for `0`), because both engines infer the index from it. It is rendered
+  /// before `DO`, so any bind it does carry is numbered after the `VALUES`
+  /// binds and before the `DO UPDATE` assignments.
+  pub fn where_target(mut self, expr: Expr) -> Self {
+    self.target_where.push(expr);
+    self
+  }
+
+  /// `DO UPDATE SET … WHERE <expr>` — another conjunct of the update guard,
+  /// `AND`-joined in call order.
+  ///
+  /// A false guard skips the write the way `DO NOTHING` does: no row changes
+  /// and `RETURNING` projects nothing. The guard binds after the assignments,
+  /// because it is rendered after them. It is not part of `DO NOTHING`, so
+  /// [`do_nothing`](Self::do_nothing) discards it and a clause that never
+  /// records an assignment does not render it or bind it.
+  pub fn where_update(mut self, expr: Expr) -> Self {
+    self.update_where.push(expr);
+    self
+  }
+
+  /// `DO NOTHING`, discarding every assignment and every update guard
+  /// recorded so far. The index predicate stays: it belongs to the target.
   pub fn do_nothing(mut self) -> Self {
     self.action = ConflictAction::DoNothing;
+    self.update_where.clear();
     self
   }
 
@@ -110,17 +144,19 @@ impl OnConflict {
     self
   }
 
-  /// Appends ` ON CONFLICT (…) DO …` to `sql`, pushing the assignments' bound
-  /// values onto the statement's `params` in emission order.
+  /// Appends ` ON CONFLICT (…) [WHERE …] DO …` to `sql`.
   ///
-  /// `params` already holds the `VALUES` binds, so each assignment numbers
-  /// from `BoundParams::next_index` — no offset is passed, because position
-  /// lives in the buffer. An assignment built from a
-  /// [`SharedBind`](toolu_orm_core::expr::SharedBind) the `VALUES` already
-  /// bound reuses that placeholder instead of adding one.
+  /// `params` already holds the `VALUES` binds. The index predicate is
+  /// rendered next, then each assignment, then the update guard, and each of
+  /// those numbers from [`BoundParams::next_index`]. An assignment built from
+  /// a [`SharedBind`](toolu_orm_core::expr::SharedBind) the `VALUES` already
+  /// bound reuses that placeholder instead of adding one. The update guard is
+  /// omitted entirely when the action is `DO NOTHING`.
   pub(super) fn push_sql(&self, sql: &mut String, params: &mut BoundParams, dialect: Dialect) {
     let target: Vec<String> = self.target.iter().map(|c| quote_ident(c)).collect();
-    sql.push_str(&format!(" ON CONFLICT ({}) DO ", target.join(", ")));
+    sql.push_str(&format!(" ON CONFLICT ({})", target.join(", ")));
+    append_conjuncts_for(&self.target_where, " WHERE ", sql, params, dialect);
+    sql.push_str(" DO ");
 
     match &self.action {
       ConflictAction::DoNothing => sql.push_str("NOTHING"),
@@ -131,6 +167,7 @@ impl OnConflict {
           parts.push(format!("{} = {fragment}", quote_ident(column)));
         }
         sql.push_str(&format!("UPDATE SET {}", parts.join(", ")));
+        append_conjuncts_for(&self.update_where, " WHERE ", sql, params, dialect);
       },
     }
   }

@@ -3,8 +3,8 @@
 //! # Public API
 //!
 //! - [`InsertBuilder`] — fluent builder for INSERT statements
-//! - [`OnConflict`] — an explicit `ON CONFLICT (…) DO NOTHING | DO UPDATE SET …`
-//!   clause, rendered identically on SQLite and Postgres
+//! - [`OnConflict`] — `ON CONFLICT (…) [WHERE …] DO NOTHING | DO UPDATE SET … [WHERE …]`,
+//!   rendered identically on SQLite and Postgres
 //! - `InsertBuilder::select` — `INSERT INTO "t" ("a", "b") SELECT …`, a
 //!   set-based copy whose rows are never decoded into Rust
 
