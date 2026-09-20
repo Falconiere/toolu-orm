@@ -6,7 +6,12 @@ Core types and schema engine for toolu-orm. Provides column types, table definit
 
 - **Serialization:** serde + serde_json (schema snapshots, journals)
 - **Hashing:** sha2 (migration integrity)
-- **Database:** libsql or rusqlite (feature-gated, optional)
+- **Database:** libsql, rusqlite and Postgres (feature-gated, optional)
+
+`libsql` is enabled by default. Disable default features when selecting another
+driver or using only schema/SQL generation. Multiple drivers can coexist on core;
+`FromRow` uses `from_row` with one driver and a method per driver with several.
+With no drivers it carries only `REQUIRED_COLUMNS`.
 
 ## Architecture
 
@@ -18,34 +23,48 @@ src/
 ├── schema.rs           # SchemaRegistry
 ├── index.rs            # IndexDef
 ├── value.rs            # Value enum + driver conversions
-├── row.rs              # FromRow trait (feature-gated)
+├── row/                # FromRow traits, derives' dispatch macro and driver decode helpers
 ├── expr/               # Expr + Scalar trees (types/, scalar/) and per-dialect rendering (render/)
 ├── alias/              # TableRef, AliasedColumn<T>, QualifiedColumn, column-to-column comparisons
 ├── query_column/       # Column<T>, ColumnRef, CommonOps/TextOps/NumericOps/Fts5Ops/Vec0Ops
-├── connection.rs       # libsql Connection wrapper (feature: libsql)
+├── fts5/               # FTS5 table metadata, synchronization and expressions
+├── vec0/               # SQLite vector-table metadata and expressions
+├── pg_fts/             # Postgres full-text search expressions
+├── pgvector/           # Postgres vector expressions
+├── relation.rs         # Relation metadata
+├── relational_row.rs   # Relational JSON row decoding
+├── dialect.rs          # Dialect and placeholder/default translation
 ├── error.rs            # DbCoreError
-├── diff.rs             # Schema diff → Operation list
+├── diff/               # Fallible schema diff → Operation list
 ├── journal.rs          # Migration journal (entries + SHA256 hashes)
-├── snapshot.rs         # Schema snapshot serialization
-└── sql.rs              # SQL generation from Operations
+├── snapshot/           # Schema snapshot serialization
+└── sql/                # Dialect-specific SQL generation and SQLite table rebuilds
 ```
 
 ## Usage
 
 ```rust
-use toolu_orm_core::{column::ColumnType, table::TableDef, schema::SchemaRegistry};
+use toolu_orm_core::{column::Text, dialect::Dialect, error::DbCoreError};
 use toolu_orm_core::query_column::{Column, CommonOps, TextOps};
 use toolu_orm_core::expr::Expr;
-use toolu_orm_core::value::Value;
+use toolu_orm_core::{schema::SchemaRegistry, snapshot::Snapshot};
 
 // Type-safe column references
-const NAME: Column<toolu_orm_core::column::Text> = Column::new("users", "name");
-let filter = NAME.eq("Alice").and(NAME.like("%admin%"));
+const NAME: Column<Text> = Column::new("users", "name");
+fn name_filter(name: &str) -> Expr {
+    NAME.eq(name).and(NAME.like("%admin%"))
+}
 
 // Schema diffing
-let ops = toolu_orm_core::diff::diff(&old_snapshot, &new_registry);
-let sql = toolu_orm_core::sql::generate_sql(&ops);
+fn migration_sql(old: &Snapshot, new: &SchemaRegistry) -> Result<String, DbCoreError> {
+    let ops = toolu_orm_core::diff::diff(old, new)?;
+    Ok(toolu_orm_core::sql::generate_sql_for(&ops, Dialect::Sqlite))
+}
 ```
+
+`generate_sql()` selects `Dialect::CURRENT` (Postgres whenever core's
+`postgres` feature is enabled); `generate_sql_for()` chooses explicitly.
+Driver connection wrappers live in `toolu-orm-connection`.
 
 ## Development
 

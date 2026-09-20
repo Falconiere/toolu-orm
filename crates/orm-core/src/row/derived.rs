@@ -54,7 +54,7 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`impl_derived_from_row!`] for a `libsql`-only build.
+/// [`crate::impl_derived_from_row!`] for a `libsql`-only build.
 #[cfg(all(
   feature = "libsql",
   not(feature = "postgres"),
@@ -71,7 +71,7 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`impl_derived_from_row!`] for a `rusqlite`-only build.
+/// [`crate::impl_derived_from_row!`] for a `rusqlite`-only build.
 #[cfg(all(
   feature = "rusqlite",
   not(feature = "postgres"),
@@ -88,7 +88,7 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`impl_derived_from_row!`] for a `postgres` + `libsql` build.
+/// [`crate::impl_derived_from_row!`] for a `postgres` + `libsql` build.
 #[cfg(all(feature = "postgres", feature = "libsql", not(feature = "rusqlite"),))]
 #[macro_export]
 macro_rules! impl_derived_from_row {
@@ -104,7 +104,7 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`impl_derived_from_row!`] for a `postgres` + `rusqlite` build.
+/// [`crate::impl_derived_from_row!`] for a `postgres` + `rusqlite` build.
 #[cfg(all(feature = "postgres", feature = "rusqlite", not(feature = "libsql"),))]
 #[macro_export]
 macro_rules! impl_derived_from_row {
@@ -120,7 +120,7 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`impl_derived_from_row!`] for a `libsql` + `rusqlite` build.
+/// [`crate::impl_derived_from_row!`] for a `libsql` + `rusqlite` build.
 #[cfg(all(feature = "libsql", feature = "rusqlite", not(feature = "postgres"),))]
 #[macro_export]
 macro_rules! impl_derived_from_row {
@@ -136,7 +136,7 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`impl_derived_from_row!`] for a build with all three drivers.
+/// [`crate::impl_derived_from_row!`] for a build with all three drivers.
 #[cfg(all(feature = "postgres", feature = "libsql", feature = "rusqlite",))]
 #[macro_export]
 macro_rules! impl_derived_from_row {
@@ -154,7 +154,7 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`impl_derived_from_row!`] for a build with no driver: the fallback trait
+/// [`crate::impl_derived_from_row!`] for a build with no driver: the fallback trait
 /// has no decoding method, so only `REQUIRED_COLUMNS` is emitted and all three
 /// decoders are dropped.
 #[cfg(not(any(

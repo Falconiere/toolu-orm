@@ -1,11 +1,11 @@
 # libsql and Turso
 
 ```toml
-toolu-orm-core       = { version = "0.1", default-features = false, features = ["libsql"] }
-toolu-orm-macros     = { version = "0.1", features = ["libsql"] }
-toolu-orm-query      = { version = "0.1", features = ["libsql"] }
-toolu-orm-connection = { version = "0.1", features = ["libsql"] }
-toolu-orm-cli        = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm-core       = { version = "0.9", default-features = false, features = ["libsql"] }
+toolu-orm-macros     = { version = "0.9", features = ["libsql"] }
+toolu-orm-query      = { version = "0.9", features = ["libsql"] }
+toolu-orm-connection = { version = "0.9", features = ["libsql"] }
+toolu-orm-cli        = { version = "0.9", default-features = false, features = ["libsql"] }
 ```
 
 ## Local and in-memory
@@ -23,8 +23,9 @@ still a real SQL engine.
 
 ## Turso embedded replica
 
-`init_remote` opens a local replica file kept in sync with a remote database.
-Reads hit the local file; writes go to the remote and come back on the next sync.
+`init_remote` configures libsql's synced database builder with a local replica
+file, a remote URL, and a background sync interval. It completes an initial sync
+before returning the database.
 
 ```rust
 use toolu_orm_connection::{Database, RemoteConfig};
@@ -39,15 +40,18 @@ let db = Database::init_remote(RemoteConfig {
 ```
 
 `sync_interval_secs` is the background sync period; `max_sync_attempts` bounds
-the retries on the initial sync, so a replica that starts while the network is
-down fails with `DbError::Connection` instead of hanging.
+the number of initial sync attempts. Ordinary failures retry with exponential
+backoff starting at 500 ms. Replica conflicts or generation-ID mismatches cause
+the local replica files to be removed and rebuilt. Exhaustion returns
+`DbError::Connection`; this setting does not impose a timeout on each attempt.
 
 ## Dialect
 
 libsql is SQLite: generate migrations with `Dialect::Sqlite`, and the builders
-render `?N` placeholders. `#[table(strict = true)]` emits a Turso `STRICT` table,
-which is worth turning on — it rejects values that do not match the column type
-instead of silently storing them.
+render `?N` placeholders. `#[table(name = "users", strict = true)]` emits a
+`STRICT` table. Check the [column type mapping](../schema/column-types.md)
+before enabling it: some marker types emit extension type names that stock
+SQLite STRICT tables reject.
 
 ## Transactions
 

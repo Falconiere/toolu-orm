@@ -1,4 +1,4 @@
-//! Type-state `RelationalQuery` built on [`RelationalSelectBuilder`](crate::select::RelationalSelectBuilder).
+//! Type-state `RelationalQuery` built on [`RelationalSelectBuilder`].
 //!
 //! # Public API
 //!

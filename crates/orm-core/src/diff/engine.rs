@@ -20,7 +20,7 @@ use super::virtual_tables::{check_new_virtual_table, check_virtual_pair, Virtual
 /// # Errors
 ///
 /// Returns [`DbCoreError::VirtualTableChange`] when a virtual table changed in
-/// a way SQLite cannot apply. See [`super::virtual_tables`].
+/// a way SQLite cannot apply. Virtual-table changes are validated before diffing.
 pub fn diff(
   old_snapshot: &Snapshot,
   new_schema: &SchemaRegistry,
@@ -31,7 +31,7 @@ pub fn diff(
 /// # Errors
 ///
 /// Returns [`DbCoreError::VirtualTableChange`] when a virtual table changed in
-/// a way SQLite cannot apply. See [`super::virtual_tables`].
+/// a way SQLite cannot apply. Virtual-table changes are validated before diffing.
 pub fn diff_with_resolver(
   old_snapshot: &Snapshot,
   new_schema: &SchemaRegistry,

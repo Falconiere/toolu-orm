@@ -8,7 +8,7 @@ use crate::migrate::sql::SELECT_APPLIED_MIGRATIONS;
 
 /// The names of every applied migration, in the order they were applied.
 ///
-/// Reads the same rows as [`get_applied_history`] and drops their hashes: a
+/// Reads the same rows as `get_applied_history` and drops their hashes: a
 /// caller that only reports names ([`crate::status`]) needs no second
 /// statement, and the runners that do need the hashes take the records whole.
 ///
@@ -45,7 +45,7 @@ pub(crate) async fn get_applied_history(
     .map_err(|e| map_db(&e))
 }
 
-/// Blocking twin of [`get_applied_history`].
+/// Blocking twin of `get_applied_history`.
 pub(crate) fn get_applied_history_blocking(
   conn: &impl DbConnectionBlocking,
 ) -> Result<Vec<AppliedMigration>, MigrateError> {

@@ -6,14 +6,19 @@ saves a compile error.
 | Trait | Crate | Implemented for | Used by |
 |---|---|---|---|
 | `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `toolu_orm_connection::PgTransaction` | `run_migrate`, `get_status`, and your own code |
-| `DbConnectionBlocking` | `toolu-orm-connection` | `RusqliteConnection` only | your own code, with no runtime |
-| `Executor` | `toolu-orm-query` | `libsql::Connection`, `rusqlite::Connection`, `tokio_postgres::Client`, `toolu_orm_query::executor::PgTransaction` | the query builders' `.execute()` and `fetch_*` |
+| `DbConnectionBlocking` | `toolu-orm-connection` | `RusqliteConnection` only | blocking migration/status APIs and your own code |
+| `Executor` | `toolu-orm-query` | `libsql::Connection`, `rusqlite::Connection`, `RusqliteConnection`, `tokio_postgres::Client`, `toolu_orm_query::transaction::Transaction`, `toolu_orm_query::executor::PgTransaction` | the query builders' `.execute()` and `fetch_*` |
 
-Both rows end in a `PgTransaction`, and they are **two different types** — the
+The first and last rows include a `PgTransaction`, and they are **two different types** — the
 connection crate's wrapper implements `DbConnection`, the query crate's
-implements `Executor`. Neither is `tokio_postgres::Transaction`; both wrap one.
-Pick by what you are calling: builders take the query crate's, `run_migrate` and
-`execute_sql` take the connection crate's.
+implements `Executor`. The connection wrapper holds a deadpool transaction;
+the query wrapper holds a `tokio_postgres::Transaction`. Builders take the query
+crate's wrapper; functions accepting `DbConnection` take the connection crate's.
+
+`Executor` and the builders' execution/fetch methods are available only when
+**exactly one** driver feature is enabled on `toolu-orm-query`. The connection
+crate can enable several drivers together. Its blocking trait also supports
+`run_migrate_blocking` and `get_status_blocking` without an async runtime.
 
 `DbConnection` is the portable, driver-agnostic surface:
 
@@ -28,11 +33,12 @@ pub trait DbConnection: Send + Sync {
 ```
 
 Take `&impl DbConnection` in your own repository functions and the driver becomes
-a Cargo feature rather than a rewrite.
+a caller choice. Raw SQL still needs the selected database's syntax and
+placeholders (`?1` for SQLite, `$1` for Postgres).
 
 `DbConnectionBlocking` is the same surface without the `async`, and only rusqlite
-implements it — it is the one in-process driver, so it is the one that can run a
-statement without a runtime:
+implements it — it provides a synchronous SQLite API that can run a statement
+without a runtime:
 
 ```rust
 pub trait DbConnectionBlocking: Send + Sync {
@@ -45,8 +51,8 @@ pub trait DbConnectionBlocking: Send + Sync {
 Note the missing `Send + 'static` on `T`: rows are decoded on the calling thread.
 See [rusqlite](rusqlite.md#without-a-runtime).
 
-`Executor` is the narrower trait the builders run on, and it is implemented on
-the **driver's own connection type**. The wrappers expose it:
+`Executor` is the narrower trait the builders run on. For libsql, borrow the
+raw connection from the wrapper:
 
 ```rust
 let db = Database::init_local("data/app.db").await?;
@@ -56,6 +62,10 @@ let exec = conn.inner_conn();      // &libsql::Connection — Executor, for buil
 run_migrate(&conn, "migrations", Dialect::Sqlite).await?;
 UsersTable::insert().set(&users::id, "u_1").execute(exec).await?;
 ```
+
+`RusqliteConnection` implements `Executor` directly. `PgConnection` does not
+implement it or expose its pooled client; Postgres builders need a separate
+`tokio_postgres::Client` or the query crate's transaction wrapper.
 
 ## Sync and async
 

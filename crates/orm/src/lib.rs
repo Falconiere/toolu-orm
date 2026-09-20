@@ -4,7 +4,7 @@
 //! of the four library crates, all pinned to one version.
 //!
 //! ```toml
-//! toolu-orm = { version = "0.1", features = ["postgres"] }
+//! toolu-orm = { version = "0.9", features = ["postgres"] }
 //! ```
 //!
 //! | Re-export | Crate | Holds |
@@ -28,12 +28,13 @@
 //! `toolu-orm` on its own is enough — import the macro and nothing else:
 //!
 //! ```ignore
+//! use toolu_orm::core::column::{Integer, Text};
 //! use toolu_orm::table;
 //!
 //! #[table(name = "users")]
 //! pub struct User {
-//!   pub id: i64,
-//!   pub email: String,
+//!   pub id: Integer,
+//!   pub email: Text,
 //! }
 //! ```
 //!

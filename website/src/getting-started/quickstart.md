@@ -5,12 +5,13 @@ against an in-memory libsql database.
 
 ```toml
 [dependencies]
-toolu-orm     = { version = "0.1", features = ["libsql"] }
-toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm     = { version = "0.9", features = ["libsql"] }
+toolu-orm-cli = { version = "0.9", default-features = false, features = ["libsql"] }
 tokio         = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
-`toolu-orm` is the only ORM dependency: the macros emit absolute paths that go
+`toolu-orm` supplies the schema, macros, queries and connections;
+`toolu-orm-cli` supplies migration generation and application. Macro paths go
 through the facade — see [Installation](installation.md).
 
 ```rust
@@ -24,7 +25,7 @@ use toolu_orm::{table, FromRow};
 
 #[table(name = "users")]
 pub struct UsersTable {
-  #[column(primary_key)]
+  #[column(primary_key, not_null)]
   pub id: Text,
   #[column(not_null)]
   pub email: Text,
@@ -84,14 +85,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - the builder factories `select()`, `select_for::<T>()`, `insert()`, `update()`
   and `delete()`, each pre-bound to the table name.
 
-`select_for::<User>()` selects exactly `User::REQUIRED_COLUMNS`, so the row
-mapper and the column list cannot drift apart.
+`select_for::<User>()` initializes the projection from `User::REQUIRED_COLUMNS`.
+It returns an ordinary `SelectBuilder`; fetch the same row type and preserve
+that projection to keep decoding aligned.
 
 Only `use toolu_orm::table;` is needed for the macro: the expansion emits
 absolute `::toolu_orm::core::…` / `::toolu_orm::query::…` paths, so nothing
-else has to be in scope. Code you write yourself still needs its own imports —
-`use toolu_orm::core::libsql;` above is what the `libsql::Row` in the `FromRow`
-impl below resolves through. See [Installation](installation.md).
+else has to be in scope for generated code. Your own calls still need imports
+such as `TableSchema` for `table_def()` and `CommonOps` for `eq()`.
+See [Installation](installation.md).
 
 Note the two connection types: `LibsqlConnection` (what `db.connect()` returns)
 is what migrations take, and `conn.inner_conn()` is the driver connection the

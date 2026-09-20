@@ -41,9 +41,10 @@ each file's SHA-256 so a migration edited after it shipped fails loudly instead
 of silently diverging.
 
 The same struct also hands you typed `Column<T>` constants, `select()` /
-`insert()` / `update()` / `delete()` builder factories, and an async executor
-that speaks `?1` to SQLite and `$1` to Postgres. Swap the driver by flipping a
-Cargo feature; the application code does not change.
+`insert()` / `update()` / `delete()` builder factories, and driver-specific executors
+that speak `?1` to SQLite and `$1` to Postgres. Swap the driver by flipping a
+Cargo feature; SQL rendering follows the selected dialect. Connection setup,
+row types and database-specific expressions still need the matching driver API.
 
 > Extracted from a production backend where it drives Turso embedded replicas
 > in the field and Postgres in the cloud, from one set of table structs.
@@ -56,15 +57,15 @@ Cargo feature; the application code does not change.
 |---|---|
 | 🧱 **Schema as code** | `#[table]` turns a struct into a `TableDef` with primary keys, defaults, foreign keys with `on_delete` / `on_update`, `strict` tables, and `#[index]` / `#[unique_index]`. |
 | 🔁 **Diff-driven migrations** | `run_generate` diffs your registry against the last `*.snapshot.json` and writes numbered SQL with a `--> statement-breakpoint` separator. `run_migrate` / `run_migrate_blocking` apply pending files in one transaction each; `get_status` / `get_status_blocking` list applied and pending. |
-| 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration, and `_migrations` keeps the hash each applied migration ran with. Every run re-checks the whole applied history before it skips anything: an edited file stops the run with `MigrateError::HashMismatch`, a rewritten journal entry with `MigrateError::HistoryMismatch`. |
+| 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration, and `_migrations` keeps the hash each applied migration ran with. Runs re-check declared applied entries whose hashes can be verified: an edited file stops the run with `MigrateError::HashMismatch`, a rewritten journal entry with `MigrateError::HistoryMismatch`. |
 | 🧮 **Typed columns, typed expressions** | Generated `Column<T>` constants (`users::email`) build `Expr` trees: `eq` / `ne` / `in_list` / `not_in` / `is_null` on every column, `like` on text, `gt` / `lt` / `gte` / `lte` / `between` on numbers, combined with `.and()` / `.or()`. Table-qualified, always quoted. |
-| 🏗️ **Four builders, one executor** | `SelectBuilder` (filters, joins, ordering, paging, `distinct` / `group_by` / `having` with typed aggregates), `InsertBuilder` (with `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
+| 🏗️ **Four builders, one executor** | `SelectBuilder` (filters, joins, ordering, paging, `distinct` / `group_by` / `having` with typed aggregates), `InsertBuilder` (explicit `on_conflict`, `RETURNING`, `INSERT … SELECT`, plus `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
 | 🌐 **Dialect-aware SQL** | `to_sql_for(Dialect::Sqlite)` emits `?N` placeholders; `Dialect::Postgres` emits `$N`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`, and `LEFT JOIN LATERAL` + `json_agg` for relations. |
-| 🕸️ **Relational loads without N+1** | `#[derive(Relational)]` with `#[has_many]`, `#[belongs_to]`, `#[many_to_many]`; `RelationalQuery` fetches parent + children as JSON arrays in a single statement per dialect. |
+| 🕸️ **Relational loads without N+1** | `#[derive(Relational)]` decodes relation JSON; `RelationalQuery::with_many` / `with_one` build the single-statement loads. `#[many_to_many]` metadata is parsed, but requires hand-written join SQL. |
 | 🔎 **Full-text search** | `#[fts5_table]` (or the `Fts5Table` builder) declares an SQLite FTS5 virtual table with `UNINDEXED` columns, a free-form tokenizer, and external content. Migrations emit `CREATE VIRTUAL TABLE ... USING fts5(...)`. |
 | 🧭 **Vector tables** | `#[vec0_table]` (or `Vec0Table`) declares an sqlite-vec `vec0` virtual table with a typed `Vector { dim, element }` column, partition keys, metadata and auxiliary columns. `Value::vector` encodes little-endian f32 embeddings. Load `sqlite-vec` on the connection before `run_migrate` (#12); otherwise migrate fails as `MissingExtension`. |
 | 🧬 **Enums and views** | `#[derive(ColumnEnum)]` stores a Rust enum as text; `#[view(Name, pick(...))]` / `omit(...)` generates subset structs from a table. |
-| 🔄 **Transactions** | `conn.run_transaction(|tx| async move { ... })` commits on `Ok`, rolls back on `Err`. |
+| 🔄 **Transactions** | libsql's `conn.run_transaction(|tx| async move { ... })` commits on `Ok`, rolls back on `Err`; Postgres has explicit `PgTransaction` wrappers. |
 | 🔌 **Three drivers, one trait** | `DbConnection` over libsql (async, Turso embedded replica with sync retry), rusqlite (sync, wrapped in `spawn_blocking`), and Postgres (`deadpool-postgres` pool, rustls TLS). |
 | 🛡️ **Panic-free `src/`** | Workspace-wide `clippy::unwrap_used`, `expect_used`, `panic`, `indexing_slicing` are `deny`. No `#[allow]` anywhere. |
 
@@ -72,8 +73,14 @@ Cargo feature; the application code does not change.
 
 ## How it works
 
-Five crates. `orm-core` is the foundation; every other crate depends on it, and
-only `orm-cli` depends on `orm-connection`.
+The workspace has eight crates: six public-facing crates, the optional
+`toolu-orm-sqlite-vec-register` helper, and the unpublished
+`toolu-orm-facade-consumer` test crate. `toolu-orm-core` supplies the shared types.
+The `toolu-orm` facade re-exports core, macros, query and connection; the migration
+library is a separate dependency. Both the facade and `orm-cli` depend on
+`orm-connection`, as does `orm-query` with its `rusqlite` feature.
+
+The five implementation crates behind those entry points:
 
 ```
                  ┌────────────────────────┐
@@ -114,7 +121,7 @@ feature list:
 
 ```toml
 [dependencies]
-toolu-orm = { version = "0.1", features = ["libsql"] }
+toolu-orm = { version = "0.9", features = ["libsql"] }
 tokio     = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
@@ -129,7 +136,7 @@ dependency when you generate or apply migrations from your own binary — it is 
 library crate with no `[[bin]]` of its own:
 
 ```toml
-toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm-cli = { version = "0.9", default-features = false, features = ["libsql"] }
 ```
 
 If you do name `toolu-orm-core` directly as well, keep it on the same version as
@@ -144,16 +151,18 @@ crate you depend on** so Cargo unifies them into one shape.
 
 ```toml
 [dependencies]
-toolu-orm-core       = { version = "0.1", default-features = false, features = ["libsql"] }
-toolu-orm-macros     = { version = "0.1", features = ["libsql"] }
-toolu-orm-query      = { version = "0.1", features = ["libsql"] }
-toolu-orm-connection = { version = "0.1", features = ["libsql"] }
-toolu-orm-cli        = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm-core       = { version = "0.9", default-features = false, features = ["libsql"] }
+toolu-orm-macros     = { version = "0.9", features = ["libsql"] }
+toolu-orm-query      = { version = "0.9", features = ["libsql"] }
+toolu-orm-connection = { version = "0.9", features = ["libsql"] }
+toolu-orm-cli        = { version = "0.9", default-features = false, features = ["libsql"] }
 tokio                = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
 For Postgres, replace `"libsql"` with `"postgres"`. `toolu-orm-core` and
 `toolu-orm-cli` default to `libsql`; the other crates have no default driver.
+Keep core and query on the same single SQLite driver for execution: query's
+libsql/rusqlite scalar decoders require core's single-driver `FromRow` shape.
 
 ---
 
@@ -164,14 +173,14 @@ an in-memory libsql database.
 
 ```toml
 [dependencies]
-toolu-orm     = { version = "0.1", features = ["libsql"] }
-toolu-orm-cli = { version = "0.1", default-features = false, features = ["libsql"] }
+toolu-orm     = { version = "0.9", features = ["libsql"] }
+toolu-orm-cli = { version = "0.9", default-features = false, features = ["libsql"] }
 tokio         = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
 `toolu-orm-cli` is a plain library crate despite the name — it ships no
 binary, so `run_generate`, `run_migrate` and `get_status` are called from your
-own code (see [Migrations](#migrations) for the usual `bin/migrate.rs`).
+own code (see [Migrations](#migrations)).
 
 ```rust
 use toolu_orm::connection::Database;
@@ -238,17 +247,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 one `Column<T>` per field, `UsersTable::table_def()`, and the `select()` /
 `select_for::<T>()` / `insert()` / `update()` / `delete()` factories.
 
-Two connection surfaces show up there. `DbConnection` — what `db.connect()`
-returns — is what `run_migrate` and `get_status` take. `Executor` is what the
-query builders run on, and it is implemented for the **driver's own** connection
-type (`libsql::Connection`, `rusqlite::Connection`, `tokio_postgres::Client`,
-`PgTransaction`), which `conn.inner_conn()` hands out.
+Two connection surfaces show up there. `db.connect()` returns a wrapper
+implementing `DbConnection`, which `run_migrate` and `get_status` accept.
+Query builders use `Executor`: libsql exposes its driver connection through
+`conn.inner_conn()`, and rusqlite accepts either a raw `rusqlite::Connection`
+or the `RusqliteConnection` wrapper directly. Postgres builders need a separate
+raw `tokio_postgres::Client`; the pooled `PgConnection` exposes `DbConnection`
+operations and does not implement `Executor` or expose its client.
+The query crate also supplies libsql and Postgres transaction executors.
 
 ---
 
 ## Defining tables
 
 ```rust
+use toolu_orm_core::column::{Timestamp, Uuid};
 use toolu_orm_macros::{table, ColumnEnum};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, ColumnEnum)]
@@ -273,25 +286,30 @@ pub struct PipelineRun {
 | Attribute | Effect |
 |---|---|
 | `#[table(name = "...", strict = true)]` | Table name; `strict` switches column SQL types to the SQLite / Turso `STRICT` set. |
-| `#[column(primary_key)]` | Primary key. |
+| `#[column(primary_key)]` / `#[primary_key(a, b)]` | Single-column / table-level composite primary key. |
+| `#[column(primary_key, autoincrement)]` | Integer key generated by SQLite `AUTOINCREMENT` or Postgres `GENERATED BY DEFAULT AS IDENTITY`. |
+| `#[column(check = "...")]` | Raw SQL `CHECK` expression. |
 | `#[column(not_null)]` | `NOT NULL`; omit it for a nullable column. |
 | `#[column(default = "...")]` | Raw SQL default, e.g. `"unixepoch()"`, `"'pending'"`, `"uuid4_str()"`. |
 | `#[column(references = "t(col)", on_delete = "cascade", on_update = "...")]` | Foreign key with referential actions. |
 | `#[column(as_text)]` | Store an enum or custom type as `TEXT`. |
-| `#[index("name", col, ...)]` / `#[unique_index("name", col)]` | Secondary indexes on the table; `unique_index` is how you express uniqueness. |
+| `#[index("name", col, ...)]` / `#[unique_index("name", col)]` | Secondary indexes; `desc(col)` selects descending order and `where = "..."` adds a partial-index predicate. |
 | `#[view(Name, pick(a, b))]` / `#[view(Name, omit(c))]` | Generate a subset struct from the table. |
 
 Field types map to `ColumnType`: `Text`, `Integer`, `Real`, `Blob`, `Uuid`,
 `Boolean`, `Timestamp`, `Date`, `Time`, `Json`, plus Postgres-flavoured
-`BigInt`, `SmallInt`, `Varchar(n)`, `Serial`, `BigSerial`, `Jsonb`, `Numeric`,
-`Char(n)`, `Array`.
+`BigInt`, `SmallInt`, `Varchar<N>`, `Serial`, `BigSerial`, `Jsonb`, `Numeric`,
+`Char<N>`, and the `Vector` marker used by `#[vec0_table]`.
+`ColumnType::Array` is available for programmatic schema definitions; there is
+no corresponding `Array` marker for table fields.
 
 **Row mapping.** `#[derive(FromRow)]` fills `REQUIRED_COLUMNS` from the field
 names in declaration order and reads each field positionally at its own index, so
 `select_for::<T>()` picks exactly the columns `T` needs, in the order it decodes
-them. An `Option<T>` field decodes SQL `NULL` as `None`; anything else missing
-or undecodable is a `DbCoreError::RowMapping` naming the column's index and
-name, never a panic.
+them. An `Option<T>` field decodes SQL `NULL` as `None`; decode failures
+produce `DbCoreError::RowMapping` naming the column's index and name. libsql
+also reads a missing trailing nullable column as `None`; rusqlite rejects the
+out-of-range index. Use `select_for::<T>()` to select every required column.
 
 The derive expands to whichever shape the drivers on `toolu-orm-core` gave the
 trait, so it compiles on every combination — one driver means a single
@@ -310,7 +328,7 @@ Writing the impl by hand stays supported, and is the way out when a field type
 the active driver cannot decode needs a conversion:
 
 ```rust
-use toolu_orm_core::{error::DbCoreError, row::FromRow};
+use toolu_orm_core::{error::DbCoreError, libsql, row::FromRow};
 
 impl FromRow for User {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["id", "email", "created_at"];
@@ -333,6 +351,7 @@ impl FromRow for User {
 but the `TableDef` carries `TableKind::Virtual { module: "fts5", args }`:
 
 ```rust
+use toolu_orm_core::column::Text;
 use toolu_orm_macros::fts5_table;
 
 #[fts5_table(name = "memory_fts", tokenize = "porter unicode61 remove_diacritics 2")]
@@ -409,12 +428,13 @@ identifiers, so a hostile name fails the build instead of being escaped.
 `Value::vector(&[f32])` (and `vector_with_dim`) produce the little-endian blob
 a `float[N]` parameter expects.
 
-Unlike FTS5, `vec0` is **not** built into SQLite. Register `sqlite-vec` on the
-connection (typically via `sqlite3_auto_extension` / the bindings' equivalent)
-**before** `run_migrate`. A migration that creates a `vec0` table against a
-connection that never loaded it fails as
-`MigrateError::MissingExtension { module: "vec0", … }`. Connection setup
-ordering is issue #12 (`from_connection`). Changing `dim`, the element type, or
+Unlike FTS5, `vec0` is **not** built into SQLite. When using
+`sqlite3_auto_extension`, register it before opening the connection; otherwise
+load the extension on an existing raw connection **before** `run_migrate`. A
+migration that creates a `vec0` table without the extension fails as
+`MigrateError::MissingExtension { module: "vec0", … }`.
+`RusqliteConnection::from_connection` adopts a configured raw connection.
+Changing `dim`, the element type, or
 `distance_metric` is refused by the diff the same way FTS5 changes are — drop,
 recreate, and re-embed in a hand-written migration.
 
@@ -426,7 +446,8 @@ The snippets below name the crates directly (`toolu_orm_core::…`,
 `toolu_orm_query::…`); through the facade the same items are
 `toolu_orm::core::…` and `toolu_orm::query::…`.
 
-Every builder renders with `to_sql()` (current dialect) or
+Every builder renders with `to_sql()` (`Dialect::CURRENT`: Postgres whenever
+orm-core's `postgres` feature is active, SQLite otherwise) or
 `to_sql_for(Dialect::…)` and returns `(String, Vec<Value>)`. Column references
 are always table-qualified and quoted. The comparison methods come from three
 traits in `toolu_orm_core::query_column`: `CommonOps` (`eq`, `ne`, `in_list`,
@@ -469,10 +490,18 @@ DeleteBuilder::new("users").filter(users::id.eq("user-1")).to_sql_for(Dialect::P
 // DELETE FROM "users" WHERE "users"."id" = $1
 ```
 
-**Executing.** All four builders share `.execute(exec) -> u64`, where `exec` is
+For an update that preserves the existing row, use
+`on_conflict(OnConflict::column(&ID).set_excluded(&NAME))`; SQLite's
+`or_replace()` deletes and reinserts the row and may cascade to child rows.
+`returning(&ID)` exposes inserted or updated values through the insert fetch
+methods. `InsertBuilder::select` inserts a whole SELECT result. See
+[Upsert](docs/scenarios/upsert.md) and [INSERT … SELECT](docs/scenarios/insert-select.md).
+
+**Executing.** All four builders share `.execute(exec)`, where `exec` is
 the driver connection (`&libsql::Connection`, `&rusqlite::Connection`,
-`&tokio_postgres::Client`, or a transaction) — not the `DbConnection` wrapper.
-Select adds:
+`&tokio_postgres::Client`, or a supported transaction). The rusqlite
+`RusqliteConnection` wrapper also implements `Executor` directly. Calls return
+`Result<u64, QueryError>`; libsql and Postgres require `.await`. Select adds:
 
 ```rust
 let users: Vec<User> = SelectBuilder::new("users").columns_raw(&["id", "email", "created_at"]).fetch_all(exec).await?;
@@ -486,9 +515,11 @@ On the `rusqlite` driver these are synchronous: same names, no `.await`.
 
 Also available: `to_count_sql_for`, `to_exists_sql_for`,
 `SelectBuilder::raw().column_expr(expr, alias)`, and
-`columns_typed(&[&dyn ColumnRef])`. `count()` reports **how many rows the
-unpaginated query returns**, so once `distinct()` or `group_by()` is in play it
-counts distinct rows or groups rather than underlying rows — see below.
+`columns_typed(&[&dyn ColumnRef])`. For simple queries, `count()` counts source
+rows after joins and filters, replacing the projection. Distinct, grouped and
+compound queries instead count their result rows through a derived table.
+Both forms ignore outer ordering and pagination; an ungrouped aggregate
+projection alone does not change the simple count behavior.
 
 **DISTINCT, grouping and aggregates.** `distinct()` deduplicates whole
 projected rows, `group_by` / `group_by_scalar` add grouping keys and `having`
@@ -557,11 +588,15 @@ let (sql, params) = SelectBuilder::from_table(&u)
 
 Placeholders are numbered in render order, so `ON` parameters come after the
 select list's (a `column_scalar` projection can bind) and before the `WHERE`
-clause's — in `to_count_sql_for` and `to_exists_sql_for`, which render no select
-list, `ON` starts at 1. Keep a `LEFT JOIN` predicate in the `ON` clause: moving
+clause's. For this simple query, `to_count_sql_for` and `to_exists_sql_for`
+replace the projection, so `ON` starts at 1. CTEs and table-valued sources
+can bind before `ON`; distinct, grouped and compound counts preserve the
+inner projection and its bindings. Keep a `LEFT JOIN` predicate in the `ON` clause: moving
 it to `filter` drops the unmatched rows.
 
-**Transactions.** Anything that errors inside the closure rolls the whole block back.
+**Transactions (libsql).** `run_transaction` commits when the closure returns
+`Ok` and rolls back on `Err`. Postgres uses explicit transaction wrappers; see
+[Transactions](docs/scenarios/transactions.md).
 
 ```rust
 use toolu_orm_query::transaction::TransactionExt;
@@ -646,8 +681,9 @@ migrations/
 └── 0002_add_posts.snapshot.json
 ```
 
-- Files apply in name order; the applied set is tracked in a `_migrations`
-  table on the target database.
+- Directory migrations follow journal entry order when the journal is nonempty;
+  the fallback directory scan sorts filenames. Embedded migrations follow slice
+  order. The applied set is tracked in `_migrations` on the target database.
 - A file holding several statements separates them with
   `--> statement-breakpoint`. Each file runs inside `BEGIN` / `COMMIT`.
 - The journal hash is verified before a file runs. Edit a shipped migration
@@ -722,7 +758,8 @@ Read **[CLAUDE.md](CLAUDE.md)** first: it holds the workspace map and the
 binding rules. The short version:
 
 1. No `.unwrap()`, `.expect()`, `panic!`, `unreachable!`, or `[]` indexing in
-   `src/`. Propagate with `?` / `ok_or`. Tests may.
+   `src/`. Propagate with `?` / `ok_or`. Tests may use `unwrap` and `expect`
+   (`clippy.toml`); the panic and indexing lints still apply.
 2. No `#[allow]` / `#[expect]`. Fix the warning.
 3. No `#[cfg(test)]` in `src/`; tests live in each crate's `tests/`.
 4. ≤ 250 lines per file. Over that, split into a folder module whose `mod.rs`
@@ -730,27 +767,33 @@ binding rules. The short version:
 5. One concern per file. No `utils.rs` / `helpers.rs` / `common.rs`.
 6. `cargo nextest run`, never `cargo test`.
 
-The quality gate is what CI runs: four feature lanes plus a docs check. Every
-test executes against a real database (in-memory libsql, in-memory rusqlite,
-or a live Postgres), so start the test Postgres first:
+The quality gate is what CI runs: four feature lanes plus five checks. SQL
+rendering, schema diffs and macro compilation have database-free tests; driver
+integration tests use in-memory libsql, in-memory rusqlite or live Postgres.
+Start the test Postgres first:
 
 ```sh
-docker compose -f docker-compose.test.yaml up -d --wait   # postgres:16 on localhost:5434
+docker compose -f docker-compose.test.yaml up -d --wait   # pgvector/pgvector:pg16 on localhost:5434
 export TEST_DB_PORT=5434                                   # for_test() defaults to 5433
 
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace
-cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres --all-targets -- -D warnings
-cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli --features postgres
+cargo clippy -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer --features postgres --all-targets -- -D warnings
+cargo nextest run -p toolu-orm -p toolu-orm-core -p toolu-orm-macros -p toolu-orm-query -p toolu-orm-connection -p toolu-orm-cli -p toolu-orm-facade-consumer --features postgres
 cargo clippy -p toolu-orm-query --features libsql --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features libsql
 cargo clippy -p toolu-orm-query --features rusqlite,sqlite-vec --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec
 cargo clippy -p toolu-orm-connection --features rusqlite,sqlite-vec --all-targets -- -D warnings
 cargo nextest run -p toolu-orm-connection --features rusqlite,sqlite-vec
+cargo clippy -p toolu-orm-cli --no-default-features --features rusqlite --all-targets -- -D warnings
+cargo nextest run -p toolu-orm-cli --no-default-features --features rusqlite
 bash scripts/check-derive-matrix.sh
+bash scripts/check-driver-matrix.sh
 bash scripts/check-scenario-docs.sh
+bash scripts/check-test-targets.sh
+bash scripts/check-file-length.sh
 ```
 
 `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, and `TEST_DB_PASSWORD` point the
@@ -768,7 +811,7 @@ not bump versions or tag by hand.
 
 - Merge Conventional Commits to `main`. release-plz maintains one **release PR**
   that bumps the shared workspace version and rewrites `CHANGELOG.md`.
-- Merge that PR to cut the release: the five crates publish to crates.io in
+- Merge that PR to cut the release: the seven publishable crates publish to crates.io in
   dependency order, then a single `vX.Y.Z` tag and GitHub Release are created.
 
 ## License

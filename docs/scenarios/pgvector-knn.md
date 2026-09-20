@@ -7,7 +7,7 @@ orderable via `.asc()` / `Into<OrderBy>`. Pair with `limit(k)` for the
 surface — these do not share APIs. [Postgres FTS](postgres-fts-queries.md) is
 unrelated.
 **Drivers:** Postgres only. On SQLite every constructor refuses.
-**Spec:** [pgvector query surface](../toolu/specs/2026-09-09-pgvector-query-surface-design.md), AC-1 … AC-7.
+**Coverage:** pgvector query surface, AC-1 … AC-7.
 
 ## What is proven
 

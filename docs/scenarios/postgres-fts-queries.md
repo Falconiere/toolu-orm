@@ -2,7 +2,7 @@
 
 **Feature:** `pg_fts::column` / `to_tsvector` build a `PgTsDocument`; `matches_tsquery` / `matches_plainto_tsquery` / `matches_websearch_to_tsquery` put `@@` in `filter(...)`; `pg_fts::ts_rank_*` renders `ts_rank` as `PgFtsFn` for `column_expr` and `order_by`. [FTS5 queries](fts5-queries.md) is the SQLite surface — these do not share APIs.
 **Drivers:** Postgres only. On SQLite every constructor refuses.
-**Spec:** [Postgres FTS query surface](../toolu/specs/2026-09-09-postgres-fts-query-surface-design.md), AC-1 … AC-9.
+**Coverage:** Postgres FTS query surface, AC-1 … AC-9.
 
 ## What is proven
 

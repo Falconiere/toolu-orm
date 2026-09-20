@@ -137,7 +137,7 @@ impl InsertBuilder {
   ///
   /// The list is rendered last and unqualified, which both engines accept,
   /// and it binds nothing. Read the projected rows with
-  /// [`fetch_one`](Self::fetch_one) / `fetch_optional` / `fetch_all` rather
+  /// `fetch_one` / `fetch_optional` / `fetch_all` rather
   /// than `execute`: rusqlite refuses to `execute` a row-producing statement,
   /// and the other two drivers discard the rows. A conflict clause that took
   /// the `DO NOTHING` branch produces no row at all, so `fetch_optional`

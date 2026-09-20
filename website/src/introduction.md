@@ -65,14 +65,16 @@ structs ──#[table]──▶ TableDef ──SchemaRegistry──▶ diff vs l
         ──▶ NNNN_name.sql + NNNN_name.snapshot.json + _journal.json
 ```
 
-Six crates. `toolu-orm-core` is the foundation and every other crate depends on
-it; only `toolu-orm-cli` depends on `toolu-orm-connection`.
+Six public-facing crates make up the ORM. The workspace also contains the
+published `toolu-orm-sqlite-vec-register` helper and the unpublished
+`toolu-orm-facade-consumer` test crate. `toolu-orm-core` supplies shared types;
+connection is used by the facade, CLI and query's rusqlite executor.
 
 | Crate | What it holds |
 |---|---|
 | [`toolu-orm`](https://docs.rs/toolu-orm) | The facade: re-exports the four library crates and the macros behind one version and one feature list. |
 | [`toolu-orm-core`](https://docs.rs/toolu-orm-core) | `TableDef`, `ColumnType`, `Value`, `Expr`, `Column<T>`, snapshots, journal, diff, `Dialect`. |
-| [`toolu-orm-macros`](https://docs.rs/toolu-orm-macros) | `#[table]`, `#[derive(FromRow)]`, `#[derive(Relational)]`, `#[derive(ColumnEnum)]`, `#[view]`. |
+| [`toolu-orm-macros`](https://docs.rs/toolu-orm-macros) | `#[table]`, `#[derive(FromRow)]`, `#[derive(Relational)]`, `#[derive(ColumnEnum)]`, `#[fts5_table]`, `#[vec0_table]`; `#[view]` is a `#[table]` helper attribute. |
 | [`toolu-orm-query`](https://docs.rs/toolu-orm-query) | `SelectBuilder`, `InsertBuilder`, `UpdateBuilder`, `DeleteBuilder`, `RelationalQuery`, executor and transactions. |
 | [`toolu-orm-connection`](https://docs.rs/toolu-orm-connection) | `DbConnection` over libsql, rusqlite and Postgres. |
 | [`toolu-orm-cli`](https://docs.rs/toolu-orm-cli) | `run_generate`, `run_migrate`, `get_status`. |

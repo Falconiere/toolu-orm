@@ -4,7 +4,8 @@ Migration tooling for toolu-orm — generates, applies, and checks migration sta
 
 ## Crate Type
 - Library
-- Internal deps: toolu-orm-core
+- Internal deps: toolu-orm-core, toolu-orm-connection
+- Features: `libsql` (default), `rusqlite`, `postgres`; blocking migration/status APIs use rusqlite
 
 ## Crate-Specific Rules
 - Migrations are split on `"--> statement-breakpoint"` separator for multi-statement execution
@@ -15,9 +16,9 @@ Migration tooling for toolu-orm — generates, applies, and checks migration sta
 
 ## Key Modules
 - `generate.rs` — `run_generate()`: diff current schema vs latest snapshot, produce .sql migration
-- `migrate.rs` — `run_migrate()`: apply pending migrations, track in `_migrations` table
-- `status.rs` — `get_status()`: report applied vs pending migrations
+- `migrate/` — Directory and embedded runners, baseline APIs and their blocking twins; track applied migrations in `_migrations`
+- `status.rs` — Directory/embedded, async/blocking status APIs
 
 ## References
 - Root CLAUDE.md (project-wide rules)
-- `docs/rules/forbidden-syntax-rust.md`
+- Root `Cargo.toml`, `clippy.toml` and `scripts/check-file-length.sh`

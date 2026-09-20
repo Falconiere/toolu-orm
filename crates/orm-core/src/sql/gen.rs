@@ -15,7 +15,7 @@ pub fn generate_sql(operations: &[Operation]) -> String {
 /// Migration SQL for `dialect`, as `--> statement-breakpoint`-separated chunks.
 ///
 /// On SQLite the ordered operations first pass through
-/// [`plan_sqlite_rebuilds`], which folds every column operation on a table that
+/// `plan_sqlite_rebuilds`, which folds every column operation on a table that
 /// SQLite cannot alter in place into one table rebuild.
 pub fn generate_sql_for(operations: &[Operation], dialect: Dialect) -> String {
   let ordered = order_operations(operations.to_vec());

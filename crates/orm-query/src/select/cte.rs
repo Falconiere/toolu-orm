@@ -9,8 +9,8 @@ use super::SelectBuilder;
 /// One named query in a `WITH` prefix.
 ///
 /// The body is an ordinary [`SelectBuilder`], so a recursive walk is just a
-/// body whose arms are `anchor.union(step)` — the `UNION` is what collapses a
-/// node already reached and therefore what terminates a cyclic graph.
+/// body whose arms are `anchor.union(step)`. `UNION` deduplicates whole rows;
+/// when depth is projected, the step still needs a depth bound or cycle guard.
 ///
 /// ```ignore
 /// let walk = Cte::new("walk", anchor.union(step))
@@ -49,7 +49,7 @@ impl Cte {
   /// Marks this CTE self-referential.
   ///
   /// One such CTE makes the whole prefix `WITH RECURSIVE`, which both engines
-  /// require and both accept for the non-recursive members beside it. Whether
+  /// accept, including for the non-recursive members beside it. Whether
   /// the body actually refers to itself is not policed here; the engine
   /// reports a recursive term that is not in a compound.
   pub fn recursive(mut self) -> Self {

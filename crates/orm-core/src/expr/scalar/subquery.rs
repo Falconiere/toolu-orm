@@ -28,8 +28,9 @@ impl Scalar {
   /// `(SELECT …)` in value position — a projection, an `ORDER BY` term, or one
   /// side of a comparison.
   ///
-  /// The engine rejects a subquery here that returns more than one column or
-  /// more than one row; this does not police it.
+  /// The subquery must select one column. Postgres rejects multiple rows;
+  /// SQLite takes the first. Both return NULL for an empty result. The
+  /// builder does not validate the result shape.
   #[must_use]
   pub fn subquery(query: impl SelectSource + 'static) -> Self {
     Self::from_kind(ScalarKind::Subquery(Box::new(query)))

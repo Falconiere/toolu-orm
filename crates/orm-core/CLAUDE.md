@@ -5,11 +5,11 @@ Foundation crate for toolu-orm — core types, schema definitions, snapshot/diff
 ## Crate Type
 - Library
 - Internal deps: none (foundation crate)
-- Features: `libsql` (default), `rusqlite` (mutually exclusive)
+- Features: `libsql` (default), `rusqlite`, `postgres`; all eight combinations compile
 
 ## Crate-Specific Rules
-- Dual database: `FromRow` trait definition changes based on active feature flag
-- `Value` enum bridges ORM ↔ database driver types (libsql::Value or rusqlite types)
+- `FromRow` uses `from_row` with one driver, driver-specific methods with multiple drivers, and no decoder with none. Its shape follows the features unified on orm-core; callers use the `row::from_*_row` helpers.
+- `Value` bridges ORM values to libsql, rusqlite and Postgres parameters
 - `Column<T>` uses PhantomData marker types for type-safe operations (CommonOps, TextOps, NumericOps)
 - Snapshot serialization uses BTreeMap for deterministic ordering
 - Migration hashes use SHA256 with `sha256:` prefix
@@ -20,15 +20,15 @@ Foundation crate for toolu-orm — core types, schema definitions, snapshot/diff
 - `table.rs` — TableDef, TableSchema trait
 - `schema.rs` — SchemaRegistry (collection of TableDefs)
 - `value.rs` — Value enum with database driver conversions
-- `expr/` — Expression AST. `types/` (Expr + ExprKind, OrderBy, JsonExpr, and JoinCondition — an Expr newtype with and/or), `scalar/` (Scalar + ScalarKind, function calls, arithmetic, `CASE`, `like_pattern_literal`), `render/` (per-dialect SQL rendering; empty `in_list` renders `1 = 0`, every node numbers its placeholders from `start + params.len()`)
-- `alias/` — TableRef (table + optional alias), AliasedColumn\<T\>, the object-safe QualifiedColumn trait, and the six column-to-column comparisons on both column kinds
+- `expr/` — Expression AST: `types/`, `scalar/`, `render/`, and `binding/`. Renderers share `BoundParams` and take the next index from `params.next_index()`; they never add a separate offset. `nested(start, ...)` handles standalone fragments and nested statements. Shared handles reuse their recorded indices; empty `in_list` renders `1 = 0`.
+- `alias/` — TableRef (table or bound table-valued function, optional database/schema and alias), AliasedColumn\<T\>, the object-safe QualifiedColumn trait, and six column-to-column comparisons
 - `query_column/` — Column\<T\>, ColumnRef trait, CommonOps/TextOps (`like`, `like_escape`)/NumericOps traits, Fts5Ops, Vec0Ops
-- `row.rs` — FromRow trait (feature-gated)
-- `diff.rs` — Schema diff algorithm (Operation enum)
-- `snapshot.rs` — Schema snapshot serialization
+- `row/` — FromRow traits, driver decode helpers and `impl_derived_from_row!`
+- `diff/` — Schema diff algorithm (Operation enum)
+- `snapshot/` — Schema snapshot serialization
 - `journal.rs` — Migration journal tracking
-- `sql.rs` — SQL generation from Operation list
+- `sql/` — SQL generation from Operation list, SQLite rebuilds and FTS5 sync triggers
 
 ## References
 - Root CLAUDE.md (project-wide rules)
-- `docs/rules/forbidden-syntax-rust.md`
+- Root `Cargo.toml`, `clippy.toml` and `scripts/check-file-length.sh`

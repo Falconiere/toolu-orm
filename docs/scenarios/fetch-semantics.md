@@ -17,7 +17,9 @@
 The last row pins current behavior: `fetch_one` does not error on more than one match (spec Q4).
 
 `fetch_one` and `fetch_optional` reach that first row without materializing the
-rest: both send a query bounded to at most one row. See
+rest when the original limit is absent or nonnegative: both send a query
+bounded to at most one row. Explicit negative limits remain unbounded on
+SQLite and are rejected on Postgres. See
 [Bounded first-row fetch](bounded-first-row.md).
 
 ## How to run

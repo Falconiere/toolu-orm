@@ -1,8 +1,13 @@
 # Driver feature unification
 
 **Feature:** only `toolu-orm-core` decides which `FromRow` method exists. Every other crate decodes through `toolu_orm_core::row::from_postgres_row` / `from_libsql_row` / `from_rusqlite_row`, so no crate has to guess what Cargo unified onto orm-core.
-**Drivers:** all of them, in every combination — that is the point of the scenario.
-**Spec:** `docs/toolu/specs/2026-09-18-124-driver-feature-unification-design.md` ([#124](https://github.com/Falconiere/toolu-orm/issues/124)).
+**Drivers:** the supported feature combinations described below.
+**Spec:** [#124](https://github.com/Falconiere/toolu-orm/issues/124).
+
+The extra-core-driver checks cover **orm-connection**, not arbitrary query/core
+feature mismatches. Query's libsql and rusqlite scalar decoders still implement
+the single-driver `FromRow` shape, so keep core and query aligned when using
+either SQLite executor.
 
 ## The problem this closes
 
@@ -50,6 +55,7 @@ now use all three.
 - **All eight driver combinations compile, for the crates that decode.**
   `scripts/check-driver-matrix.sh` builds orm-connection, orm-query, orm-cli and
   the `toolu-orm` facade against every subset of `{postgres, libsql, rusqlite}`.
+  orm-cli skips the no-driver subset because its migration decoders require a driver.
   The three `toolu-orm-query` combinations that fail on v0.8.0 —
   `postgres,rusqlite`, `libsql,rusqlite`, `postgres,libsql,rusqlite` — are the
   regression guard.

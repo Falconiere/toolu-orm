@@ -17,25 +17,19 @@ use super::SelectBuilder;
 const COUNT_SUBQUERY_ALIAS: &str = r#""toolu_count""#;
 
 impl SelectBuilder {
-  /// `SELECT COUNT(*) …` — **how many rows [`SelectBuilder::to_sql_for`] would
-  /// return** without `LIMIT`/`OFFSET`.
+  /// Counts source rows after joins and filters, ignoring outer pagination.
   ///
-  /// That one contract holds for every builder shape, which is what decides
-  /// the grouped case. `GROUP BY` makes the returned rows *groups*, so the
-  /// count is the number of groups; appending `GROUP BY` to a bare
-  /// `SELECT COUNT(*)` would instead return one row per group and report the
-  /// size of whichever came first. So a grouped — or `DISTINCT` — builder
-  /// counts a derived table:
+  /// A grouped, DISTINCT or compound builder instead counts its result rows
+  /// through a derived table, preserving the projection and HAVING:
   ///
   /// ```sql
   /// SELECT COUNT(*) FROM (SELECT … GROUP BY … HAVING …) AS "toolu_count"
   /// ```
   ///
-  /// The inner statement keeps the select list (it is what `DISTINCT`
-  /// deduplicates on, and it may bind), every join, `WHERE`, `GROUP BY` and
-  /// `HAVING`; only `ORDER BY` and pagination are dropped, exactly as they
-  /// always were. A builder with neither clause renders the plain form
-  /// unchanged.
+  /// The plain form replaces the projection and omits HAVING. In particular,
+  /// an ungrouped aggregate projection does not make this helper return `1`:
+  /// it still counts the matching source rows. ORDER BY is dropped in both
+  /// forms, along with LIMIT/OFFSET.
   pub fn to_count_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     if self.distinct || !self.group_bys.is_empty() || self.is_compound() {
       return self.to_wrapped_count_sql_for(dialect);
@@ -79,8 +73,10 @@ impl SelectBuilder {
     self.to_count_sql_for(Dialect::CURRENT)
   }
 
-  /// `SELECT EXISTS(SELECT 1 …)` — true when at least one row would be
-  /// returned.
+  /// `SELECT EXISTS(SELECT 1 …)` — whether a source row or group exists.
+  ///
+  /// Except for compound queries, the original projection is replaced with
+  /// `1`; an ungrouped aggregate projection does not affect this result.
   ///
   /// `GROUP BY`/`HAVING` are appended, because `SELECT 1 … GROUP BY x HAVING …`
   /// yields one row per surviving group and a `HAVING` can eliminate them all.

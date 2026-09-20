@@ -44,7 +44,7 @@ impl DistanceOp {
 ///
 /// ASC is nearest for all three operators (pgvector’s convention for `<#>`).
 /// The query vector is embedded as a SQL literal — see
-/// [`super::literal::vector_literal`].
+/// `vector_literal`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PgVectorDistance {
   sql: String,

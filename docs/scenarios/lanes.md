@@ -5,7 +5,7 @@
 | Lane | Command | Compiles |
 |---|---|---|
 | default | `cargo nextest run --workspace` | orm-core and orm-cli with libsql, orm-query with no driver (SQL-generation tests only), the `toolu-orm` facade with no driver |
-| postgres | `cargo nextest run -p <six crates> --features postgres` | orm-core postgres+libsql (the two-driver derive shape), orm-query postgres alone, every live-Postgres suite |
+| postgres | The seven-package Postgres command in [the quality gate](../../CLAUDE.md#quality-gate) | orm-core postgres+libsql (the two-driver derive shape), orm-query postgres alone, every live-Postgres suite and the facade-only consumer |
 | libsql-only | `cargo nextest run -p toolu-orm-query --features libsql` | orm-query's libsql executor, `run_transaction`, fetch methods |
 | rusqlite-only | `cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec` and `-p toolu-orm-connection --features rusqlite,sqlite-vec` and `-p toolu-orm-cli --no-default-features --features rusqlite` | orm-query's sync rusqlite executor (raw + `RusqliteConnection`), live sqlite-vec, `DbConnectionBlocking`, and blocking migrate/status/baseline twins (see [Blocking connection](blocking-connection.md)) |
 
@@ -18,7 +18,8 @@ cover the gap:
   eight (see [FromRow derive](from-row-derive.md)).
 - `bash scripts/check-driver-matrix.sh` compiles the driver-dependent *crates* —
   orm-connection, orm-query, orm-cli and the `toolu-orm` facade — against all
-  eight, plus six cases where orm-core carries a driver its dependent does not
+  eight (except orm-cli with no driver), plus six cases where orm-core carries
+  a driver orm-connection does not
   (see [Driver feature unification](driver-feature-unification.md)). The derive
   matrix never builds those crates, which is how issue #124 shipped a
   `toolu-orm-query --features rusqlite,libsql` that did not compile.

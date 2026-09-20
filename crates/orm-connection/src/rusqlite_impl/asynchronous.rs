@@ -54,7 +54,7 @@ where
 /// Every method hands off to its [`DbConnectionBlocking`] twin on a blocking
 /// thread, so the two surfaces run the same statement code and cannot drift.
 /// Statement errors therefore arrive unchanged; only a task that never finished
-/// is classified here, by [`join_failure`].
+/// is classified here, by `join_failure`.
 #[async_trait::async_trait]
 impl DbConnection for RusqliteConnection {
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {

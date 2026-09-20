@@ -11,8 +11,8 @@ feature on `toolu-orm-query`: CI statically links the official `sqlite-vec`
 crate, registers it, adopts the connection via `from_connection`, and runs
 ORM `vec0` DDL plus `SelectBuilder::knn` end-to-end (see
 [vec0 virtual tables](vec0-virtual-tables.md)).
-**Spec:** [vec0 KNN](../toolu/specs/2026-09-08-vec0-knn-design.md), AC-1 … AC-8;
-live lane [2026-09-09](../toolu/specs/2026-09-09-live-sqlite-vec-tests-design.md).
+**Coverage:** vec0 KNN, AC-1 … AC-8;
+live lane 2026-09-09.
 
 **Reading one:** [vec0 virtual tables](vec0-virtual-tables.md) declares the
 index; this page searches it.

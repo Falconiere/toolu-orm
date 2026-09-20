@@ -1,74 +1,114 @@
 # toolu-orm-query
 
-Type-safe SQL query builders for toolu-orm. Provides Select, Insert, Update, and Delete builders with feature-gated database executors for libsql (async) or rusqlite (sync).
+Type-safe SQL query builders for toolu-orm. Select, Insert, Update, and Delete
+builders render SQLite or Postgres SQL without a database connection.
 
-## Stack
+## Driver features
 
-- **Query Building:** toolu-orm-core (Expr, Column\<T\>, Value)
-- **Execution:** libsql (async, default) or rusqlite (sync)
-- **Async:** async-trait, tokio (feature: libsql)
+No driver is enabled by default. Enable exactly one of `libsql`, `rusqlite`, or
+`postgres` for execution and row fetching. libsql and Postgres are async;
+rusqlite is synchronous. With zero or multiple driver features, builders and
+explicit `to_sql_for(Dialect::...)` rendering remain available, but executors
+and fetch methods are not compiled.
+
+The `sqlite-vec` feature enables `rusqlite` and the sqlite-vec registration
+dependency. The query API uses `toolu-orm-core` types: `Expr`, `Scalar`,
+`Column<T>`, `TableRef`, and `Value`.
 
 ## Architecture
 
 ```
 src/
 ├── lib.rs                       # Module exports
-├── select/
-│   ├── builder.rs               # SelectBuilder (columns, joins, filters, limit)
-│   ├── projection.rs            # column_expr / column_scalar and the select list
-│   ├── ordering.rs              # order_by and the ORDER BY tail
-│   └── executor_fetch.rs        # query_map extension methods (feature-gated)
-├── insert.rs                    # InsertBuilder (set, set_scalar, or_replace, or_ignore)
+├── select/                      # SelectBuilder, projections, joins, pagination
+│   ├── grouping.rs              # DISTINCT, GROUP BY, HAVING
+│   ├── cte.rs                   # WITH / WITH RECURSIVE
+│   ├── compound.rs              # UNION / UNION ALL
+│   ├── executor_fetch/          # Feature-gated fetch/count/exists methods
+│   └── relational/              # Relational SQL and JSON/binary decoding
+├── insert/                      # VALUES / SELECT, ON CONFLICT, RETURNING
 ├── update.rs                    # UpdateBuilder (set, set_expr, set_scalar, filter)
 ├── delete.rs                    # DeleteBuilder (filter)
-├── executor.rs                  # Executor trait + database implementations
-├── transaction.rs               # Transaction wrapper
-├── where_clause.rs              # Filter macro + WHERE generation
+├── executor/                    # Driver-specific Executor traits and implementations
+├── transaction.rs               # libsql run_transaction closure API
+├── relational_builder.rs        # RelationalQuery tuple shape
+├── where_clause.rs              # Filter macro + WHERE/HAVING generation
 ├── error.rs                     # QueryError
-└── exec_helpers.rs              # impl_execute! macro
+└── exec_helpers.rs              # Execute and RETURNING fetch macros
 ```
 
 ## Usage
 
 ```rust
 use toolu_orm_query::select::SelectBuilder;
-use toolu_orm_query::insert::InsertBuilder;
+use toolu_orm_core::alias::TableRef;
+use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::query_column::CommonOps;
 
-// Select with type-safe columns
+// Assuming #[table(name = "users")] generated the users column module.
 let (sql, params) = SelectBuilder::new("users")
-    .columns_typed(&[&users::columns::ID, &users::columns::EMAIL])
-    .filter(users::columns::EMAIL.eq("alice@example.com"))
-    .order_by(users::columns::CREATED_AT.desc())
+    .columns_typed(&[&users::id, &users::email])
+    .filter(users::email.eq("alice@example.com"))
+    .order_by(users::created_at.desc())
     .limit(10)
-    .to_sql();
+    .to_sql_for(Dialect::Sqlite);
 
-// Aliased tables: users sharing an email, oldest first (a self-join)
+// Aliased tables: older/newer users sharing an email (a self-join).
 let older = TableRef::aliased("users", "older");
 let newer = TableRef::aliased("users", "newer");
 let (sql, params) = SelectBuilder::from_table(&older)
-    .column_as(&older.column(&users::columns::ID), "older_id")
-    .column_as(&newer.column(&users::columns::ID), "newer_id")
+    .column_as(&older.column(&users::id), "older_id")
+    .column_as(&newer.column(&users::id), "newer_id")
     .join(
         &newer,
         older
-            .column(&users::columns::EMAIL)
-            .equals(&newer.column(&users::columns::EMAIL))
+            .column(&users::email)
+            .equals(&newer.column(&users::email))
             .and(
                 older
-                    .column(&users::columns::CREATED_AT)
-                    .less_than(&newer.column(&users::columns::CREATED_AT)),
+                    .column(&users::created_at)
+                    .less_than(&newer.column(&users::created_at)),
             ),
     )
-    .to_sql();
+    .to_sql_for(Dialect::Sqlite);
+```
 
-// Insert
+Set an explicit projection before fetching: `SelectBuilder::new` starts with an
+empty list. Generated `UsersTable::select_for::<Row>()` fills it from
+`Row::REQUIRED_COLUMNS`. Simple `count` and `exists` queries generate their own
+projections. Distinct/grouped/compound counts and compound existence queries
+preserve the projection, so those forms still need a valid select list. Both
+helpers ignore outer ordering and pagination.
+
+With the `libsql` feature and a raw `libsql::Connection` named `conn`:
+
+```rust
+use toolu_orm_query::insert::{InsertBuilder, OnConflict};
+
 let rows = InsertBuilder::new("users")
-    .set(&users::columns::ID, "uuid-123")
-    .set(&users::columns::EMAIL, "alice@example.com")
+    .set(&users::id, "uuid-123")
+    .set(&users::email, "alice@example.com")
+    .on_conflict(OnConflict::column(&users::id).set_excluded(&users::email))
     .execute(&conn)
     .await?;
 ```
+
+The same calls work with a `tokio_postgres::Client` in the Postgres lane. For
+rusqlite, pass a raw `rusqlite::Connection` or the connection crate's
+`RusqliteConnection`, and omit `.await`.
+
+`on_conflict` updates in place on either dialect. SQLite's `or_replace` deletes
+and reinserts the conflicting row, which can reset omitted columns and cascade
+deletions. Use `.returning(&column)` with `fetch_one`, `fetch_optional`, or
+`fetch_all` to read inserted or updated values.
+
+See the [query guides](../../website/src/queries/select.md) and the tested
+scenarios for [scalar expressions](../../docs/scenarios/scalar-expressions.md),
+[grouping](../../docs/scenarios/distinct-and-grouping.md),
+[query composition](../../docs/scenarios/query-composition.md),
+[reusable bindings](../../docs/scenarios/reusable-bound-parameters.md),
+[upsert](../../docs/scenarios/upsert.md), and
+[INSERT … SELECT](../../docs/scenarios/insert-select.md).
 
 ## Development
 
@@ -76,4 +116,8 @@ let rows = InsertBuilder::new("users")
 cargo build -p toolu-orm-query
 cargo nextest run -p toolu-orm-query
 cargo clippy -p toolu-orm-query -- -D warnings
+
+# Run an execution lane as well; the default lane tests SQL rendering.
+cargo nextest run -p toolu-orm-query --features libsql
+cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec
 ```

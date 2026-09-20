@@ -1,11 +1,11 @@
 # Postgres
 
 ```toml
-toolu-orm-core       = { version = "0.1", default-features = false, features = ["postgres"] }
-toolu-orm-macros     = { version = "0.1", features = ["postgres"] }
-toolu-orm-query      = { version = "0.1", features = ["postgres"] }
-toolu-orm-connection = { version = "0.1", features = ["postgres"] }
-toolu-orm-cli        = { version = "0.1", default-features = false, features = ["postgres"] }
+toolu-orm-core       = { version = "0.9", default-features = false, features = ["postgres"] }
+toolu-orm-macros     = { version = "0.9", features = ["postgres"] }
+toolu-orm-query      = { version = "0.9", features = ["postgres"] }
+toolu-orm-connection = { version = "0.9", features = ["postgres"] }
+toolu-orm-cli        = { version = "0.9", default-features = false, features = ["postgres"] }
 ```
 
 Backed by `tokio-postgres` with a `deadpool-postgres` pool and rustls TLS.
@@ -29,21 +29,33 @@ let pg = PgDatabase::init(&PgConfig {
 let conn = pg.connect().await?;   // PgConnection — DbConnection
 ```
 
-`PgDatabase::init` builds the pool; `connect()` checks one connection out of it.
+`PgDatabase::init` builds the pool and performs an initial checkout to verify
+connectivity; an unreachable database fails during initialization. `connect()`
+checks a connection out, and dropping it returns it to the pool.
 `ssl: true` enables rustls; leave it `false` for a local development database
 that speaks plaintext.
 
 `checkout_timeout` bounds how long `connect()` waits for a free pool slot
 (deadpool's checkout **wait** timeout) — distinct from connection-creation or
 recycle timeouts, which are separate deadpool settings this config does not
-expose. `Some(PgConfig::DEFAULT_CHECKOUT_TIMEOUT)` (5s) is the documented
-default; `None` opts out for an unbounded wait, matching the pool's behavior
-before this setting existed.
+expose. `PgConfig` has no `Default` implementation: set this field explicitly.
+`Some(PgConfig::DEFAULT_CHECKOUT_TIMEOUT)` is 5s and is used by `for_test`;
+`None` opts out for an unbounded wait.
 
-`PgConfig::for_test("my_schema")` builds the configuration the test suites use —
-`localhost:5433`, user and password `toolu` — with `TEST_DB_HOST`, `TEST_DB_PORT`,
-`TEST_DB_USER` and `TEST_DB_PASSWORD` overriding any field. See
+`PgConfig::for_test("my_database")` sets the **database name**. It uses
+`localhost:5433`, user and password `toolu`, with `TEST_DB_HOST`, `TEST_DB_PORT`,
+`TEST_DB_USER` and `TEST_DB_PASSWORD` overriding those four settings. It also
+sets five pool connections and disables TLS. See
 [Testing](../guides/testing.md).
+
+`PgConnection` supports `DbConnection` methods but does not expose an
+`Executor` for query builders. Builders use a `tokio_postgres::Client` you open
+separately, or the query crate's `PgTransaction` shown below.
+
+The pooled connection's `execute_sql` and `query_map` reuse prepared statements
+per connection, including inside its transactions. An execution error evicts
+that statement and is returned without a retry. The caches have no size bound;
+`pg.clear_statement_caches()` clears them across the pool.
 
 ## Dialect
 
@@ -52,11 +64,13 @@ visible in the SQL:
 
 - placeholders are `$1`, `$2`, … instead of `?1`, `?2`;
 - `or_ignore` renders `ON CONFLICT DO NOTHING`, `or_replace` renders
-  `ON CONFLICT (…) DO UPDATE SET … = EXCLUDED.…`;
+  `ON CONFLICT (…) DO UPDATE SET … = EXCLUDED.…` (or `DO NOTHING` when no
+  non-target column was inserted); its target is `conflict_columns(...)` or,
+  by default, the first inserted column;
 - relational loads render `LEFT JOIN LATERAL` with `json_agg` /
   `json_build_array` instead of correlated `json_group_array` subqueries;
 - column types use the Postgres names (`bigint`, `jsonb`, `varchar(n)`,
-  `timestamp`, `uuid`, `serial`).
+  `TIMESTAMPTZ`, `uuid`, `serial`).
 
 ## Transactions
 
@@ -74,7 +88,9 @@ implements `DbConnection`. Both roll back when dropped without a `commit`. See
 
 ## Errors
 
-Failures come back as `DbError::Query`, `DbError::Connection` or
-`DbError::Pool`, carrying the driver message — including the SQLSTATE code for
-constraint violations, which is what makes a unique-violation distinguishable
-from a syntax error. See [Error handling](../guides/errors.md).
+Connection operations return `DbError`; transaction and row-decoding failures
+have their own variants. `execute_sql` and `query_map` include severity, message,
+and SQLSTATE for server errors. `execute_batch` stringifies the driver error
+without that extra formatting. Builders using a raw client return
+`QueryError::Driver`, which preserves the `tokio_postgres::Error`. See
+[Error handling](../guides/errors.md).
