@@ -36,7 +36,7 @@ async fn pg_execute(
   sql: &str,
   params: Vec<Value>,
 ) -> Result<u64, QueryError> {
-  let pg_params = toolu_orm_core::value::to_pg_params(&params);
+  let pg_params = toolu_orm_core::value::to_pg_params(&params)?;
   let refs = pg_param_slice(&pg_params);
   let affected = client.execute(sql, &refs[..]).await?;
   Ok(affected)
@@ -47,7 +47,7 @@ async fn pg_query_map<T: FromRow + Send>(
   sql: &str,
   params: Vec<Value>,
 ) -> Result<Vec<T>, QueryError> {
-  let pg_params = toolu_orm_core::value::to_pg_params(&params);
+  let pg_params = toolu_orm_core::value::to_pg_params(&params)?;
   let refs = pg_param_slice(&pg_params);
   let rows = client.query(sql, &refs[..]).await?;
   let mut results = Vec::new();

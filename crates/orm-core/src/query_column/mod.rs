@@ -1,5 +1,6 @@
 //! `Column<T>` and the typed column operations that build expressions from it.
 
+mod bind;
 mod column;
 mod common_ops;
 mod fts5_ops;
@@ -8,6 +9,7 @@ mod shared_ops;
 mod text_ops;
 mod vec0_ops;
 
+pub use bind::tag_column_bind;
 pub use column::{Column, ColumnRef};
 pub use common_ops::CommonOps;
 pub use fts5_ops::Fts5Ops;

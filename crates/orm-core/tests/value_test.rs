@@ -62,31 +62,35 @@ fn from_some_string_creates_text() {
 
 #[cfg(feature = "postgres")]
 mod postgres_conversions {
+  use toolu_orm_core::error::DbCoreError;
   use toolu_orm_core::value::{to_pg_params, Value};
 
   #[test]
-  fn to_pg_params_empty_input() {
+  fn to_pg_params_empty_input() -> Result<(), DbCoreError> {
     let params: Vec<Value> = vec![];
-    let pg_params = to_pg_params(&params);
+    let pg_params = to_pg_params(&params)?;
     assert_eq!(pg_params.len(), 0);
+    Ok(())
   }
 
   #[test]
-  fn to_pg_params_text_value() {
+  fn to_pg_params_text_value() -> Result<(), DbCoreError> {
     let params = vec![Value::Text("hello".to_owned())];
-    let pg_params = to_pg_params(&params);
+    let pg_params = to_pg_params(&params)?;
     assert_eq!(pg_params.len(), 1);
+    Ok(())
   }
 
   #[test]
-  fn to_pg_params_integer_value() {
+  fn to_pg_params_integer_value() -> Result<(), DbCoreError> {
     let params = vec![Value::Integer(42)];
-    let pg_params = to_pg_params(&params);
+    let pg_params = to_pg_params(&params)?;
     assert_eq!(pg_params.len(), 1);
+    Ok(())
   }
 
   #[test]
-  fn to_pg_params_multiple_values() {
+  fn to_pg_params_multiple_values() -> Result<(), DbCoreError> {
     let params = vec![
       Value::Text("hello".to_owned()),
       Value::Integer(42),
@@ -94,25 +98,28 @@ mod postgres_conversions {
       Value::Null,
       Value::Blob(vec![1, 2, 3]),
     ];
-    let pg_params = to_pg_params(&params);
+    let pg_params = to_pg_params(&params)?;
     assert_eq!(pg_params.len(), 5);
+    Ok(())
   }
 
   #[test]
-  fn to_pg_params_null_value() {
+  fn to_pg_params_null_value() -> Result<(), DbCoreError> {
     let params = vec![Value::Null];
-    let pg_params = to_pg_params(&params);
+    let pg_params = to_pg_params(&params)?;
     assert_eq!(pg_params.len(), 1);
+    Ok(())
   }
 
   #[test]
-  fn to_pg_params_preserves_order() {
+  fn to_pg_params_preserves_order() -> Result<(), DbCoreError> {
     let params = vec![
       Value::Text("first".to_owned()),
       Value::Integer(2),
       Value::Text("third".to_owned()),
     ];
-    let pg_params = to_pg_params(&params);
+    let pg_params = to_pg_params(&params)?;
     assert_eq!(pg_params.len(), 3);
+    Ok(())
   }
 }
