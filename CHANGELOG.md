@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1](https://github.com/Falconiere/toolu-orm/compare/v0.9.0...v0.9.1) - 2026-09-20
+
+### `toolu-orm-cli`
+
+#### Other
+- align documentation with the current implementation ([#137](https://github.com/Falconiere/toolu-orm/pull/137))
+
+### `toolu-orm`
+
+#### Other
+- align documentation with the current implementation ([#137](https://github.com/Falconiere/toolu-orm/pull/137))
+
+### `toolu-orm-query`
+
+#### Other
+- align documentation with the current implementation ([#137](https://github.com/Falconiere/toolu-orm/pull/137))
+
+### `toolu-orm-macros`
+
+#### Other
+- align documentation with the current implementation ([#137](https://github.com/Falconiere/toolu-orm/pull/137))
+
+### `toolu-orm-connection`
+
+#### Other
+- align documentation with the current implementation ([#137](https://github.com/Falconiere/toolu-orm/pull/137))
+
+### `toolu-orm-sqlite-vec-register`
+
+#### Other
+- align documentation with the current implementation ([#137](https://github.com/Falconiere/toolu-orm/pull/137))
+
+### `toolu-orm-core`
+
+#### Other
+- align documentation with the current implementation ([#137](https://github.com/Falconiere/toolu-orm/pull/137))
+
 ## [0.9.0](https://github.com/Falconiere/toolu-orm/compare/v0.8.1...v0.9.0) - 2026-09-19
 
 ### `toolu-orm-query`
