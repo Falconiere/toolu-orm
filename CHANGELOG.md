@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### `toolu-orm-query`
+
+#### Added
+- *(core,query)* bind Postgres parameters from the column type ([#139](https://github.com/Falconiere/toolu-orm/pull/139))
+
+### `toolu-orm-connection`
+
+#### Added
+- *(core,query)* bind Postgres parameters from the column type ([#139](https://github.com/Falconiere/toolu-orm/pull/139))
+
+### `toolu-orm-core`
+
+#### Added
+- *(core,query)* bind Postgres parameters from the column type ([#139](https://github.com/Falconiere/toolu-orm/pull/139))
+
 ## [0.9.1](https://github.com/Falconiere/toolu-orm/compare/v0.9.0...v0.9.1) - 2026-09-20
 
 ### `toolu-orm-cli`
