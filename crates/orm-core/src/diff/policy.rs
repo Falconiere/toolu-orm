@@ -35,8 +35,7 @@ pub(crate) fn validate(schema: &SchemaRegistry) -> Result<(), DbCoreError> {
         policy: security
           .policies
           .first()
-          .map(|p| p.name.clone())
-          .unwrap_or_default(),
+          .map_or_else(String::new, |p| p.name.clone()),
         reason: "a virtual table cannot carry row security".to_owned(),
       });
     }
@@ -97,6 +96,7 @@ pub fn diff_row_security(table_name: &str, old: &Snapshot, new: &Snapshot) -> Ve
   ops
 }
 
+/// Appends to `ops` the operations that take `table_name` from `old` to `new`.
 pub(crate) fn diff_row_security_inner(
   ops: &mut Vec<Operation>,
   table_name: &str,
@@ -137,7 +137,7 @@ pub(crate) fn diff_row_security_inner(
 
 /// The policies of a declaration by name; empty for an absent one.
 fn by_name(security: Option<&RowSecurity>) -> BTreeMap<&str, &PolicyDef> {
-  security
-    .map(|rs| rs.policies.iter().map(|p| (p.name.as_str(), p)).collect())
-    .unwrap_or_default()
+  security.map_or_else(BTreeMap::new, |rs| {
+    rs.policies.iter().map(|p| (p.name.as_str(), p)).collect()
+  })
 }
