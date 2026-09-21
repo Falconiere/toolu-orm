@@ -1,0 +1,5 @@
+error: expected `for = …`, `as = …`, `to = …`, `using = "…"` or `with_check = "…"`
+ --> tests/ui/policy_unknown_key.rs:6:20
+  |
+6 | #[policy("tenant", check = "tenant_id = 1")]
+  |                    ^^^^^

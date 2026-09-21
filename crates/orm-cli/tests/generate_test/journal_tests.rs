@@ -37,6 +37,7 @@ fn test_generate_creates_journal_and_snapshot() -> TestResult {
     strict: true,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }]);
 
   let result =
@@ -75,6 +76,7 @@ fn test_generate_incremental_migration() -> TestResult {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }]);
   toolu_orm_cli::generate::run_generate(&initial, mig_path, "initial", Dialect::Sqlite)?;
 

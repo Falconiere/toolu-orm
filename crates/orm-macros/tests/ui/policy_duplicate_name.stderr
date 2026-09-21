@@ -1,0 +1,5 @@
+error: duplicate policy "tenant" on the same table
+ --> tests/ui/policy_duplicate_name.rs:7:1
+  |
+7 | #[policy("tenant", using = "tenant_id = 2")]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

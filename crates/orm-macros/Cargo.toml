@@ -74,6 +74,10 @@ path = "tests/column_check_test.rs"
 name = "partial_index_macro_test"
 path = "tests/partial_index_macro_test.rs"
 
+[[test]]
+name = "policy_macro_test"
+path = "tests/policy_macro_test.rs"
+
 # trybuild compile-fail cases for the macro error paths (tests/ui/*.rs).
 [[test]]
 name = "compile_fail_test"

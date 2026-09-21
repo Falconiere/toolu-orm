@@ -75,6 +75,7 @@ fn embeddings_ddl() -> String {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
   generate_sql_for(&[Operation::CreateTable { table }], Dialect::Sqlite)
 }

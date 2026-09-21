@@ -36,5 +36,6 @@ pub fn sample_registry() -> SchemaRegistry {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }])
 }

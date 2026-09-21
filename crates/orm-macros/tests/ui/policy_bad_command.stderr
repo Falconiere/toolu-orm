@@ -1,0 +1,5 @@
+error: expected `for = all`, `select`, `insert`, `update` or `delete`
+ --> tests/ui/policy_bad_command.rs:6:26
+  |
+6 | #[policy("tenant", for = truncate, using = "tenant_id = 1")]
+  |                          ^^^^^^^^

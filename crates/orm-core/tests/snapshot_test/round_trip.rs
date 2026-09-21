@@ -81,6 +81,7 @@ fn test_snapshot_round_trip_with_indexes() -> Result<(), Box<dyn std::error::Err
     strict: true,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }]);
   let snap = Snapshot::from_registry(&reg);
   let restored = snap.to_registry();

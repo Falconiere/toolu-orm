@@ -58,6 +58,7 @@ pub fn memories(body_not_null: bool) -> TableDef {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }
 }
 

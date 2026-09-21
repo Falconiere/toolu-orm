@@ -22,14 +22,17 @@ fn priority(op: &Operation) -> u8 {
     Operation::DropForeignKey { .. }
     | Operation::DropIndex { .. }
     | Operation::DropCheckConstraint { .. }
-    | Operation::DropFts5SyncTriggers { .. } => 6,
+    | Operation::DropFts5SyncTriggers { .. }
+    | Operation::DropPolicy { .. } => 6,
     Operation::AlterColumn { .. } | Operation::RecreateFts5FromContent { .. } => 7,
     Operation::AddColumn { .. } => 8,
     // And go back up with the other creates, once both tables are in place.
     Operation::AddForeignKey { .. }
     | Operation::CreateIndex { .. }
     | Operation::AddCheckConstraint { .. }
-    | Operation::CreateFts5SyncTriggers { .. } => 9,
+    | Operation::CreateFts5SyncTriggers { .. }
+    | Operation::AlterRowLevelSecurity { .. }
+    | Operation::CreatePolicy { .. } => 9,
     Operation::DropColumn { .. } => 10,
     Operation::DropTable { .. } => 11,
     Operation::DropEnum { .. } => 12,

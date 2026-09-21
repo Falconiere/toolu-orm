@@ -15,6 +15,7 @@
 //! ```
 
 mod columns_expansion;
+mod policy_expansion;
 mod relational_expansion;
 mod schema_expansion;
 

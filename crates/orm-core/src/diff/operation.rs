@@ -3,6 +3,7 @@
 use crate::column::{ColumnDef, ColumnType};
 use crate::fts5::Fts5Sync;
 use crate::index::IndexDef;
+use crate::policy::PolicyDef;
 use crate::snapshot::ForeignKeyDef;
 use crate::table::TableDef;
 
@@ -133,5 +134,24 @@ pub enum Operation {
   CreateFts5SyncTriggers {
     table: String,
     sync: Fts5Sync,
+  },
+  /// Set both row-security flags on a Postgres table to exactly this state:
+  /// `ENABLE` / `DISABLE` and `FORCE` / `NO FORCE`. Ordered with the creates,
+  /// before the table's `CreatePolicy` operations.
+  AlterRowLevelSecurity {
+    table: String,
+    enabled: bool,
+    force: bool,
+  },
+  /// `CREATE POLICY` on a Postgres table. A changed policy is dropped and
+  /// created again: `ALTER POLICY` cannot change its command or its kind.
+  CreatePolicy {
+    table: String,
+    policy: PolicyDef,
+  },
+  /// `DROP POLICY IF EXISTS`. Ordered with the other drops.
+  DropPolicy {
+    table: String,
+    name: String,
   },
 }

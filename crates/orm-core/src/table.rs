@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::column::ColumnDef;
 use crate::fts5::Fts5Sync;
 use crate::index::IndexDef;
+use crate::policy::RowSecurity;
 
 /// How the database creates the table.
 ///
@@ -81,6 +82,11 @@ pub struct TableDef {
   /// written before this existed is unchanged.
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub fts5_sync: Option<Fts5Sync>,
+  /// Postgres row-level security, when the table opts in; `None` for every
+  /// other table, so a snapshot written before this existed is unchanged.
+  /// SQLite has no equivalent and renders it as a comment.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub row_security: Option<RowSecurity>,
 }
 
 impl TableDef {

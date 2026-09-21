@@ -54,6 +54,7 @@ fn full_ordering_13_tiers() {
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
         fts5_sync: None,
+        row_security: None,
       },
     },
     Operation::DropCheckConstraint {
@@ -78,6 +79,7 @@ fn full_ordering_13_tiers() {
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
         fts5_sync: None,
+        row_security: None,
       },
     },
     Operation::AlterEnum {
@@ -110,39 +112,6 @@ fn full_ordering_13_tiers() {
 
   let ordered = order_operations(ops);
 
-  let tier = |op: &Operation| -> u8 {
-    match op {
-      Operation::CreateEnum { .. } => 1,
-      Operation::AlterEnum { removed, .. } if removed.is_empty() => 2,
-      Operation::CreateTable { .. } => 3,
-      Operation::RenameTable { .. } => 4,
-      Operation::RenameColumn { .. } => 5,
-      Operation::DropForeignKey { .. }
-      | Operation::DropIndex { .. }
-      | Operation::DropCheckConstraint { .. }
-      | Operation::DropFts5SyncTriggers { .. } => 6,
-      Operation::AlterColumn { .. } | Operation::RecreateFts5FromContent { .. } => 7,
-      Operation::AddColumn { .. } => 8,
-      Operation::AddForeignKey { .. }
-      | Operation::CreateIndex { .. }
-      | Operation::AddCheckConstraint { .. }
-      | Operation::CreateFts5SyncTriggers { .. } => 9,
-      Operation::DropColumn { .. } => 10,
-      Operation::DropTable { .. } => 11,
-      Operation::DropEnum { .. } => 12,
-      Operation::AlterEnum { .. } => 13,
-      // `Operation` is `#[non_exhaustive]`; new variants get their own tier test.
-      other => {
-        assert_eq!(
-          Some(other),
-          None::<&Operation>,
-          "unexpected Operation variant in ordering fixture: {other:?}"
-        );
-        0
-      },
-    }
-  };
-
   for window in ordered.windows(2) {
     match window {
       [a, b] => assert!(
@@ -155,5 +124,43 @@ fn full_ordering_13_tiers() {
       ),
       _ => assert_eq!(window.len(), 2, "windows(2) must yield length-2 slices"),
     }
+  }
+}
+
+/// The tier `order_operations` sorts by, mirrored here so the test fails
+/// loudly when a variant is missing from the fixture.
+fn tier(op: &Operation) -> u8 {
+  match op {
+    Operation::CreateEnum { .. } => 1,
+    Operation::AlterEnum { removed, .. } if removed.is_empty() => 2,
+    Operation::CreateTable { .. } => 3,
+    Operation::RenameTable { .. } => 4,
+    Operation::RenameColumn { .. } => 5,
+    Operation::DropForeignKey { .. }
+    | Operation::DropIndex { .. }
+    | Operation::DropCheckConstraint { .. }
+    | Operation::DropFts5SyncTriggers { .. }
+    | Operation::DropPolicy { .. } => 6,
+    Operation::AlterColumn { .. } | Operation::RecreateFts5FromContent { .. } => 7,
+    Operation::AddColumn { .. } => 8,
+    Operation::AddForeignKey { .. }
+    | Operation::CreateIndex { .. }
+    | Operation::AddCheckConstraint { .. }
+    | Operation::CreateFts5SyncTriggers { .. }
+    | Operation::AlterRowLevelSecurity { .. }
+    | Operation::CreatePolicy { .. } => 9,
+    Operation::DropColumn { .. } => 10,
+    Operation::DropTable { .. } => 11,
+    Operation::DropEnum { .. } => 12,
+    Operation::AlterEnum { .. } => 13,
+    // `Operation` is `#[non_exhaustive]`; new variants get their own tier test.
+    other => {
+      assert_eq!(
+        Some(other),
+        None::<&Operation>,
+        "unexpected Operation variant in ordering fixture: {other:?}"
+      );
+      0
+    },
   }
 }

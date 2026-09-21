@@ -13,6 +13,7 @@ Proc macros for toolu-orm — `#[table]`, `#[fts5_table]`, `#[vec0_table]`, and 
 - `#[derive(FromRow)]` supports `#[from_row(with = "fn_name")]` on every driver; the function takes and returns the field's own type
 - `#[derive(ColumnEnum)]` generates `EnumSchema::variants()` for CHECK constraints
 - Index attributes: `#[index("name", col, desc(other), where = "predicate")]` and `#[unique_index("name", col)]`; these are parsed by `#[table]`
+- Policy attributes: `#[policy("name", for = select, as = restrictive, to = ["role"], using = "…", with_check = "…")]` plus `#[table(rls = "enable" | "force")]` fill `TableDef.row_security`; any policy implies enable. `#[fts5_table]` / `#[vec0_table]` reject `#[policy]`
 - View attributes: `#[view(Name, pick(a, b))]` / `#[view(Name, omit(c))]` generate subset structs; they are parsed by `#[table]`, not standalone proc macros
 
 ## Key Modules
@@ -21,6 +22,7 @@ Proc macros for toolu-orm — `#[table]`, `#[fts5_table]`, `#[vec0_table]`, and 
 - `parse/column_attrs.rs` — Read the `#[column(...)]` keys, and strip the attribute before re-emission
 - `parse/column_type_spec.rs` — The field's Rust type as a `TypeSpec` (`Varchar<N>`, `Char<N>`)
 - `parse/index_parsing.rs` — Parse `#[index]`/`#[unique_index]` attributes
+- `parse/policy_parsing.rs` — Parse `#[policy]` attributes; `expand/policy_expansion.rs` emits the `RowSecurity` literal
 - `expand/schema_expansion.rs` — Generate TableSchema impl + constants
 - `expand/columns_expansion.rs` — Generate Column\<T\> constants module
 - `column_enum.rs` — ColumnEnum derive logic

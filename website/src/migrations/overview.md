@@ -215,7 +215,8 @@ column alterations trigger one create/copy/drop/rename rebuild per table,
 including its declared indexes. Standalone foreign-key and CHECK changes render
 comments requiring hand-written migration SQL. Postgres primary-key and
 autoincrement alterations also render comments. SQLite virtual-table DDL is
-commented out for Postgres. Inspect the generated file before applying it.
+commented out for Postgres, and Postgres row-level security (`ENABLE ROW LEVEL
+SECURITY`, `CREATE POLICY`) is commented out for SQLite. Inspect the generated file before applying it.
 
 Unsupported virtual-table changes return `DbCoreError::VirtualTableChange`.
 Eligible external-content FTS5 tables can be recreated and rebuilt from their

@@ -165,6 +165,7 @@ impl Vec0Table {
       strict: false,
       kind: TableKind::virtual_table(VEC0_MODULE, args),
       fts5_sync: None,
+      row_security: None,
     }
   }
 }

@@ -1,0 +1,5 @@
+error: expected `rls = "enable"` or `rls = "force"`
+ --> tests/ui/table_rls_bad_value.rs:5:30
+  |
+5 | #[table(name = "docs", rls = "on")]
+  |                              ^^^^

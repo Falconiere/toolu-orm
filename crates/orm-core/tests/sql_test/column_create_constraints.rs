@@ -28,6 +28,7 @@ fn test_column_with_unique_constraint() {
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -58,6 +59,7 @@ fn test_column_with_references() {
       strict: true,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -88,6 +90,7 @@ fn test_create_table_with_on_delete_cascade() {
       strict: true,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -125,6 +128,7 @@ fn test_create_table_with_check_constraint() {
       strict: true,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);

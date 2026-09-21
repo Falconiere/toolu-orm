@@ -62,6 +62,8 @@ pipeline_runs::status;       // Column<Text>
 | `#[unique_index("name", col)]` | Unique index. Repeatable — this is how you express multi-column uniqueness. `desc(col)` works the same way. |
 | `#[index("name", col, where = "deleted_at IS NULL")]` | Partial index with a raw SQL predicate. Also supported on `#[unique_index(...)]`. |
 | `#[view(Name, pick(a, b))]` / `#[view(Name, omit(c))]` | Generates a subset struct from the table. See [Enums and views](enums-views.md). |
+| `#[policy("name", for = select, as = restrictive, to = ["role"], using = "…", with_check = "…")]` | A Postgres row-level security policy; declaring one enables row security on the table. Repeatable. See [Row-level security](row-level-security.md). |
+| `#[table(name = "…", rls = "enable" \| "force")]` | Enable Postgres row security without a policy (default-deny), or also bind the owner with `"force"`. SQLite renders a comment. |
 
 ## Column attributes
 

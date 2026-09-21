@@ -24,6 +24,7 @@ fn make_table(name: &str) -> TableDef {
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }
 }
 

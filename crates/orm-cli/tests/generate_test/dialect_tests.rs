@@ -35,6 +35,7 @@ fn generate_creates_postgres_migration() -> TestResult {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }]);
 
   let result =
@@ -78,6 +79,7 @@ fn generate_creates_sqlite_migration() -> TestResult {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }]);
 
   let result = toolu_orm_cli::generate::run_generate(&registry, mig_path, "init", Dialect::Sqlite)?;
@@ -119,6 +121,7 @@ fn generate_sets_dialect_in_snapshot() -> TestResult {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }]);
 
   toolu_orm_cli::generate::run_generate(&registry, mig_path, "init", Dialect::Postgres)?;

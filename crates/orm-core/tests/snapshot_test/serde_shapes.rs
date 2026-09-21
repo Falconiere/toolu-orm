@@ -54,6 +54,7 @@ fn snapshot_roundtrip_with_btreemap_columns() -> Result<(), Box<dyn std::error::
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
 
   let mut tables = BTreeMap::new();
@@ -122,6 +123,7 @@ fn snapshot_indexes_use_btreemap() -> Result<(), Box<dyn std::error::Error>> {
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
 
   let json = serde_json::to_string(&table)?;

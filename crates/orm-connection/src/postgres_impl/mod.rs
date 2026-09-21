@@ -6,6 +6,7 @@
 
 mod connection;
 mod pool;
+mod session;
 mod tls;
 
 pub use connection::{PgConnection, PgTransaction};

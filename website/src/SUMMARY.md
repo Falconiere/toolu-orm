@@ -12,6 +12,7 @@
 - [Defining tables](schema/tables.md)
 - [Column types](schema/column-types.md)
 - [Enums and views](schema/enums-views.md)
+- [Row-level security](schema/row-level-security.md)
 - [Row mapping](schema/row-mapping.md)
 
 # Queries

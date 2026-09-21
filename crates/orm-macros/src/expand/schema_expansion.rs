@@ -18,6 +18,8 @@ use quote::quote;
 use crate::parse::{ColumnInput, IndexInput, TableInput, TypeSpec};
 use crate::paths;
 
+use super::policy_expansion::row_security_tokens;
+
 pub fn expand(input: &TableInput) -> TokenStream {
   let core = paths::core();
   let struct_name = &input.struct_name;
@@ -27,6 +29,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
   let column_defs = input.columns.iter().map(|c| column_def_tokens(&core, c));
   let index_defs = input.indexes.iter().map(|i| index_def_tokens(&core, i));
   let primary_key = &input.primary_key;
+  let row_security = row_security_tokens(&core, input.row_security.as_ref());
 
   quote! {
       impl #core::table::TableSchema for #struct_name {
@@ -43,6 +46,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
                   strict: #strict,
                   kind: #core::table::TableKind::Ordinary,
                   fts5_sync: ::core::option::Option::None,
+                  row_security: #row_security,
               }
           }
       }

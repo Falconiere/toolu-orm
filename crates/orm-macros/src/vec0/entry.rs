@@ -5,7 +5,7 @@ use syn::parse::Parser;
 use syn::{ItemStruct, Meta};
 
 use crate::expand::{expand_builder_methods, expand_columns_module};
-use crate::parse::{parse_struct, strip_column_attrs, TableInput};
+use crate::parse::{parse_struct, reject_policy_attrs, strip_column_attrs, TableInput};
 
 use super::attrs::parse_attrs;
 use super::expand::expand;
@@ -25,6 +25,8 @@ pub fn expand_vec0_table(attr: TokenStream, item: TokenStream) -> syn::Result<To
     }
   }
 
+  reject_policy_attrs(&item_struct, "vec0_table")?;
+
   let columns = parse_struct(&item_struct)?;
   if columns.is_empty() {
     return Err(syn::Error::new_spanned(
@@ -40,6 +42,7 @@ pub fn expand_vec0_table(attr: TokenStream, item: TokenStream) -> syn::Result<To
     columns,
     indexes: Vec::new(),
     primary_key: Vec::new(),
+    row_security: None,
   };
 
   let schema_impl = expand(&input)?;

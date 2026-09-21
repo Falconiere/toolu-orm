@@ -16,6 +16,7 @@ fn create_enum_before_create_table() {
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
         fts5_sync: None,
+        row_security: None,
       },
     },
     Operation::CreateEnum {
@@ -51,6 +52,7 @@ fn drop_index_before_alter_column() {
         strict: false,
         kind: toolu_orm_core::table::TableKind::Ordinary,
         fts5_sync: None,
+        row_security: None,
       },
     },
     Operation::DropIndex {

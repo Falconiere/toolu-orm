@@ -15,6 +15,7 @@ use super::fk::{diff_check_constraints_inner, diff_foreign_keys_inner};
 use super::fts5_sync::{trigger_operations, validate as validate_fts5_sync};
 use super::indexes::diff_indexes_inner;
 use super::operation::{ColumnChange, Operation};
+use super::policy::{diff_row_security_inner, validate as validate_policies};
 use super::virtual_tables::{check_new_virtual_table, check_virtual_pair, VirtualPairCheck};
 
 /// # Errors
@@ -38,6 +39,7 @@ pub fn diff_with_resolver(
   resolver: &impl RenameResolver,
 ) -> Result<Vec<Operation>, DbCoreError> {
   validate_fts5_sync(new_schema)?;
+  validate_policies(new_schema)?;
   let new_snap = Snapshot::from_registry(new_schema);
   let mut ops = diff_enums(old_snapshot, &new_snap);
   ops.extend(diff_tables(old_snapshot, &new_snap, new_schema, resolver)?);
@@ -93,6 +95,7 @@ fn diff_tables(
           index: idx.clone(),
         });
       }
+      diff_row_security_inner(&mut ops, &table.name, None, table.row_security.as_ref());
       continue;
     }
 
@@ -153,6 +156,12 @@ fn diff_tables(
       &table.name,
       &old_st.check_constraints,
       &new_st.check_constraints,
+    );
+    diff_row_security_inner(
+      &mut ops,
+      &table.name,
+      old_st.row_security.as_ref(),
+      table.row_security.as_ref(),
     );
   }
 

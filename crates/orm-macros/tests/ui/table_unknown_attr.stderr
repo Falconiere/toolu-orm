@@ -1,4 +1,4 @@
-error: unknown attribute, expected `name` or `strict`
+error: unknown attribute, expected `name`, `strict` or `rls`
  --> tests/ui/table_unknown_attr.rs:5:27
   |
 5 | #[table(name = "widgets", foo = "x")]

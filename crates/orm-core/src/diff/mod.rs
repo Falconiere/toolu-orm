@@ -7,9 +7,11 @@ mod fk;
 mod fts5_sync;
 mod indexes;
 mod operation;
+mod policy;
 mod virtual_tables;
 
 pub use engine::{diff, diff_with_resolver};
 pub use enums::diff_enums;
 pub use fk::diff_foreign_keys;
 pub use operation::{ColumnChange, Operation};
+pub use policy::diff_row_security;

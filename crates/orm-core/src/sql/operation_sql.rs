@@ -9,6 +9,7 @@ use super::ddl::{
   add_column_sql, create_index_sql, create_table_sql, recreate_fts5_from_content_sql,
 };
 use super::fts5_triggers::{create_sync_triggers_sql, drop_sync_triggers_sql};
+use super::policy::{alter_row_level_security_sql, create_policy_sql, drop_policy_sql};
 use super::postgres::alter_column_statements_postgres;
 
 /// Separator between several statements rendered for one operation.
@@ -54,6 +55,13 @@ pub(super) fn operation_sql(op: &Operation, dialect: Dialect) -> String {
     Operation::CreateFts5SyncTriggers { table, sync } => {
       create_sync_triggers_sql(table, sync, dialect)
     },
+    Operation::AlterRowLevelSecurity {
+      table,
+      enabled,
+      force,
+    } => alter_row_level_security_sql(table, *enabled, *force, dialect),
+    Operation::CreatePolicy { table, policy } => create_policy_sql(table, policy, dialect),
+    Operation::DropPolicy { table, name } => drop_policy_sql(table, name, dialect),
   }
 }
 

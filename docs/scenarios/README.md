@@ -47,6 +47,7 @@ test, update its page.
 | [vec0 KNN](vec0-knn.md) | `SelectBuilder::knn` (`MATCH` + hidden `k`), `vec0::distance`, Postgres refusal, and the filtered-KNN oversample note. |
 | [pgvector KNN](pgvector-knn.md) | `<->` / `<=>` / `<#>` distance `ORDER BY … LIMIT k` as a Postgres-only surface, embedded vector literals, and the SQLite refusal. |
 | [Legacy snapshot](legacy-snapshot.md) | Old snapshot JSON shapes still deserialize and diff. |
+| [Postgres row-level security](postgres-row-level-security.md) | `#[policy]` / `#[table(rls = …)]` on `TableDef.row_security`, diffed into `ENABLE` / `FORCE ROW LEVEL SECURITY` and `CREATE` / `DROP POLICY`, comments on SQLite, `PgTransaction::set_local_config` binding the tenant context, and a live proof that a non-owner role reads and writes only its tenant's rows. |
 | [Partial indexes](partial-indexes.md) | `#[index(..., where = "…")]` predicates on `IndexDef`, SQL render, serde, and drop+create diffs. |
 | [Index column DESC](index-desc.md) | `desc(col)` in `#[index]` / `#[unique_index]`, SQL `DESC`, serde string lists, diff drop+create. |
 | [Composite primary key](composite-primary-key.md) | Table-level `#[primary_key(...)]`, `AUTOINCREMENT` / Postgres `IDENTITY`, and key-set recreation. |

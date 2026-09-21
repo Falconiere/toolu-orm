@@ -55,7 +55,7 @@ row types and database-specific expressions still need the matching driver API.
 
 | | |
 |---|---|
-| 🧱 **Schema as code** | `#[table]` turns a struct into a `TableDef` with primary keys, defaults, foreign keys with `on_delete` / `on_update`, `strict` tables, and `#[index]` / `#[unique_index]`. |
+| 🧱 **Schema as code** | `#[table]` turns a struct into a `TableDef` with primary keys, defaults, foreign keys with `on_delete` / `on_update`, `strict` tables, `#[index]` / `#[unique_index]`, and Postgres row-level security through `#[policy]`. |
 | 🔁 **Diff-driven migrations** | `run_generate` diffs your registry against the last `*.snapshot.json` and writes numbered SQL with a `--> statement-breakpoint` separator. `run_migrate` / `run_migrate_blocking` apply pending files in one transaction each; `get_status` / `get_status_blocking` list applied and pending. |
 | 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration, and `_migrations` keeps the hash each applied migration ran with. Runs re-check declared applied entries whose hashes can be verified: an edited file stops the run with `MigrateError::HashMismatch`, a rewritten journal entry with `MigrateError::HistoryMismatch`. |
 | 🧮 **Typed columns, typed expressions** | Generated `Column<T>` constants (`users::email`) build `Expr` trees: `eq` / `ne` / `in_list` / `not_in` / `is_null` on every column, `like` on text, `gt` / `lt` / `gte` / `lte` / `between` on numbers, combined with `.and()` / `.or()`. Table-qualified, always quoted. |
@@ -295,6 +295,7 @@ pub struct PipelineRun {
 | `#[column(as_text)]` | Store an enum or custom type as `TEXT`. |
 | `#[index("name", col, ...)]` / `#[unique_index("name", col)]` | Secondary indexes; `desc(col)` selects descending order and `where = "..."` adds a partial-index predicate. |
 | `#[view(Name, pick(a, b))]` / `#[view(Name, omit(c))]` | Generate a subset struct from the table. |
+| `#[policy("name", for = select, as = restrictive, to = ["role"], using = "...", with_check = "...")]` / `#[table(name = "...", rls = "enable" \| "force")]` | Postgres row-level security: `CREATE POLICY` and `ENABLE` / `FORCE ROW LEVEL SECURITY`, migrated like any other change; a comment on SQLite. Set the per-request context with `PgTransaction::set_local_config`. |
 
 Field types map to `ColumnType`: `Text`, `Integer`, `Real`, `Blob`, `Uuid`,
 `Boolean`, `Timestamp`, `Date`, `Time`, `Json`, plus Postgres-flavoured
