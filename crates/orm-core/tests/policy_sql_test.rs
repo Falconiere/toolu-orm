@@ -35,14 +35,10 @@ fn disable_renders_disable_and_no_force_postgres() {
     enabled: false,
     force: false,
   };
-  let sql = generate_sql_for(&[op], Dialect::Postgres);
-  assert!(
-    sql.starts_with("ALTER TABLE \"docs\" DISABLE ROW LEVEL SECURITY;"),
-    "sql: {sql}"
-  );
-  assert!(
-    sql.ends_with("ALTER TABLE \"docs\" NO FORCE ROW LEVEL SECURITY;"),
-    "sql: {sql}"
+  assert_eq!(
+    generate_sql_for(&[op], Dialect::Postgres),
+    "ALTER TABLE \"docs\" DISABLE ROW LEVEL SECURITY;\n\n--> statement-breakpoint\n\n\
+     ALTER TABLE \"docs\" NO FORCE ROW LEVEL SECURITY;"
   );
 }
 
@@ -104,11 +100,25 @@ fn every_row_security_operation_is_a_comment_on_sqlite() {
       name: "old".to_owned(),
     },
   ];
-  let sql = generate_sql_for(&ops, Dialect::Sqlite);
-  for chunk in sql.split("--> statement-breakpoint") {
-    let chunk = chunk.trim();
-    assert!(chunk.starts_with("--"), "not a comment: {chunk}");
-    assert!(chunk.contains("Postgres only"), "chunk: {chunk}");
-  }
-  assert_eq!(sql.matches("--> statement-breakpoint").count(), 2);
+  // Ordered output: the drop takes the drop tier, the other two the create tier.
+  assert_eq!(
+    generate_sql_for(&ops, Dialect::Sqlite),
+    "-- drop policy \"old\" on \"docs\" (Postgres only; SQLite has no row-level security)\n\n\
+     --> statement-breakpoint\n\n\
+     -- row level security on \"docs\" (Postgres only; SQLite has no row-level security)\n\n\
+     --> statement-breakpoint\n\n\
+     -- policy \"p\" on \"docs\" (Postgres only; SQLite has no row-level security)"
+  );
+}
+
+#[test]
+fn role_with_embedded_quote_is_doubled() {
+  let op = Operation::CreatePolicy {
+    table: "docs".to_owned(),
+    policy: PolicyDef::new("p").role("odd\"role").using("true"),
+  };
+  assert_eq!(
+    generate_sql_for(&[op], Dialect::Postgres),
+    "CREATE POLICY \"p\" ON \"docs\" TO \"odd\"\"role\" USING (true);"
+  );
 }

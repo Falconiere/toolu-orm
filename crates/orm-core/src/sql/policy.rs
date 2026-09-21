@@ -78,12 +78,12 @@ pub(crate) fn drop_policy_sql(table: &str, name: &str, dialect: Dialect) -> Stri
 }
 
 /// A role in a `TO` list: the four special keywords bare, any other name
-/// quoted as an identifier.
+/// quoted as an identifier with an embedded `"` doubled.
 fn role_sql(role: &str) -> String {
   let upper = role.to_ascii_uppercase();
   if ROLE_KEYWORDS.contains(&upper.as_str()) {
     upper
   } else {
-    format!("\"{role}\"")
+    format!("\"{}\"", role.replace('"', "\"\""))
   }
 }

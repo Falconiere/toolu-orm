@@ -30,7 +30,7 @@ fn policy_def_tokens(core: &TokenStream, policy: &PolicyInput) -> TokenStream {
     },
     Span::call_site(),
   );
-  let command = Ident::new(&capitalize(&policy.command), Span::call_site());
+  let command = Ident::new(policy.command, Span::call_site());
   let roles = &policy.roles;
   let using = option_string_tokens(policy.using.as_deref());
   let with_check = option_string_tokens(policy.with_check.as_deref());
@@ -43,15 +43,6 @@ fn policy_def_tokens(core: &TokenStream, policy: &PolicyInput) -> TokenStream {
       using: #using,
       with_check: #with_check,
     }
-  }
-}
-
-/// `select` → `Select`: the parser only admits the five lowercase commands.
-fn capitalize(word: &str) -> String {
-  let mut chars = word.chars();
-  match chars.next() {
-    Some(first) => first.to_ascii_uppercase().to_string() + chars.as_str(),
-    None => String::new(),
   }
 }
 

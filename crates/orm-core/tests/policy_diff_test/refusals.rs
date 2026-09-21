@@ -6,6 +6,8 @@ use toolu_orm_core::policy::{PolicyCommand, PolicyDef, RowSecurity};
 use toolu_orm_core::schema::SchemaRegistry;
 use toolu_orm_core::snapshot::Snapshot;
 
+use toolu_orm_core::table::TableKind;
+
 use super::support::{docs, tenant_policy};
 
 /// The `PolicyInvalid` reason `diff` reports for a schema declaring `policy`,
@@ -62,4 +64,22 @@ fn refuses_duplicate_policy_names() {
     err,
     Err(DbCoreError::PolicyInvalid { policy, .. }) if policy == "tenant_isolation"
   ));
+}
+
+#[test]
+fn refuses_row_security_on_a_virtual_table() {
+  let reason = "a virtual table cannot carry row security";
+  for security in [
+    RowSecurity::enabled(),
+    RowSecurity::enabled().policy(tenant_policy()),
+  ] {
+    let mut fts = docs(Some(security));
+    fts.kind = TableKind::virtual_table("fts5", vec!["body".to_owned()]);
+    let err = diff(&Snapshot::empty(), &SchemaRegistry::from_tables(vec![fts]));
+    assert!(
+      matches!(&err, Err(DbCoreError::PolicyInvalid { table, reason: r, .. })
+        if table == "docs" && r == reason),
+      "err: {err:?}"
+    );
+  }
 }

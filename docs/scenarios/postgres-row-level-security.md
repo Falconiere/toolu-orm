@@ -7,8 +7,8 @@
 ## What is proven
 
 - Types: the `PolicyDef` builder, the SQL keywords, which clauses each command accepts, and the JSON shape — defaults omitted, so a snapshot written before this feature is byte-identical.
-- Diff: enable-then-create for a new table, add / change / drop one policy at a time, a `FORCE` flip alone, disable with drops when the declaration goes, policies surviving a `RenameResolver` rename, and the five refusals.
-- SQL: each operation on Postgres (clause order `AS … FOR … TO … USING … WITH CHECK`, keyword roles `PUBLIC` / `CURRENT_USER` unquoted, others quoted) and as comments on SQLite; ordering puts `DropPolicy` with the drops and the flags before the `CreatePolicy` they govern.
+- Diff: enable-then-create for a new table, add / change / drop one policy at a time, a `FORCE` flip alone, disable with drops when the declaration goes, policies surviving a `RenameResolver` rename, and the six refusals (including row security on a virtual table, with or without a policy).
+- SQL: each operation on Postgres (clause order `AS … FOR … TO … USING … WITH CHECK`, keyword roles `PUBLIC` / `CURRENT_USER` unquoted, others quoted with an embedded `"` doubled) and as comments on SQLite; ordering puts `DropPolicy` with the drops and the flags before the `CreatePolicy` they govern.
 - Macro: `#[policy]` and `rls = …` land on `TableDef.row_security`; the five malformed forms are pinned under [Macro compile errors](macro-compile-errors.md).
 - Live Postgres: generate → migrate → evolve → generate → migrate over three versions, read back from `pg_class.relrowsecurity` / `relforcerowsecurity` and `pg_policies` (kind, command, roles, `qual`, `with_check`); then, for a `NOLOGIN` role the test creates and switches to with `SET LOCAL ROLE` (the test user is a superuser and the owner, both exempt), tenant 1 sees two rows and inserts a third, tenant 2 sees one and gets SQLSTATE `42501` for a cross-tenant insert, and no tenant at all sees nothing.
 - `set_local_config`: visible for the transaction and reset after it, a hostile value stays a value, a one-part name is rejected with `42704`.
@@ -47,12 +47,14 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-cli -p toolu-orm-connection --f
 | default | policy_diff_test | refusals::refuses_a_policy_without_any_expression |
 | default | policy_diff_test | refusals::refuses_using_on_insert_and_with_check_on_select |
 | default | policy_diff_test | refusals::refuses_duplicate_policy_names |
+| default | policy_diff_test | refusals::refuses_row_security_on_a_virtual_table |
 | default | policy_sql_test | enable_renders_both_flags_postgres |
 | default | policy_sql_test | disable_renders_disable_and_no_force_postgres |
 | default | policy_sql_test | minimal_policy_renders_name_table_and_using |
 | default | policy_sql_test | full_policy_renders_every_clause_in_postgres_order |
 | default | policy_sql_test | drop_policy_postgres |
 | default | policy_sql_test | every_row_security_operation_is_a_comment_on_sqlite |
+| default | policy_sql_test | role_with_embedded_quote_is_doubled |
 | default | policy_ordering_test | drop_policy_before_add_column_and_creates_after |
 | default | policy_ordering_test | diff_order_keeps_flags_before_policies_within_the_create_tier |
 | default | policy_snapshot_test | undeclared_row_security_is_absent_from_the_json |

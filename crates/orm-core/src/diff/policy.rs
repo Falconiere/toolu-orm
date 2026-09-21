@@ -13,7 +13,6 @@ use crate::error::DbCoreError;
 use crate::policy::{PolicyDef, RowSecurity};
 use crate::schema::SchemaRegistry;
 use crate::snapshot::Snapshot;
-use crate::table::TableDef;
 
 use super::operation::Operation;
 
@@ -28,9 +27,22 @@ pub(crate) fn validate(schema: &SchemaRegistry) -> Result<(), DbCoreError> {
     let Some(security) = &table.row_security else {
       continue;
     };
+    // Checked once per table, with or without policies: `rls = "enable"` on
+    // a virtual table is as wrong as a policy on one.
+    if table.is_virtual() {
+      return Err(DbCoreError::PolicyInvalid {
+        table: table.name.clone(),
+        policy: security
+          .policies
+          .first()
+          .map(|p| p.name.clone())
+          .unwrap_or_default(),
+        reason: "a virtual table cannot carry row security".to_owned(),
+      });
+    }
     let mut seen: Vec<&str> = Vec::new();
     for policy in &security.policies {
-      if let Some(reason) = invalid_reason(table, policy, &seen) {
+      if let Some(reason) = invalid_reason(policy, &seen) {
         return Err(DbCoreError::PolicyInvalid {
           table: table.name.clone(),
           policy: policy.name.clone(),
@@ -39,22 +51,12 @@ pub(crate) fn validate(schema: &SchemaRegistry) -> Result<(), DbCoreError> {
       }
       seen.push(&policy.name);
     }
-    if security.policies.is_empty() && table.is_virtual() {
-      return Err(DbCoreError::PolicyInvalid {
-        table: table.name.clone(),
-        policy: String::new(),
-        reason: "a virtual table cannot carry row security".to_owned(),
-      });
-    }
   }
   Ok(())
 }
 
 /// Why Postgres would reject this policy, or `None` when it would not.
-fn invalid_reason(table: &TableDef, policy: &PolicyDef, seen: &[&str]) -> Option<String> {
-  if table.is_virtual() {
-    return Some("a virtual table cannot carry row security".to_owned());
-  }
+fn invalid_reason(policy: &PolicyDef, seen: &[&str]) -> Option<String> {
   if policy.name.is_empty() {
     return Some("the policy has no name".to_owned());
   }

@@ -19,8 +19,9 @@ pub struct PolicyInput {
   pub name: String,
   /// `restrictive` when set; permissive otherwise.
   pub restrictive: bool,
-  /// The `for` command as written: `all`, `select`, `insert`, `update`, `delete`.
-  pub command: String,
+  /// The `PolicyCommand` variant name: `All`, `Select`, `Insert`, `Update`
+  /// or `Delete`.
+  pub command: &'static str,
   pub roles: Vec<String>,
   pub using: Option<String>,
   pub with_check: Option<String>,
@@ -34,6 +35,28 @@ pub struct RowSecurityInput {
 
 const EXPECTED_KEY: &str =
   "expected `for = …`, `as = …`, `to = …`, `using = \"…\"` or `with_check = \"…\"`";
+
+/// The keys `#[policy(...)]` accepts after the name.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PolicyKey {
+  For,
+  As,
+  To,
+  Using,
+  WithCheck,
+}
+
+impl PolicyKey {
+  const fn name(self) -> &'static str {
+    match self {
+      Self::For => "for",
+      Self::As => "as",
+      Self::To => "to",
+      Self::Using => "using",
+      Self::WithCheck => "with_check",
+    }
+  }
+}
 
 /// Extracts and strips every `#[policy(...)]` from the struct, in order.
 pub fn parse_policy_attrs(item: &mut ItemStruct) -> Result<Vec<PolicyInput>> {
@@ -86,12 +109,12 @@ impl Parse for PolicyInput {
     let mut policy = Self {
       name: name.value(),
       restrictive: false,
-      command: "all".to_owned(),
+      command: "All",
       roles: Vec::new(),
       using: None,
       with_check: None,
     };
-    let mut seen: Vec<&'static str> = Vec::new();
+    let mut seen: Vec<PolicyKey> = Vec::new();
     while !input.is_empty() {
       input.parse::<Token![,]>()?;
       if input.is_empty() {
@@ -100,11 +123,11 @@ impl Parse for PolicyInput {
       let key = parse_key(input, &mut seen)?;
       input.parse::<Token![=]>()?;
       match key {
-        "for" => policy.command = parse_command(input)?,
-        "as" => policy.restrictive = parse_kind(input)?,
-        "to" => policy.roles = parse_roles(input)?,
-        "using" => policy.using = Some(input.parse::<LitStr>()?.value()),
-        _ => policy.with_check = Some(input.parse::<LitStr>()?.value()),
+        PolicyKey::For => policy.command = parse_command(input)?,
+        PolicyKey::As => policy.restrictive = parse_kind(input)?,
+        PolicyKey::To => policy.roles = parse_roles(input)?,
+        PolicyKey::Using => policy.using = Some(input.parse::<LitStr>()?.value()),
+        PolicyKey::WithCheck => policy.with_check = Some(input.parse::<LitStr>()?.value()),
       }
     }
     Ok(policy)
@@ -112,20 +135,20 @@ impl Parse for PolicyInput {
 }
 
 /// The next key, rejecting one already given and one that is not a key.
-fn parse_key(input: ParseStream<'_>, seen: &mut Vec<&'static str>) -> Result<&'static str> {
+fn parse_key(input: ParseStream<'_>, seen: &mut Vec<PolicyKey>) -> Result<PolicyKey> {
   let span = input.span();
-  let key: &'static str = if input.peek(Token![for]) {
+  let key = if input.peek(Token![for]) {
     input.parse::<Token![for]>()?;
-    "for"
+    PolicyKey::For
   } else if input.peek(Token![as]) {
     input.parse::<Token![as]>()?;
-    "as"
+    PolicyKey::As
   } else if input.peek(Ident) {
     let ident: Ident = input.parse()?;
     match ident.to_string().as_str() {
-      "to" => "to",
-      "using" => "using",
-      "with_check" => "with_check",
+      "to" => PolicyKey::To,
+      "using" => PolicyKey::Using,
+      "with_check" => PolicyKey::WithCheck,
       _ => return Err(syn::Error::new(ident.span(), EXPECTED_KEY)),
     }
   } else {
@@ -134,18 +157,23 @@ fn parse_key(input: ParseStream<'_>, seen: &mut Vec<&'static str>) -> Result<&'s
   if seen.contains(&key) {
     return Err(syn::Error::new(
       span,
-      format!("duplicate `{key}` on policy"),
+      format!("duplicate `{}` on policy", key.name()),
     ));
   }
   seen.push(key);
   Ok(key)
 }
 
-fn parse_command(input: ParseStream<'_>) -> Result<String> {
+/// `for = select` → the `PolicyCommand` variant name, so the expansion never
+/// has to derive an identifier from user text.
+fn parse_command(input: ParseStream<'_>) -> Result<&'static str> {
   let ident: Ident = input.parse()?;
-  let command = ident.to_string();
-  match command.as_str() {
-    "all" | "select" | "insert" | "update" | "delete" => Ok(command),
+  match ident.to_string().as_str() {
+    "all" => Ok("All"),
+    "select" => Ok("Select"),
+    "insert" => Ok("Insert"),
+    "update" => Ok("Update"),
+    "delete" => Ok("Delete"),
     _ => Err(syn::Error::new(
       ident.span(),
       "expected `for = all`, `select`, `insert`, `update` or `delete`",
