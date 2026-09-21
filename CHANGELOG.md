@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0](https://github.com/Falconiere/toolu-orm/compare/v0.10.1...v0.11.0) - 2026-09-21
+
+### `toolu-orm-cli`
+
+#### Added
+- *(core,macros,connection,cli)* [**breaking**] declare and migrate Postgres row-level security ([#143](https://github.com/Falconiere/toolu-orm/pull/143))
+
+### `toolu-orm`
+
+#### Added
+- *(core,macros,connection,cli)* [**breaking**] declare and migrate Postgres row-level security ([#143](https://github.com/Falconiere/toolu-orm/pull/143))
+
+### `toolu-orm-query`
+
+#### Added
+- *(core,macros,connection,cli)* [**breaking**] declare and migrate Postgres row-level security ([#143](https://github.com/Falconiere/toolu-orm/pull/143))
+
+### `toolu-orm-macros`
+
+#### Added
+- *(core,macros,connection,cli)* [**breaking**] declare and migrate Postgres row-level security ([#143](https://github.com/Falconiere/toolu-orm/pull/143))
+
+### `toolu-orm-connection`
+
+#### Added
+- *(core,macros,connection,cli)* [**breaking**] declare and migrate Postgres row-level security ([#143](https://github.com/Falconiere/toolu-orm/pull/143))
+
+### `toolu-orm-sqlite-vec-register`
+
+#### Added
+- *(core,macros,connection,cli)* [**breaking**] declare and migrate Postgres row-level security ([#143](https://github.com/Falconiere/toolu-orm/pull/143))
+
+### `toolu-orm-core`
+
+#### Added
+- *(core,macros,connection,cli)* [**breaking**] declare and migrate Postgres row-level security ([#143](https://github.com/Falconiere/toolu-orm/pull/143))
+
 ### `toolu-orm-query`
 
 #### Added
