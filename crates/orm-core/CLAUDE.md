@@ -19,6 +19,7 @@ Foundation crate for toolu-orm — core types, schema definitions, snapshot/diff
 ## Key Modules
 - `column.rs` — ColumnType, ColumnDef, ForeignKeyAction, marker types
 - `table.rs` — TableDef, TableSchema trait
+- `policy.rs` — Postgres row-level security: `RowSecurity` (force flag + `PolicyDef` list) on `TableDef.row_security`; `diff/policy.rs` validates and diffs it, `sql/policy.rs` renders it (comments on SQLite)
 - `schema.rs` — SchemaRegistry (collection of TableDefs)
 - `value.rs` — Value enum with database driver conversions
 - `expr/` — Expression AST: `types/`, `scalar/`, `render/`, and `binding/`. Renderers share `BoundParams` and take the next index from `params.next_index()`; they never add a separate offset. `nested(start, ...)` handles standalone fragments and nested statements. Shared handles reuse their recorded indices; empty `in_list` renders `1 = 0`.

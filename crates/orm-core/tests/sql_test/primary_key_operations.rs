@@ -33,6 +33,7 @@ fn composite_primary_key_renders_as_table_constraint() {
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
   let sql = generate_sql_for(&[Operation::CreateTable { table }], Dialect::Sqlite);
   assert!(
@@ -68,6 +69,7 @@ fn autoincrement_renders_sqlite_primary_key_autoincrement() {
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
   let sql = generate_sql_for(&[Operation::CreateTable { table }], Dialect::Sqlite);
   assert!(
@@ -99,6 +101,7 @@ fn autoincrement_maps_to_identity_on_postgres() {
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
   let sql = generate_sql_for(&[Operation::CreateTable { table }], Dialect::Postgres);
   assert!(

@@ -135,6 +135,7 @@ impl Fts5Table {
       strict: false,
       kind: TableKind::virtual_table(FTS5_MODULE, args),
       fts5_sync,
+      row_security: None,
     }
   }
 

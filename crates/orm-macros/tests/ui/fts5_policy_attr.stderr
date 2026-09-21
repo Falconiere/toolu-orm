@@ -1,0 +1,5 @@
+error: virtual tables cannot declare policies; remove it from #[fts5_table]
+ --> tests/ui/fts5_policy_attr.rs:6:1
+  |
+6 | #[policy("tenant", using = "true")]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

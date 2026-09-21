@@ -9,6 +9,7 @@ use crate::column::{ColumnDef, ForeignKeyAction};
 use crate::error::DbCoreError;
 use crate::fts5::Fts5Sync;
 use crate::index::IndexDef;
+use crate::policy::RowSecurity;
 use crate::schema::SchemaRegistry;
 use crate::table::{TableDef, TableKind};
 
@@ -101,6 +102,9 @@ pub struct SnapshotTable {
   /// The FTS5 synchronization declaration, when the table opted in. Omitted
   /// from the JSON otherwise, so an older snapshot is unchanged.
   pub fts5_sync: Option<Fts5Sync>,
+  /// Postgres row-level security, when the table opted in. Omitted from the
+  /// JSON otherwise, so an older snapshot is unchanged.
+  pub row_security: Option<RowSecurity>,
 }
 
 impl serde::Serialize for SnapshotTable {
@@ -153,6 +157,7 @@ impl Snapshot {
           strict: table.strict,
           kind: table.kind.clone(),
           fts5_sync: table.fts5_sync.clone(),
+          row_security: table.row_security.clone(),
         },
       );
     }
@@ -183,6 +188,7 @@ impl Snapshot {
           strict: snap_table.strict,
           kind: snap_table.kind.clone(),
           fts5_sync: snap_table.fts5_sync.clone(),
+          row_security: snap_table.row_security.clone(),
         }
       })
       .collect();

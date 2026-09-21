@@ -49,6 +49,19 @@ pub enum DbCoreError {
   )]
   Fts5SyncInvalid { table: String, reason: String },
 
+  /// A row-security declaration Postgres would reject. Reported instead of
+  /// writing a migration, so a policy set is never half-applied.
+  #[error(
+    "cannot create policy \"{policy}\" on \"{table}\": {reason}; a policy needs a USING or a WITH \
+     CHECK expression, an INSERT policy takes only WITH CHECK, a SELECT or DELETE policy takes \
+     only USING, names are unique per table, and only an ordinary table can carry one"
+  )]
+  PolicyInvalid {
+    table: String,
+    policy: String,
+    reason: String,
+  },
+
   /// `vec0` parses its own constructor arguments with a scanner that has no
   /// quoting, so a name outside `[A-Za-z][A-Za-z0-9_]*` cannot be rendered
   /// safely at all — unlike FTS5, where quoting the name is enough.

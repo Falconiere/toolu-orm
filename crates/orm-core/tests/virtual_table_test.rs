@@ -130,6 +130,7 @@ fn a_module_without_arguments_omits_the_parentheses() {
     strict: false,
     kind: TableKind::virtual_table("series", vec![]),
     fts5_sync: None,
+    row_security: None,
   };
   assert_eq!(
     create_sql(&table, Dialect::Sqlite),
@@ -149,6 +150,7 @@ fn neither_name_can_end_the_statement() {
     strict: false,
     kind: TableKind::virtual_table("fts5\"); DROP TABLE users; --", vec![]),
     fts5_sync: None,
+    row_security: None,
   };
   assert_eq!(
     create_sql(&table, Dialect::Sqlite),
@@ -179,6 +181,7 @@ fn a_newline_in_a_name_stays_inside_the_skipped_table_comment() {
     strict: false,
     kind: TableKind::virtual_table("fts5\nDROP TABLE users;", vec![]),
     fts5_sync: None,
+    row_security: None,
   };
   let sql = create_sql(&table, Dialect::Postgres);
   assert_eq!(sql.lines().count(), 1, "comment broke across lines: {sql}");

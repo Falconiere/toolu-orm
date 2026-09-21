@@ -10,4 +10,5 @@ mod fk_operations;
 mod fts5_recreate;
 mod index_operations;
 mod primary_key_operations;
+mod rename_operations;
 mod table_operations;

@@ -17,7 +17,11 @@ use syn::{parse_macro_input, ItemStruct, Meta};
 pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
   let mut item_struct = parse_macro_input!(item as ItemStruct);
 
-  let (table_name, strict) = match parse::parse_table_attrs(attr) {
+  let parse::TableAttrs {
+    name: table_name,
+    strict,
+    rls,
+  } = match parse::parse_table_attrs(attr) {
     Ok(attrs) => attrs,
     Err(e) => return e.to_compile_error().into(),
   };
@@ -31,6 +35,20 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
   let primary_key = match parse::parse_primary_key_attr(&mut item_struct) {
     Ok(pk) => pk,
     Err(e) => return e.to_compile_error().into(),
+  };
+
+  // Parse and strip #[policy] attrs; any policy, or `rls = …`, opts the
+  // table into row-level security.
+  let policies = match parse::parse_policy_attrs(&mut item_struct) {
+    Ok(policies) => policies,
+    Err(e) => return e.to_compile_error().into(),
+  };
+  let row_security = match (rls, policies.is_empty()) {
+    (None, true) => None,
+    (force, _) => Some(parse::RowSecurityInput {
+      force: force.unwrap_or(false),
+      policies,
+    }),
   };
 
   // Parse and strip #[view] attrs from the struct
@@ -58,6 +76,7 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
     columns,
     indexes,
     primary_key,
+    row_security,
   };
 
   let expanded = expand::expand(&input);
@@ -118,6 +137,8 @@ fn expand_fts5_table(attr: TokenStream, item: TokenStream) -> syn::Result<TokenS
     }
   }
 
+  parse::reject_policy_attrs(&item_struct, "fts5_table")?;
+
   let columns = parse::parse_struct(&item_struct)?;
   if columns.is_empty() {
     return Err(syn::Error::new_spanned(
@@ -135,6 +156,7 @@ fn expand_fts5_table(attr: TokenStream, item: TokenStream) -> syn::Result<TokenS
     columns,
     indexes: Vec::new(),
     primary_key: Vec::new(),
+    row_security: None,
   };
 
   let schema_impl = fts5::expand(&attrs, &input);

@@ -4,6 +4,7 @@ mod ddl;
 mod fts5_triggers;
 mod gen;
 mod operation_sql;
+mod policy;
 mod postgres;
 mod rebuild;
 mod translate;

@@ -28,6 +28,7 @@ fn test_create_table_sql() {
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -63,6 +64,7 @@ fn test_create_strict_table() {
       strict: true,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -93,6 +95,7 @@ fn test_non_strict_keeps_fk_references() {
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   // `references` is a foreign key regardless of `strict`; `strict` only
@@ -138,6 +141,7 @@ fn test_non_strict_uses_compat_types() {
       strict: false,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,
+      row_security: None,
     },
   }];
   let sql = generate_sql_for(&ops, Dialect::Sqlite);
@@ -211,6 +215,7 @@ fn create_table_postgres_uses_uuid_and_boolean() {
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
 
   let ops = vec![Operation::CreateTable { table }];
@@ -221,29 +226,5 @@ fn create_table_postgres_uses_uuid_and_boolean() {
   assert!(
     !sql.contains("\"active\" INTEGER"),
     "boolean should not map to INTEGER on Postgres: {sql}"
-  );
-}
-
-#[test]
-fn rename_table_sql() {
-  let ops = vec![Operation::RenameTable {
-    old: "users".to_owned(),
-    new: "accounts".to_owned(),
-  }];
-  let sql = generate_sql_for(&ops, Dialect::Postgres);
-  assert_eq!(sql.trim(), "ALTER TABLE \"users\" RENAME TO \"accounts\";");
-}
-
-#[test]
-fn rename_column_sql() {
-  let ops = vec![Operation::RenameColumn {
-    table: "users".to_owned(),
-    old: "name".to_owned(),
-    new: "full_name".to_owned(),
-  }];
-  let sql = generate_sql_for(&ops, Dialect::Postgres);
-  assert_eq!(
-    sql.trim(),
-    "ALTER TABLE \"users\" RENAME COLUMN \"name\" TO \"full_name\";"
   );
 }

@@ -43,6 +43,7 @@ pub fn memories() -> TableDef {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }
 }
 

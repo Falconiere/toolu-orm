@@ -35,6 +35,7 @@ fn table_with_index(index: IndexDef) -> TableDef {
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   }
 }
 

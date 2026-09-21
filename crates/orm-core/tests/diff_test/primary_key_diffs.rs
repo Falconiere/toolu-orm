@@ -26,6 +26,7 @@ fn composite_primary_key_change_recreates_table() -> TestResult {
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,
+    row_security: None,
   };
   let new_table = TableDef {
     primary_key: vec!["memory_id".to_owned(), "tag".to_owned()],

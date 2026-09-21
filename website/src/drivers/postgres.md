@@ -86,6 +86,20 @@ tx.commit().await?;
 implements `DbConnection`. Both roll back when dropped without a `commit`. See
 [Transactions](../queries/transactions.md).
 
+## Row-level security
+
+Policies are declared on the table (`#[policy(...)]`, `#[table(rls = …)]`) and
+migrated with everything else; see [Row-level security](../schema/row-level-security.md).
+The per-request context a policy reads is set on the connection-layer
+transaction with bound parameters rather than SQL text:
+
+```rust
+let tx = conn.transaction().await?;
+tx.set_local_config("app.tenant_id", "42").await?;   // set_config($1, $2, true)
+// … queries on `tx` see only tenant 42's rows …
+tx.commit().await?;                                  // the setting is gone
+```
+
 ## Errors
 
 Connection operations return `DbError`; transaction and row-decoding failures
