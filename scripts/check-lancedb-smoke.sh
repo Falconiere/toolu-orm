@@ -17,7 +17,14 @@ case "$(uname -s)/$(uname -m)" in
     ;;
   Linux/x86_64)
     platform=linux_amd64
-    platform_version=$(source /etc/os-release && printf '%s' "$VERSION_ID")
+    if [[ ! -r /etc/os-release ]]; then
+      dependency_error "cannot read Linux OS release metadata"
+    fi
+    platform_version=$(source /etc/os-release && printf '%s' "${VERSION_ID:-}") || \
+      dependency_error "cannot read Linux OS release metadata"
+    if [[ -z "$platform_version" ]]; then
+      dependency_error "Linux OS release version is missing"
+    fi
     expected=cae58f5c0831454b44b973875d0d457bf96574b0c629875b732ef4578fb07080
     ;;
   *)

@@ -31,7 +31,7 @@ fn load_lance(connection: &Connection, path: &Path) -> Result<(), LanceDependenc
   let literal = quoted_path(path)
     .map_err(|error| LanceDependencyUnavailable(format!("lance extension path: {error}")))?;
   connection
-    .execute_batch(&format!("LOAD {literal};"))
+    .execute(&format!("LOAD {literal}"), [])
     .map_err(|error| LanceDependencyUnavailable(format!("lance extension load: {error}")))?;
 
   let (version, loaded): (String, bool) = connection
