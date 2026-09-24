@@ -1,0 +1,23 @@
+[package]
+name = "toolu-orm-lancedb-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+duckdb = { version = "=1.10505.0", features = ["bundled"] }
+tempfile = "3.22"
+
+[[test]]
+name = "lancedb_smoke_test"
+path = "tests/lancedb_smoke_test.rs"
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.test]
+debug = 0
+incremental = false
