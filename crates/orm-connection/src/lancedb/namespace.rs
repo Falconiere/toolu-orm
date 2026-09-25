@@ -86,10 +86,10 @@ impl LanceNamespace {
     let path = quoted_path(directory)?;
     let catalog = quoted_identifier(namespace)?;
     connection
-      .execute_batch(&format!("ATTACH {path} AS {catalog} (TYPE LANCE)"))
+      .execute(&format!("ATTACH {path} AS {catalog} (TYPE LANCE)"), [])
       .map_err(LanceNamespaceError::Attach)?;
     connection
-      .execute_batch(&format!("USE {catalog}"))
+      .execute(&format!("USE {catalog}"), [])
       .map_err(LanceNamespaceError::Use)?;
     Ok(Self {
       connection,
@@ -177,8 +177,9 @@ impl LanceNamespace {
     );
     self
       .connection
-      .execute_batch(&sql)
+      .execute(&sql, [])
       .map_err(LanceNamespaceError::CreateTable)
+      .map(|_| ())
   }
 
   /// Drop exactly one existing Lance table.
@@ -195,8 +196,9 @@ impl LanceNamespace {
     let catalog = quoted_identifier(&self.catalog)?;
     self
       .connection
-      .execute_batch(&format!("DROP TABLE {catalog}.main.{table}"))
+      .execute(&format!("DROP TABLE {catalog}.main.{table}"), [])
       .map_err(LanceNamespaceError::DropTable)
+      .map(|_| ())
   }
 
   fn has_table(&self, name: &str) -> Result<bool, LanceNamespaceError> {
