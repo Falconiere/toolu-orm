@@ -5,8 +5,8 @@ saves a compile error.
 
 | Trait | Crate | Implemented for | Used by |
 |---|---|---|---|
-| `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `toolu_orm_connection::PgTransaction` | `run_migrate`, `get_status`, and your own code |
-| `DbConnectionBlocking` | `toolu-orm-connection` | `RusqliteConnection` only | blocking migration/status APIs and your own code |
+| `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `toolu_orm_connection::PgTransaction`, `LanceDbConnection` | `run_migrate` and `get_status` on supported migration drivers; your own SQL on all listed drivers |
+| `DbConnectionBlocking` | `toolu-orm-connection` | `RusqliteConnection`, `LanceDbConnection` | blocking migration/status APIs on rusqlite; your own SQL on either driver |
 | `Executor` | `toolu-orm-query` | `libsql::Connection`, `rusqlite::Connection`, `RusqliteConnection`, `tokio_postgres::Client`, `toolu_orm_query::transaction::Transaction` (libsql only), `toolu_orm_query::executor::PgTransaction` (Postgres only) | the query builders' `.execute()` and `fetch_*` |
 
 The first and last rows include a `PgTransaction`, and they are **two different types** — the
@@ -111,8 +111,17 @@ slice to `duckdb::params_from_iter(params.iter())`. See the
 for prepared insert and filter coverage. The tagged codecs remain outside
 epic #145.
 
-`DbConnection`, portable query execution, row decoding, and migrations are not
-available for Lance yet.
+`LanceDbConnection::from_namespace(namespace)` consumes an attached namespace
+and exposes async `DbConnection` plus runtime-free `DbConnectionBlocking`.
+Calls share one serialized DuckDB connection; async calls wait for admission
+before entering the blocking pool. Bound `Value` inputs use prepared SQL.
+For `query_map`, implement `FromRow::from_lance_row` and read named `LanceRow`
+values; BIGINT, VARCHAR, and NULL results are currently supported. Batch SQL
+can create tables that persist after reopen, while unsupported statements
+return a typed query error. Full scalar decoding, derive support, portable
+query builders, and migrations remain separate work. The
+[Lance connection scenario](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-dbconnection.md)
+records the API limits and real tests.
 
 `lancedb` can coexist with `postgres`, `rusqlite`, or `libsql` in Cargo. The
 query crate exposes its existing executor only when one implemented driver is
@@ -136,9 +145,8 @@ Take `&impl DbConnection` in your own repository functions and the driver become
 a caller choice. Raw SQL still needs the selected database's syntax and
 placeholders (`?1` for SQLite, `$1` for Postgres).
 
-`DbConnectionBlocking` is the same surface without the `async`, and only rusqlite
-implements it — it provides a synchronous SQLite API that can run a statement
-without a runtime:
+`DbConnectionBlocking` is the same surface without the `async`. Rusqlite and
+Lance implement it, so either can run SQL without a runtime:
 
 ```rust
 pub trait DbConnectionBlocking: Send + Sync {
@@ -193,3 +201,4 @@ The async impl delegates to the blocking one, so the two cannot drift.
 | [libsql](libsql.md) | Turso, embedded replicas, or a local SQLite file in an async application. |
 | [rusqlite](rusqlite.md) | Plain local SQLite with no async runtime requirement (`DbConnectionBlocking`), or tests. |
 | [Postgres](postgres.md) | A server database, connection pooling, TLS. |
+| Lance | An attached local Lance catalog with prepared SQL and a blocking or async connection trait. |

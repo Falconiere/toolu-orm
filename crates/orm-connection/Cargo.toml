@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
-description = "Connection adapters (libsql, rusqlite, Postgres, Lance startup) for toolu-orm"
+description = "Connection adapters (libsql, rusqlite, Postgres, Lance) for toolu-orm"
 
 [dependencies]
 toolu-orm-core = { path = "../orm-core", version = "0.11.0", default-features = false, features = [] }
@@ -73,6 +73,11 @@ required-features = ["lancedb"]
 [[test]]
 name = "lancedb_value_test"
 path = "tests/lancedb_value_test.rs"
+required-features = ["lancedb"]
+
+[[test]]
+name = "lancedb_dbconnection_test"
+path = "tests/lancedb_dbconnection_test.rs"
 required-features = ["lancedb"]
 
 # Release benchmark for issue #88: compares uncached/cached rusqlite

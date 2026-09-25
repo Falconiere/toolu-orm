@@ -7,9 +7,9 @@ use toolu_orm_core::value::Value;
 /// Trait abstracting over database connections for testability and driver swaps.
 ///
 /// Query functions accept `&(impl DbConnection)` so callers can provide
-/// any backend (libsql, rusqlite, postgres) or a test double.
+/// any backend (libsql, rusqlite, postgres, Lance) or a test double.
 ///
-/// All methods are async. Sync backends (rusqlite) use `spawn_blocking`
+/// All methods are async. Sync backends (rusqlite and Lance) use `spawn_blocking`
 /// internally to satisfy the async interface.
 #[async_trait::async_trait]
 pub trait DbConnection: Send + Sync {

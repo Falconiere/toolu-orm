@@ -103,6 +103,11 @@ impl LanceNamespace {
     &self.connection
   }
 
+  /// Transfer the selected DuckDB connection to the shared SQL session.
+  pub(super) fn into_connection(self) -> Connection {
+    self.connection
+  }
+
   /// Return names of tables in this Lance catalog's `main` schema.
   ///
   /// # Errors

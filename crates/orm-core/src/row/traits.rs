@@ -1,6 +1,13 @@
 //! Feature-gated FromRow trait definitions for each database backend.
 
-#[cfg(any(feature = "postgres", feature = "libsql", feature = "rusqlite"))]
+#[cfg(feature = "lancedb")]
+use super::LanceRow;
+#[cfg(any(
+  feature = "postgres",
+  feature = "libsql",
+  feature = "rusqlite",
+  feature = "lancedb"
+))]
 use crate::error::DbCoreError;
 
 /// Trait for converting a database row into a Rust struct.
@@ -15,8 +22,19 @@ use crate::error::DbCoreError;
   not(feature = "libsql"),
   not(feature = "rusqlite"),
 ))]
+/// Row decoder when Postgres is the only relational driver.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 
   /// # Errors
   ///
@@ -29,8 +47,19 @@ pub trait FromRow: Sized {
   not(feature = "postgres"),
   not(feature = "rusqlite"),
 ))]
+/// Row decoder when libsql is the only relational driver.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 
   /// # Errors
   ///
@@ -43,8 +72,19 @@ pub trait FromRow: Sized {
   not(feature = "postgres"),
   not(feature = "libsql"),
 ))]
+/// Row decoder when rusqlite is the only relational driver.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 
   /// # Errors
   ///
@@ -53,8 +93,19 @@ pub trait FromRow: Sized {
 }
 
 #[cfg(all(feature = "postgres", feature = "libsql", not(feature = "rusqlite"),))]
+/// Row decoder when Postgres and libsql are enabled.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 
   /// # Errors
   ///
@@ -68,8 +119,19 @@ pub trait FromRow: Sized {
 }
 
 #[cfg(all(feature = "postgres", feature = "rusqlite", not(feature = "libsql"),))]
+/// Row decoder when Postgres and rusqlite are enabled.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 
   /// # Errors
   ///
@@ -83,8 +145,19 @@ pub trait FromRow: Sized {
 }
 
 #[cfg(all(feature = "libsql", feature = "rusqlite", not(feature = "postgres"),))]
+/// Row decoder when libsql and rusqlite are enabled.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 
   /// # Errors
   ///
@@ -98,8 +171,19 @@ pub trait FromRow: Sized {
 }
 
 #[cfg(all(feature = "postgres", feature = "libsql", feature = "rusqlite",))]
+/// Row decoder when all relational drivers are enabled.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 
   /// # Errors
   ///
@@ -139,6 +223,17 @@ pub trait FromRow: Sized {
   all(feature = "libsql", feature = "rusqlite", not(feature = "postgres")),
   all(feature = "postgres", feature = "libsql", feature = "rusqlite"),
 )))]
+/// Row shape when no relational driver is enabled.
 pub trait FromRow: Sized {
   const REQUIRED_COLUMNS: &'static [&'static str];
+
+  /// Decode a portable row from the attached Lance catalog.
+  /// # Errors
+  /// Returns a row-mapping error when this type has no Lance decoder.
+  #[cfg(feature = "lancedb")]
+  fn from_lance_row(_row: &LanceRow) -> Result<Self, DbCoreError> {
+    Err(DbCoreError::RowMapping(
+      "Lance FromRow decoder is not implemented for this type".into(),
+    ))
+  }
 }
