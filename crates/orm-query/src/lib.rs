@@ -27,9 +27,9 @@ cfg_single_backend! {
 #[cfg(all(
   feature = "libsql",
   not(feature = "rusqlite"),
-  not(feature = "postgres"),
-  not(feature = "lancedb")
+  not(feature = "postgres")
 ))]
+#[cfg(not(feature = "lancedb"))]
 /// Libsql transaction wrapper for the sole active backend.
 pub mod transaction;
 

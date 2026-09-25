@@ -44,7 +44,10 @@ EOF
 use toolu_orm::query::QueryError;
 
 pub fn accepts_error(error: QueryError) {
-  if let QueryError::Driver(_) = error {}
+  match error {
+    QueryError::Driver(_) => {}
+    _ => {}
+  }
 }
 EOF
   else
@@ -78,3 +81,4 @@ assert_unavailable rusqlite executor
 assert_unavailable libsql executor
 assert_unavailable libsql transaction
 assert_unavailable postgres Driver
+assert_unavailable libsql Driver

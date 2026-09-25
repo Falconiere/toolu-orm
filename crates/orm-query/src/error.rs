@@ -12,6 +12,7 @@ pub enum QueryError {
     not(feature = "lancedb")
   ))]
   #[error("database error: {0}")]
+  /// The generated `From<libsql::Error>` exists only with this variant.
   Driver(#[from] libsql::Error),
 
   #[cfg(all(
