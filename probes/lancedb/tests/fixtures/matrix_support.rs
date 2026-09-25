@@ -7,7 +7,7 @@ use toolu_orm_core::{
   value::Value,
 };
 
-use crate::lance::{load_lance, quoted_path};
+use crate::lance::{LanceDependencyUnavailable, load_lance, quoted_path};
 
 pub type TestResult = Result<(), Box<dyn Error>>;
 
@@ -27,7 +27,7 @@ impl Fixture {
   pub fn new() -> Result<Self, Box<dyn Error>> {
     let directory = tempfile::tempdir()?;
     let extension = std::env::var_os("LANCE_EXTENSION_PATH")
-      .ok_or("LanceDependencyUnavailable: LANCE_EXTENSION_PATH is missing")?;
+      .ok_or_else(|| LanceDependencyUnavailable::new("LANCE_EXTENSION_PATH is missing"))?;
     let connection = Connection::open_in_memory()?;
     load_lance(&connection, std::path::Path::new(&extension))?;
     connection.execute_batch(&format!(
