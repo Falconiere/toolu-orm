@@ -5,8 +5,10 @@ use std::path::Path;
 
 mod namespace;
 mod sql;
+mod value;
 
 pub use namespace::{LanceColumn, LanceColumnType, LanceNamespace, LanceNamespaceError};
+pub use value::{LanceValueError, to_duckdb_params};
 
 const DUCKDB_VERSION: &str = "v1.5.5";
 const LANCE_VERSION: &str = "2f167ea";

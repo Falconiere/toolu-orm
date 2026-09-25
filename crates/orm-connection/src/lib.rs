@@ -45,5 +45,5 @@ pub use postgres_impl::{PgConfig, PgConnection, PgDatabase, PgTransaction};
 #[cfg(feature = "lancedb")]
 pub use lancedb::{
   LanceColumn, LanceColumnType, LanceConnection, LanceNamespace, LanceNamespaceError,
-  LanceStartupError,
+  LanceStartupError, LanceValueError, to_duckdb_params,
 };
