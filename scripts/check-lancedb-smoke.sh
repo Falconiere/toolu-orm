@@ -64,7 +64,7 @@ if ! listed=$(cargo nextest list --manifest-path probes/lancedb/Cargo.toml --loc
   exit 1
 fi
 actual=$(printf '%s\n' "$listed" | awk '
-  /^toolu-orm-lancedb-probe::lancedb_smoke_test / {
+  /^toolu-orm-lancedb-probe::lancedb_(smoke|capability)_test / {
     sub(/^toolu-orm-lancedb-probe::/, "")
     print
   }
@@ -75,7 +75,7 @@ documented=$(awk -F'|' '
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
     print $3 " " $4
   }
-' docs/scenarios/lancedb-rust-smoke.md | sort)
+' docs/scenarios/lancedb-rust-smoke.md docs/scenarios/lancedb-ddl-constraints-search.md | sort)
 if [[ -z "$actual" || -z "$documented" ]] || \
   ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
   printf 'lancedb-smoke: scenario docs and Rust test names differ\n' >&2
