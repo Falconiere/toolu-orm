@@ -111,6 +111,15 @@ path = "tests/relational_binary_decode_test.rs"
 name = "select_test"
 path = "tests/select_test/main.rs"
 
+[[test]]
+name = "session_dialect_sql_test"
+path = "tests/session_dialect_sql_test.rs"
+
+[[test]]
+name = "session_executor_dialect_test"
+path = "tests/session_executor_dialect_test.rs"
+required-features = ["rusqlite"]
+
 # Pure SQL generation for the scalar-expression surface: no driver type in the
 # binary, so it belongs in the feature-less default lane. Its live twins are
 # {rusqlite,libsql,postgres}_scalar_expr_test below.

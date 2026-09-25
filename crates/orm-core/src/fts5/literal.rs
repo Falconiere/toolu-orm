@@ -13,12 +13,12 @@ use crate::error::DbCoreError;
 ///
 /// FTS5 is a SQLite module; Postgres full-text search is `@@` / `to_tsquery` /
 /// `ts_rank`, a different enough model that translating between them silently
-/// would be wrong. Rejecting here means no Postgres SQL containing an FTS5
-/// call can be built at all.
+/// would be wrong. Lance also has no FTS5 module. Rejecting here means no
+/// non-SQLite SQL containing an FTS5 call can be built at all.
 pub(crate) fn require_sqlite(function: &str, dialect: Dialect) -> Result<(), DbCoreError> {
   match dialect {
     Dialect::Sqlite => Ok(()),
-    Dialect::Postgres => Err(DbCoreError::Fts5UnsupportedDialect {
+    Dialect::Postgres | Dialect::Lance => Err(DbCoreError::Fts5UnsupportedDialect {
       function: function.to_owned(),
       dialect: dialect.as_str(),
     }),

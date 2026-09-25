@@ -31,6 +31,11 @@ pub fn generate_sql_for(operations: &[Operation], dialect: Dialect) -> String {
         push_chunk(&mut parts, operation_sql(&op, dialect));
       }
     },
+    Dialect::Lance => {
+      if !ordered.is_empty() {
+        parts.push("-- Lance migration SQL is unsupported; see issue #181".to_owned());
+      }
+    },
   }
   parts.join("\n\n--> statement-breakpoint\n\n")
 }

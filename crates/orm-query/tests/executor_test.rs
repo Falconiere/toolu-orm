@@ -1,8 +1,10 @@
 use toolu_orm_core::column::{Integer, Text};
+use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::error::DbCoreError;
 use toolu_orm_core::query_column::{Column, CommonOps};
 use toolu_orm_core::row::FromRow;
 use toolu_orm_query::delete::DeleteBuilder;
+use toolu_orm_query::executor::Executor;
 use toolu_orm_query::insert::InsertBuilder;
 use toolu_orm_query::select::SelectBuilder;
 use toolu_orm_query::update::UpdateBuilder;
@@ -73,6 +75,13 @@ async fn insert_user(
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn built_in_libsql_executor_reports_sqlite() -> TestResult {
+  let conn = setup_db().await?;
+  assert_eq!(Executor::dialect(&conn), Dialect::Sqlite);
+  Ok(())
+}
 
 #[tokio::test]
 async fn insert_and_select() -> TestResult {

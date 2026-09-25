@@ -2,6 +2,7 @@
 
 use crate::QueryError;
 
+/// Return the first decoded row or a table-specific not-found error.
 pub(crate) fn first_or_not_found<T>(results: Vec<T>, table: &str) -> Result<T, QueryError> {
   results
     .into_iter()
@@ -24,7 +25,7 @@ macro_rules! impl_async_fetch {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<Vec<T>, $crate::QueryError> {
-        let (sql, params) = self.to_sql();
+        let (sql, params) = self.to_sql_for(exec.dialect());
         exec.query_map::<T>(&sql, params).await
       }
 
@@ -62,7 +63,7 @@ macro_rules! impl_async_fetch {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<Vec<T>, $crate::QueryError> {
-        let (sql, params) = self.to_first_row_sql();
+        let (sql, params) = self.to_first_row_sql_for(exec.dialect());
         exec.query_map::<T>(&sql, params).await
       }
 
@@ -73,7 +74,7 @@ macro_rules! impl_async_fetch {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<i64, $crate::QueryError> {
-        let (sql, params) = self.to_count_sql();
+        let (sql, params) = self.to_count_sql_for(exec.dialect());
         let rows = exec.query_map::<$scalar_ty>(&sql, params).await?;
         super::shared::first_or_not_found(rows, self.table_name()).map(|r| r.value)
       }
@@ -85,7 +86,7 @@ macro_rules! impl_async_fetch {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<bool, $crate::QueryError> {
-        let (sql, params) = self.to_exists_sql();
+        let (sql, params) = self.to_exists_sql_for(exec.dialect());
         let rows = exec.query_map::<$scalar_ty>(&sql, params).await?;
         Ok(
           rows
@@ -115,7 +116,7 @@ macro_rules! impl_sync_fetch {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<Vec<T>, $crate::QueryError> {
-        let (sql, params) = self.to_sql();
+        let (sql, params) = self.to_sql_for(exec.dialect());
         exec.query_map::<T>(&sql, params)
       }
 
@@ -153,7 +154,7 @@ macro_rules! impl_sync_fetch {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<Vec<T>, $crate::QueryError> {
-        let (sql, params) = self.to_first_row_sql();
+        let (sql, params) = self.to_first_row_sql_for(exec.dialect());
         exec.query_map::<T>(&sql, params)
       }
 
@@ -164,7 +165,7 @@ macro_rules! impl_sync_fetch {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<i64, $crate::QueryError> {
-        let (sql, params) = self.to_count_sql();
+        let (sql, params) = self.to_count_sql_for(exec.dialect());
         let rows = exec.query_map::<$scalar_ty>(&sql, params)?;
         super::shared::first_or_not_found(rows, self.table_name()).map(|r| r.value)
       }
@@ -176,7 +177,7 @@ macro_rules! impl_sync_fetch {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<bool, $crate::QueryError> {
-        let (sql, params) = self.to_exists_sql();
+        let (sql, params) = self.to_exists_sql_for(exec.dialect());
         let rows = exec.query_map::<$scalar_ty>(&sql, params)?;
         Ok(
           rows

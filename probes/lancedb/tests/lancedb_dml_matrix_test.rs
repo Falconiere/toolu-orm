@@ -3,10 +3,11 @@ pub mod lance;
 #[path = "fixtures/matrix_support.rs"]
 pub mod support;
 
-use toolu_orm_core::{dialect::Dialect, query_column::CommonOps, value::Value};
+use toolu_orm_core::{dialect::Dialect, expr::Scalar, query_column::CommonOps, value::Value};
 use toolu_orm_query::{
   delete::DeleteBuilder,
   insert::{InsertBuilder, OnConflict},
+  select::SelectBuilder,
   update::UpdateBuilder,
 };
 
@@ -31,7 +32,7 @@ fn bound_insert_update_delete_change_only_matching_rows() -> TestResult {
     .set(&ITEM_GROUP, 2_i64)
     .set(&ITEM_NAME, "five")
     .set(&ITEM_SCORE, 50_i64)
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     insert.0,
     r#"INSERT INTO "items" ("id", "group_id", "name", "score") VALUES (?1, ?2, ?3, ?4)"#
@@ -50,7 +51,7 @@ fn bound_insert_update_delete_change_only_matching_rows() -> TestResult {
   let update = UpdateBuilder::new("items")
     .set(&ITEM_NAME, "FIVE")
     .filter(ITEM_ID.eq(5_i64))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     update.0,
     r#"UPDATE "items" SET "name" = ?1 WHERE "items"."id" = ?2"#
@@ -63,7 +64,7 @@ fn bound_insert_update_delete_change_only_matching_rows() -> TestResult {
   let missing = UpdateBuilder::new("items")
     .set(&ITEM_NAME, "missing")
     .filter(ITEM_ID.eq(999_i64))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(fixture.execute(&missing.0, &missing.1)?, 0);
   assert_eq!(
     snapshot(&fixture)?.last(),
@@ -72,15 +73,40 @@ fn bound_insert_update_delete_change_only_matching_rows() -> TestResult {
 
   let delete = DeleteBuilder::new("items")
     .filter(ITEM_ID.eq(5_i64))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(delete.0, r#"DELETE FROM "items" WHERE "items"."id" = ?1"#);
   assert_eq!(delete.1, vec![Value::Integer(5)]);
   assert_eq!(fixture.execute(&delete.0, &delete.1)?, 1);
   let missing = DeleteBuilder::new("items")
     .filter(ITEM_ID.eq(999_i64))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(fixture.execute(&missing.0, &missing.1)?, 0);
   assert_eq!(snapshot(&fixture)?.len(), 4);
+  Ok(())
+}
+
+#[test]
+fn bound_insert_select_copies_a_seeded_row_with_source_binds() -> TestResult {
+  let fixture = Fixture::new()?;
+  let source = SelectBuilder::new("items")
+    .columns_qualified(&[&ITEM_GROUP, &ITEM_NAME, &ITEM_SCORE])
+    .column_scalar(Scalar::bind(5_i64), "id")
+    .filter(ITEM_ID.eq(1_i64));
+  let (sql, params) = InsertBuilder::new("items")
+    .select(&[&ITEM_GROUP, &ITEM_NAME, &ITEM_SCORE, &ITEM_ID], source)
+    .to_sql_for(Dialect::Lance);
+  assert_eq!(
+    sql,
+    r#"INSERT INTO "items" ("group_id", "name", "score", "id") SELECT "items"."group_id", "items"."name", "items"."score", ?1 AS "id" FROM "items" WHERE "items"."id" = ?2"#
+  );
+  assert_eq!(params, vec![Value::Integer(5), Value::Integer(1)]);
+  assert_eq!(fixture.execute(&sql, &params)?, 1);
+  let copied = fixture.rows(
+    "SELECT id, group_id, name, score FROM items WHERE id = 5",
+    &[],
+    |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+  )?;
+  assert_eq!(copied, vec![(5_i64, 1_i64, "one".to_owned(), 10_i64)]);
   Ok(())
 }
 
@@ -121,7 +147,7 @@ fn on_conflict_is_rejected_before_a_write() -> TestResult {
     .set(&ITEM_NAME, "replacement")
     .set(&ITEM_SCORE, 100_i64)
     .on_conflict(OnConflict::column(&ITEM_ID).do_nothing())
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     sql,
     r#"INSERT INTO "items" ("id", "group_id", "name", "score") VALUES (?1, ?2, ?3, ?4) ON CONFLICT ("id") DO NOTHING"#
@@ -156,16 +182,16 @@ fn ordinary_dml_returning_is_rejected_before_each_write() -> TestResult {
     .set(&ITEM_NAME, "five")
     .set(&ITEM_SCORE, 50_i64)
     .returning(&ITEM_ID)
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   let update = UpdateBuilder::new("items")
     .set(&ITEM_NAME, "changed")
     .filter(ITEM_ID.eq(1_i64))
     .returning(&ITEM_ID)
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   let delete = DeleteBuilder::new("items")
     .filter(ITEM_ID.eq(1_i64))
     .returning(&ITEM_ID)
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
 
   assert_eq!(
     insert.0,

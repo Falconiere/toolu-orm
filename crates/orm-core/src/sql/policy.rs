@@ -33,6 +33,7 @@ pub(crate) fn alter_row_level_security_sql(
     Dialect::Sqlite => format!(
       "-- row level security on \"{table}\" (Postgres only; SQLite has no row-level security)"
     ),
+    Dialect::Lance => format!("-- row level security on \"{table}\" is unsupported on Lance"),
   }
 }
 
@@ -64,6 +65,10 @@ pub(crate) fn create_policy_sql(table: &str, policy: &PolicyDef, dialect: Dialec
       "-- policy \"{}\" on \"{table}\" (Postgres only; SQLite has no row-level security)",
       policy.name
     ),
+    Dialect::Lance => format!(
+      "-- policy \"{}\" on \"{table}\" is unsupported on Lance",
+      policy.name
+    ),
   }
 }
 
@@ -74,6 +79,7 @@ pub(crate) fn drop_policy_sql(table: &str, name: &str, dialect: Dialect) -> Stri
     Dialect::Sqlite => format!(
       "-- drop policy \"{name}\" on \"{table}\" (Postgres only; SQLite has no row-level security)"
     ),
+    Dialect::Lance => format!("-- drop policy \"{name}\" on \"{table}\" is unsupported on Lance"),
   }
 }
 

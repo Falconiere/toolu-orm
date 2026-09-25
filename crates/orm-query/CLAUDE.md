@@ -9,9 +9,10 @@ Type-safe query builders for toolu-orm — Select, Insert, Update, Delete with f
 
 ## Crate-Specific Rules
 - The libsql/rusqlite scalar decoders require the matching single-driver shape on orm-core; do not enable extra core drivers behind a single-driver SQLite query build.
-- Builders are database-agnostic — `to_sql()` works without any feature flag
+- Builders are database-agnostic — explicit `to_sql_for(Dialect::Lance)` renders `?N` without a driver, including under mixed `postgres,lancedb` features; `to_sql()` retains compile-time `Dialect::CURRENT`
 - `execute()` methods are feature-gated: async for libsql/Postgres, sync for rusqlite
-- `Executor` trait provides `execute_sql()` and `query_map()` — implementations differ per driver
+- `Executor` trait provides `dialect()`, `execute_sql()`, and `query_map()` — built-in implementations report SQLite/Postgres; builder execution renders for `exec.dialect()` while the compatibility default is `CURRENT`
+- No production Lance executor exists in this crate; issue #174 owns refusal of Lance `ON CONFLICT` and ordinary DML `RETURNING` before execution
 - `impl_filter!` and `impl_execute!` macros reduce boilerplate across builders
 - `SelectBuilder` supports raw mode (`SelectBuilder::raw()`) for custom queries
 - Every clause renders through one `BoundParams` in SQL order: WITH, select list, FROM/JOIN arguments and ON, WHERE, GROUP BY/HAVING, compound arms, ORDER BY, LIMIT/OFFSET. UPDATE binds SET before WHERE; INSERT binds VALUES or the SELECT source before ON CONFLICT. Take `params.next_index()` rather than adding an offset; the shared ledger also spans nested statements.

@@ -59,7 +59,7 @@ pub(super) fn is_foreign_keys_pragma(chunk: &str) -> bool {
 /// how a generated table rebuild announces itself.
 pub(super) fn manages_pragmas(sql: &str, dialect: Dialect) -> bool {
   match dialect {
-    Dialect::Postgres => false,
+    Dialect::Postgres | Dialect::Lance => false,
     Dialect::Sqlite => sql.lines().any(is_foreign_keys_statement),
   }
 }

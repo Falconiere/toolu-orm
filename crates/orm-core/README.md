@@ -18,7 +18,7 @@ With no drivers it carries only `REQUIRED_COLUMNS`.
 ```
 src/
 ├── lib.rs              # Module exports
-├── column.rs           # ColumnType, ColumnDef, marker types
+├── column/             # types.rs: ColumnType, ColumnDef; markers.rs: marker types
 ├── table.rs            # TableDef, TableSchema trait
 ├── schema.rs           # SchemaRegistry
 ├── index.rs            # IndexDef

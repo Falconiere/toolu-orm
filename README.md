@@ -86,7 +86,7 @@ The five implementation crates behind those entry points:
                  ┌────────────────────────┐
                  │      toolu-orm-core     │  TableDef · ColumnType · Value · Expr
                  │  schema · snapshot ·    │  Column<T> · Snapshot · Journal
-                 │  diff · dialect · row   │  Dialect { Sqlite, Postgres }
+                 │  diff · dialect · row   │  Dialect { Sqlite, Postgres, Lance }
                  └───────────┬────────────┘
         ┌────────────────────┼─────────────────────┐
         ▼                    ▼                     ▼

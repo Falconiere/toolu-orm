@@ -31,6 +31,7 @@ impl VectorElement {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
+/// Column type used by schema definitions and dialect-aware DDL.
 pub enum ColumnType {
   // Core SQLite
   Text,
@@ -155,11 +156,13 @@ impl ColumnType {
         Self::Char(n) => format!("CHAR({n})"),
         Self::Array(inner) => format!("{}[]", inner.as_ddl_sql(Dialect::Postgres)),
       },
+      Dialect::Lance => self.as_compat_sql(),
     }
   }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// Action applied to dependent rows by a foreign key.
 pub enum ForeignKeyAction {
   Cascade,
   SetNull,
@@ -169,6 +172,7 @@ pub enum ForeignKeyAction {
 }
 
 impl ForeignKeyAction {
+  /// SQL keyword for this foreign-key action.
   pub fn as_sql(self) -> &'static str {
     match self {
       Self::Cascade => "CASCADE",
@@ -186,6 +190,7 @@ pub trait EnumSchema {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// Schema definition for one table column.
 pub struct ColumnDef {
   pub name: String,
   pub column_type: ColumnType,
@@ -211,25 +216,3 @@ pub struct ColumnDef {
   #[serde(default, skip_serializing_if = "std::ops::Not::not")]
   pub autoincrement: bool,
 }
-
-// Marker types for schema definition — used by the #[table] proc macro.
-pub struct Text;
-pub struct Integer;
-pub struct Real;
-pub struct Blob;
-pub struct Uuid;
-pub struct Boolean;
-pub struct Timestamp;
-pub struct Date;
-pub struct Time;
-pub struct Json;
-pub struct BigInt;
-pub struct SmallInt;
-pub struct Varchar<const N: u32>;
-pub struct Serial;
-pub struct BigSerial;
-pub struct Jsonb;
-pub struct Numeric;
-pub struct Char<const N: u32>;
-/// `#[vec0_table]`'s vector marker; the dimension comes from `#[column(dim = N)]`.
-pub struct Vector;

@@ -2,6 +2,7 @@
 
 use crate::dialect::Dialect;
 
+/// Translate a column default only when its dialect needs it.
 pub(crate) fn translate_default(default: &str, dialect: Dialect) -> String {
   match dialect {
     Dialect::Sqlite => match default.trim() {
@@ -10,5 +11,6 @@ pub(crate) fn translate_default(default: &str, dialect: Dialect) -> String {
       _ => default.to_owned(),
     },
     Dialect::Postgres => dialect.map_default(default),
+    Dialect::Lance => default.to_owned(),
   }
 }

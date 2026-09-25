@@ -18,7 +18,7 @@ macro_rules! impl_execute {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<u64, $crate::QueryError> {
-        let (sql, params) = self.to_sql();
+        let (sql, params) = self.to_sql_for(exec.dialect());
         exec.execute_sql(&sql, params).await
       }
     }
@@ -38,7 +38,7 @@ macro_rules! impl_execute {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<u64, $crate::QueryError> {
-        let (sql, params) = self.to_sql();
+        let (sql, params) = self.to_sql_for(exec.dialect());
         exec.execute_sql(&sql, params)
       }
     }
@@ -74,7 +74,7 @@ macro_rules! impl_returning_fetch {
         &self,
         exec: &(impl $crate::executor::Executor + Send + Sync),
       ) -> Result<Vec<T>, $crate::QueryError> {
-        let (sql, params) = self.to_sql();
+        let (sql, params) = self.to_sql_for(exec.dialect());
         exec.query_map::<T>(&sql, params).await
       }
 
@@ -125,7 +125,7 @@ macro_rules! impl_returning_fetch {
         &self,
         exec: &impl $crate::executor::Executor,
       ) -> Result<Vec<T>, $crate::QueryError> {
-        let (sql, params) = self.to_sql();
+        let (sql, params) = self.to_sql_for(exec.dialect());
         exec.query_map::<T>(&sql, params)
       }
 

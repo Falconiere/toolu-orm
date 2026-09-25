@@ -7,14 +7,17 @@
 #[path = "fixtures/postgres_db.rs"]
 pub mod pg;
 
-use toolu_orm_query::executor::PgTransaction;
+use toolu_orm_core::dialect::Dialect;
+use toolu_orm_query::executor::{Executor, PgTransaction};
 
 use pg::{all_users, client, insert_user, TestResult};
 
 #[tokio::test]
 async fn commit_persists_the_write() -> TestResult {
   let mut client = client("q_pg_tx_commit").await?;
+  assert_eq!(Executor::dialect(&client), Dialect::Postgres);
   let tx = PgTransaction::new(client.transaction().await?);
+  assert_eq!(Executor::dialect(&tx), Dialect::Postgres);
   assert_eq!(insert_user(&tx, "u1", "Ann", "a@x.io", None).await?, 1);
   tx.commit().await?;
   assert_eq!(all_users(&client).await?.len(), 1);

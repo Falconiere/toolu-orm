@@ -11,7 +11,7 @@ use crate::error::DbCoreError;
 pub(crate) fn require_postgres(feature: &str, dialect: Dialect) -> Result<(), DbCoreError> {
   match dialect {
     Dialect::Postgres => Ok(()),
-    Dialect::Sqlite => Err(DbCoreError::PgVectorUnsupportedDialect {
+    Dialect::Sqlite | Dialect::Lance => Err(DbCoreError::PgVectorUnsupportedDialect {
       feature: feature.to_owned(),
       dialect: dialect.as_str(),
     }),

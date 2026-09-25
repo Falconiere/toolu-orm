@@ -9,6 +9,7 @@
 //! `rusqlite_prepared_statement_cache_test`).
 
 use toolu_orm_connection::{DbConnectionBlocking, DbError, RusqliteConnection};
+use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::row::{from_rusqlite_row, FromRow};
 use toolu_orm_core::value::Value;
 
@@ -16,6 +17,11 @@ use crate::QueryError;
 
 /// Synchronous execute/query for a `rusqlite::Connection`.
 pub trait Executor {
+  /// Dialect selected by this executor; override for a runtime-selected backend.
+  fn dialect(&self) -> Dialect {
+    Dialect::CURRENT
+  }
+
   /// # Errors
   ///
   /// Returns [`QueryError`] if the SQL statement fails.
@@ -28,6 +34,10 @@ pub trait Executor {
 }
 
 impl Executor for rusqlite::Connection {
+  fn dialect(&self) -> Dialect {
+    Dialect::Sqlite
+  }
+
   fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, QueryError> {
     let param_refs: Vec<&dyn rusqlite::types::ToSql> = params
       .iter()
@@ -60,6 +70,10 @@ impl Executor for rusqlite::Connection {
 }
 
 impl Executor for RusqliteConnection {
+  fn dialect(&self) -> Dialect {
+    Dialect::Sqlite
+  }
+
   fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, QueryError> {
     DbConnectionBlocking::execute_sql(self, sql, params).map_err(map_db)
   }

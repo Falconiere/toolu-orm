@@ -1,5 +1,6 @@
 //! UPDATE query builder with SET clause, filter support and `RETURNING`.
 
+use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Expr, Scalar};
 use toolu_orm_core::query_column::{tag_column_bind, Column};
@@ -13,6 +14,7 @@ cfg_single_backend! {
 
 // ── UpdateBuilder ─────────────────────────────────────────────────────────────
 
+/// Typed UPDATE query builder.
 pub struct UpdateBuilder {
   table: String,
   /// Assigned column name and the scalar it is set to, in call order.
@@ -25,6 +27,7 @@ pub struct UpdateBuilder {
 impl_filter!(UpdateBuilder);
 
 impl UpdateBuilder {
+  /// Start an UPDATE for a table name.
   pub fn new(table: &str) -> Self {
     Self {
       table: table.to_owned(),
@@ -80,14 +83,15 @@ impl UpdateBuilder {
     self
   }
 
+  /// Render this UPDATE for an explicit dialect.
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
-    let mut sql = format!(r#"UPDATE "{}" SET "#, self.table);
+    let mut sql = format!("UPDATE {} SET ", quote_ident(&self.table));
     let mut params = BoundParams::new();
 
     let mut parts: Vec<String> = Vec::with_capacity(self.sets.len());
     for (column, value) in &self.sets {
       let fragment = value.render_into(&mut params, dialect);
-      parts.push(format!(r#""{column}" = {fragment}"#));
+      parts.push(format!("{} = {fragment}", quote_ident(column)));
     }
     sql.push_str(&parts.join(", "));
 
@@ -97,6 +101,7 @@ impl UpdateBuilder {
     (sql, params.into_values())
   }
 
+  /// Render this UPDATE for the compile-time default dialect.
   pub fn to_sql(&self) -> (String, Vec<Value>) {
     self.to_sql_for(Dialect::CURRENT)
   }

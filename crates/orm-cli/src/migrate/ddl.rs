@@ -20,5 +20,6 @@ pub fn migrations_table_ddl(dialect: Dialect) -> String {
                 applied_at BIGINT NOT NULL DEFAULT extract(epoch from now())::bigint
             );"
       .to_owned(),
+    Dialect::Lance => "-- Lance migrations are unsupported; see issue #181".to_owned(),
   }
 }

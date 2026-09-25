@@ -13,6 +13,7 @@ pub(crate) enum TsQueryFn {
 }
 
 impl TsQueryFn {
+  /// SQL function name for this query form.
   pub(crate) const fn as_sql(self) -> &'static str {
     match self {
       Self::To => "to_tsquery",
@@ -25,12 +26,12 @@ impl TsQueryFn {
 /// Refuses anything but Postgres.
 ///
 /// Postgres full-text (`@@` / `to_tsquery` / `ts_rank`) is a different model
-/// from SQLite FTS5. Rejecting here means no SQLite SQL containing these forms
-/// can be built from this module.
+/// from SQLite FTS5, and Lance does not support this Postgres surface.
+/// Rejecting here means these forms cannot be built for either dialect.
 pub(crate) fn require_postgres(function: &str, dialect: Dialect) -> Result<(), DbCoreError> {
   match dialect {
     Dialect::Postgres => Ok(()),
-    Dialect::Sqlite => Err(DbCoreError::PgFtsUnsupportedDialect {
+    Dialect::Sqlite | Dialect::Lance => Err(DbCoreError::PgFtsUnsupportedDialect {
       function: function.to_owned(),
       dialect: dialect.as_str(),
     }),

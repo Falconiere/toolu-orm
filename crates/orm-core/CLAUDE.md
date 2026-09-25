@@ -17,7 +17,7 @@ Foundation crate for toolu-orm — core types, schema definitions, snapshot/diff
 - `Expr::to_sql_fragment(start)` uses parameter index offset for composable WHERE clauses
 
 ## Key Modules
-- `column.rs` — ColumnType, ColumnDef, ForeignKeyAction, marker types
+- `column/` — `types.rs` defines ColumnType, ColumnDef, and ForeignKeyAction; `markers.rs` defines marker types
 - `table.rs` — TableDef, TableSchema trait
 - `policy.rs` — Postgres row-level security: `RowSecurity` (force flag + `PolicyDef` list) on `TableDef.row_security`; `diff/policy.rs` validates and diffs it, `sql/policy.rs` renders it (comments on SQLite)
 - `schema.rs` — SchemaRegistry (collection of TableDefs)
