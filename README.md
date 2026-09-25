@@ -174,7 +174,8 @@ incompatible file returns `LanceStartupError::LanceDependencyUnavailable`
 before table mutation. The [startup scenario](docs/scenarios/lancedb-extension-startup.md)
 and [Rust probe](docs/scenarios/lancedb-rust-smoke.md) show the real checks.
 Pinned artifacts are verified on macOS arm64 and Linux amd64; other platforms
-need a compatible local file. For offline use, provision the file ahead of
+need a compatible local file. Paths containing backslashes are rejected during
+startup. For offline use, provision the file ahead of
 time and pass its path to every new connection. The smoke script downloads to
 a temporary directory for tests and does not populate a persistent cache.
 

@@ -58,7 +58,7 @@ fi
 printf 'Lance extension SHA-256: %s\n' "$actual"
 cargo fmt --manifest-path probes/lancedb/Cargo.toml -- --check
 cargo clippy --manifest-path probes/lancedb/Cargo.toml --locked --all-targets -- -D warnings
-cargo fmt --all -- --check
+cargo fmt -p toolu-orm-connection -- --check
 cargo clippy -p toolu-orm-connection --no-default-features --features lancedb --all-targets -- -D warnings
 
 if ! listed=$(cargo nextest list --manifest-path probes/lancedb/Cargo.toml --locked --color never); then

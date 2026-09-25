@@ -59,6 +59,12 @@ tokio-postgres = { workspace = true }
 libsql = { workspace = true }
 toolu-orm-macros = { path = "../orm-macros", default-features = false }
 
+# Real Lance startup suite is exercised by the lancedb-smoke CI lane.
+[[test]]
+name = "lancedb_startup_test"
+path = "tests/lancedb_startup_test.rs"
+required-features = ["lancedb"]
+
 # Release benchmark for issue #88: compares uncached/cached rusqlite
 # statement preparation, and the blocking vs async RusqliteConnection paths.
 [[example]]

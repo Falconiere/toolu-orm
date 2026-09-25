@@ -52,7 +52,8 @@ arm64 and Linux amd64 artifacts. Provision one of those files before an
 offline run and pass its path to each new connection. The smoke script's
 download lives only for that test run; it does not fill a persistent cache.
 Other platforms must supply a compatible file and may receive a startup
-incompatibility error. Namespace attach and table lifecycle belong to a
+incompatibility error. Paths containing backslashes are rejected. Namespace
+attach and table lifecycle belong to a
 separate API slice; `DbConnection`, `Executor`, row decoding, and migrations
 are not available for Lance yet.
 

@@ -6,6 +6,24 @@ use std::path::Path;
 const DUCKDB_VERSION: &str = "v1.5.5";
 const LANCE_VERSION: &str = "2f167ea";
 
+fn checked_extension_path(path: &Path) -> Result<&str, LanceStartupError> {
+  let utf8_path = path.to_str().ok_or_else(|| {
+    LanceStartupError::LanceDependencyUnavailable("lance extension path is not valid UTF-8".into())
+  })?;
+  if utf8_path.contains('\\') || utf8_path.contains('\0') {
+    return Err(LanceStartupError::LanceDependencyUnavailable(
+      "lance extension path contains an unsupported backslash or NUL".into(),
+    ));
+  }
+  if !path.is_file() {
+    return Err(LanceStartupError::LanceDependencyUnavailable(format!(
+      "lance extension file is unavailable: {}",
+      path.display()
+    )));
+  }
+  Ok(utf8_path)
+}
+
 /// Startup failures before a Lance namespace or table can be touched.
 #[derive(Debug, thiserror::Error)]
 pub enum LanceStartupError {
@@ -38,16 +56,7 @@ impl LanceConnection {
   /// [`LanceStartupError::LanceDependencyUnavailable`] for an absent or
   /// incompatible extension. No namespace or table is changed on failure.
   pub fn open(extension_path: impl AsRef<Path>) -> Result<Self, LanceStartupError> {
-    let path = extension_path.as_ref();
-    let utf8_path = path.to_str().ok_or_else(|| {
-      LanceStartupError::LanceDependencyUnavailable("lance extension path is not UTF-8".into())
-    })?;
-    if !path.is_file() {
-      return Err(LanceStartupError::LanceDependencyUnavailable(format!(
-        "lance extension file is unavailable: {}",
-        path.display()
-      )));
-    }
+    let utf8_path = checked_extension_path(extension_path.as_ref())?;
 
     let connection = Connection::open_in_memory().map_err(LanceStartupError::DuckDbOpen)?;
     let engine: String = connection

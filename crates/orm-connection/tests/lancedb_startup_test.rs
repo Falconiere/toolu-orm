@@ -79,6 +79,23 @@ fn directory_extension_path_is_named_before_namespace_mutation() -> Result<(), B
   Ok(())
 }
 
+#[cfg(unix)]
+#[test]
+fn backslash_extension_path_is_rejected_before_loading() -> Result<(), Box<dyn Error>> {
+  let fixture = tempfile::tempdir()?;
+  let extension = fixture.path().join("lance\\'unsafe.duckdb_extension");
+  std::fs::write(&extension, b"not an extension")?;
+  let error = LanceConnection::open(&extension)
+    .err()
+    .ok_or("backslash path unexpectedly accepted")?;
+  assert!(matches!(
+    error,
+    LanceStartupError::LanceDependencyUnavailable(_)
+  ));
+  assert!(error.to_string().contains("unsupported backslash"));
+  Ok(())
+}
+
 #[test]
 fn corrupt_extension_is_named_before_namespace_mutation() -> Result<(), Box<dyn Error>> {
   let fixture = tempfile::tempdir()?;
