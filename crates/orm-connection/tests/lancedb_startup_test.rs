@@ -14,10 +14,12 @@ fn pinned_extension() -> Result<PathBuf, Box<dyn Error>> {
 #[test]
 fn pinned_extension_prepares_lance_sql_after_startup() -> Result<(), Box<dyn Error>> {
   let fixture = tempfile::tempdir()?;
+  let source = pinned_extension()?;
+  LanceConnection::open(&source)?;
   let quoted_dir = fixture.path().join("quote's extensions");
   std::fs::create_dir(&quoted_dir)?;
   let extension = quoted_dir.join("lance.duckdb_extension");
-  std::fs::copy(pinned_extension()?, &extension)?;
+  std::fs::copy(&source, &extension)?;
   let original = std::fs::read(&extension)?;
   let namespace = fixture.path().join("not-yet-attached");
 

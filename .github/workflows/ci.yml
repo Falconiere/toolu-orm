@@ -148,6 +148,7 @@ jobs:
         run: bash scripts/check-file-length.sh
 
   lancedb-smoke:
+    # The smoke script pins DuckDB v1.5.5's linux_amd64 Lance artifact by SHA-256.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -165,6 +166,9 @@ jobs:
 
       - name: LanceDB Rust SQL capability probes
         run: bash scripts/check-lancedb-smoke.sh
+
+      - name: Missing Lance extension fails hard
+        run: bash scripts/check-lancedb-missing-extension.sh
 
       - name: LanceDB feature wiring
         run: bash scripts/check-lancedb-feature.sh

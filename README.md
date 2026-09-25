@@ -825,8 +825,11 @@ bash scripts/check-file-length.sh
 ```
 
 The `lancedb-smoke` CI job also runs `bash scripts/check-lancedb-smoke.sh`
-against a real local Lance directory and `bash scripts/check-lancedb-feature.sh`
-for facade dependency resolution and feature coexistence.
+against a real local Lance directory,
+`bash scripts/check-lancedb-missing-extension.sh` to prove an absent extension
+fails the production startup test with `LanceDependencyUnavailable`, and
+`bash scripts/check-lancedb-feature.sh` for facade dependency resolution and
+feature coexistence.
 
 `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, and `TEST_DB_PASSWORD` point the
 Postgres suites at another server. Each feature scenario is documented in
