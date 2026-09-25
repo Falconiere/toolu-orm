@@ -46,9 +46,9 @@ pub enum QueryError {
   #[cfg(all(
     feature = "rusqlite",
     not(feature = "libsql"),
-    not(feature = "postgres"),
-    not(feature = "lancedb")
+    not(feature = "postgres")
   ))]
+  #[cfg(not(feature = "lancedb"))]
   #[error("database error: {0}")]
   Connection(String),
 }
