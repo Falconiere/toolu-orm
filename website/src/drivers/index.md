@@ -20,7 +20,7 @@ crate's wrapper; functions accepting `DbConnection` take the connection crate's.
 crate can enable several drivers together. Its blocking trait also supports
 `run_migrate_blocking` and `get_status_blocking` without an async runtime.
 
-## Lance extension startup
+## Lance extension and local namespace
 
 The optional `lancedb` Cargo feature is forwarded by the `toolu-orm` facade to
 its core, macro, query, and connection crates. It adds bundled Rust `duckdb`
@@ -43,19 +43,66 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 `open` returns a loaded in-memory DuckDB connection. It never downloads or
-caches an artifact, attaches a namespace, or creates a table. An absent,
+caches an artifact, attaches a namespace, or creates a table. After startup,
+attach an existing local directory to select it for unqualified SQL:
+
+```rust
+use toolu_orm::connection::{LanceColumn, LanceColumnType, LanceConnection};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let extension = std::env::var("LANCE_EXTENSION_PATH")?;
+    let directory = std::env::temp_dir().join(format!(
+        "toolu-lance-demo-{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos()
+    ));
+    std::fs::create_dir(&directory)?;
+
+    {
+        let namespace = LanceConnection::open(&extension)?.attach(&directory, "local")?;
+        namespace.create_table("items", &[
+            LanceColumn { name: "id", data_type: LanceColumnType::BigInt },
+            LanceColumn { name: "label", data_type: LanceColumnType::Varchar },
+        ])?;
+        namespace.connection().execute(
+            "INSERT INTO items VALUES (1, 'persisted')", []
+        )?;
+    }
+
+    let reopened = LanceConnection::open(&extension)?.attach(&directory, "local")?;
+    reopened.open_table("items")?;
+    assert_eq!(reopened.list_tables()?, vec!["items"]);
+    let label: String = reopened.connection().query_row(
+        "SELECT label FROM items WHERE id = 1", [], |row| row.get(0)
+    )?;
+    assert_eq!(label, "persisted");
+    reopened.drop_table("items")?;
+    drop(reopened);
+    std::fs::remove_dir_all(directory)?;
+    Ok(())
+}
+```
+
+`create_table` currently accepts `BigInt` and `Varchar` columns. Duplicate
+creates and missing table opens or drops return named errors without replacing
+existing rows. Paths are quoted or rejected before SQL runs. Catalog, table,
+and column names must start with an ASCII letter or underscore and then contain
+only ASCII letters, digits, or underscores; they are quoted before SQL runs.
+The [namespace lifecycle scenario](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-namespace-lifecycle.md)
+records the real reopen and error tests. An absent,
 unreadable, or incompatible file returns the named
 `LanceStartupError::LanceDependencyUnavailable` before user SQL or table
 mutation. The [Rust smoke probe](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-rust-smoke.md)
 records the pinned extension URLs and SHA-256 values for the verified macOS
-arm64 and Linux amd64 artifacts. Provision one of those files before an
+arm64 and Linux amd64 artifacts. The namespace lifecycle scenario above
+records the Linux arm64 checksum. Provision a matching file before an
 offline run and pass its path to each new connection. The smoke script's
 download lives only for that test run; it does not fill a persistent cache.
 Other platforms must supply a compatible file and may receive a startup
-incompatibility error. Paths containing backslashes are rejected. Namespace
-attach and table lifecycle belong to a
-separate API slice; `DbConnection`, `Executor`, row decoding, and migrations
-are not available for Lance yet.
+incompatibility error. Extension paths containing backslashes are rejected.
+`DbConnection`, portable query execution, row decoding, and migrations are not
+available for Lance yet.
 
 `lancedb` can coexist with `postgres`, `rusqlite`, or `libsql` in Cargo. The
 query crate exposes its existing executor only when one implemented driver is

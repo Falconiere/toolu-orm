@@ -169,18 +169,24 @@ The optional `lancedb` feature includes bundled Rust `duckdb` `1.10505.0`
 (DuckDB v1.5.5). `toolu_orm::connection::LanceConnection::open(path)` opens
 embedded DuckDB, loads the local Lance extension, and verifies loaded build
 `2f167ea` before returning. The caller supplies the extension file; startup
-does not download, cache, attach a namespace, or create tables. An absent or
+does not download, cache, attach a namespace, or create tables. After startup,
+`attach(existing_directory, namespace)` selects a local Lance catalog for
+unqualified SQL. Its `LanceNamespace` supports `create_table`, `open_table`,
+`list_tables`, and `drop_table`; a fresh connection can reopen persisted rows.
+The caller creates the directory before attaching it. An absent or
 incompatible file returns `LanceStartupError::LanceDependencyUnavailable`
 before table mutation. The [startup scenario](docs/scenarios/lancedb-extension-startup.md)
-and [Rust probe](docs/scenarios/lancedb-rust-smoke.md) show the real checks.
-Pinned artifacts are verified on macOS arm64 and Linux amd64; other platforms
-need a compatible local file. Paths containing backslashes are rejected during
+and [namespace lifecycle scenario](docs/scenarios/lancedb-namespace-lifecycle.md)
+show the real checks; the [Rust probe](docs/scenarios/lancedb-rust-smoke.md)
+checks extension loading.
+Pinned artifacts are verified on macOS arm64, Linux amd64, and Linux arm64;
+other platforms need a compatible local file. Paths containing backslashes are rejected during
 startup. For offline use, provision the file ahead of
 time and pass its path to every new connection. The smoke script downloads to
 a temporary directory for tests and does not populate a persistent cache.
 
-This slice does not yet provide namespace attachment, `DbConnection`, a query
-executor, or a CLI migration backend. `lancedb` may be enabled with an existing
+This slice does not yet provide `DbConnection`, a query executor, portable
+schema rendering, or a CLI migration backend. `lancedb` may be enabled with an existing
 driver feature, but query execution is available only when exactly one
 implemented driver (`libsql`, `rusqlite`, or `postgres`) is enabled and
 `lancedb` is absent.

@@ -2,6 +2,9 @@
 
 **Scope:** Issue #158 opens embedded DuckDB with a previously provisioned Lance extension. It does not attach a Lance namespace or create tables during startup.
 
+Issue #159 adds explicit attachment and table lifecycle after startup; see the
+[namespace lifecycle scenario](lancedb-namespace-lifecycle.md).
+
 The production startup API accepts an explicit local extension path and verifies DuckDB `v1.5.5` and loaded Lance build `2f167ea`. A missing, directory, or corrupt file, or a non-UTF-8 path, returns `LanceStartupError::LanceDependencyUnavailable` before a target namespace exists. The successful test attaches a real temporary Lance namespace *after* startup and prepares a bound SELECT against a real row. Its extension path contains a quote, and the local file's bytes are unchanged after opening.
 
 Paths containing backslashes or NUL are rejected before `LOAD` so SQL literal parsing cannot treat those characters as escapes.
