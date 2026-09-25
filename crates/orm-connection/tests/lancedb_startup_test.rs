@@ -132,7 +132,7 @@ fn non_utf8_extension_path_is_named_before_namespace_mutation() -> Result<(), Bo
     error,
     LanceStartupError::LanceDependencyUnavailable(_)
   ));
-  assert!(error.to_string().contains("not UTF-8"));
+  assert!(error.to_string().contains("not valid UTF-8"));
   assert!(!namespace.exists());
   Ok(())
 }
