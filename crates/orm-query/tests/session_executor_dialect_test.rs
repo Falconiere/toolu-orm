@@ -1,3 +1,5 @@
+#![cfg(not(feature = "postgres"))]
+
 use std::cell::RefCell;
 
 use rusqlite::Connection;

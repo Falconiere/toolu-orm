@@ -121,8 +121,12 @@ fn explicit_rendering_and_legacy_current_remain_distinct() {
   assert_eq!(builder.to_sql(), builder.to_sql_for(Dialect::CURRENT));
   assert!(builder.to_sql_for(Dialect::Postgres).0.contains("$1"));
   assert!(builder.to_sql_for(Dialect::Lance).0.contains("?1"));
-  #[cfg(all(feature = "postgres", feature = "lancedb"))]
-  assert_eq!(Dialect::CURRENT, Dialect::Postgres);
+  let expected_current = if cfg!(feature = "postgres") {
+    Dialect::Postgres
+  } else {
+    Dialect::Sqlite
+  };
+  assert_eq!(Dialect::CURRENT, expected_current);
 }
 
 #[test]
