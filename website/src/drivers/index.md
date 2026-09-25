@@ -20,15 +20,41 @@ crate's wrapper; functions accepting `DbConnection` take the connection crate's.
 crate can enable several drivers together. Its blocking trait also supports
 `run_migrate_blocking` and `get_status_blocking` without an async runtime.
 
-## LanceDB dependency feature
+## Lance extension startup
 
 The optional `lancedb` Cargo feature is forwarded by the `toolu-orm` facade to
-its core, macro, query, and connection crates. It adds a bundled Rust `duckdb`
-`1.10505.0` dependency (DuckDB v1.5.5). The separate
-[Rust smoke probe](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-rust-smoke.md)
-pins and tests Lance extension build `2f167ea` on a real local directory.
-The feature does not yet load that extension or provide a production Lance
-connection, `DbConnection`, `Executor`, row decoder, or migration backend.
+its core, macro, query, and connection crates. It adds bundled Rust `duckdb`
+`1.10505.0` (DuckDB v1.5.5). The production startup API loads and verifies
+Lance extension build `2f167ea` from a caller-supplied local file:
+
+```rust
+use toolu_orm::connection::LanceConnection;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let extension = std::env::var("LANCE_EXTENSION_PATH")?;
+    let lance = LanceConnection::open(std::path::Path::new(&extension))?;
+    let mut statement = lance.connection().prepare(
+        "SELECT loaded FROM duckdb_extensions() WHERE extension_name = 'lance'"
+    )?;
+    let loaded: bool = statement.query_row([], |row| row.get(0))?;
+    assert!(loaded);
+    Ok(())
+}
+```
+
+`open` returns a loaded in-memory DuckDB connection. It never downloads or
+caches an artifact, attaches a namespace, or creates a table. An absent,
+unreadable, or incompatible file returns the named
+`LanceStartupError::LanceDependencyUnavailable` before user SQL or table
+mutation. The [Rust smoke probe](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-rust-smoke.md)
+records the pinned extension URLs and SHA-256 values for the verified macOS
+arm64 and Linux amd64 artifacts. Provision one of those files before an
+offline run and pass its path to each new connection. The smoke script's
+download lives only for that test run; it does not fill a persistent cache.
+Other platforms must supply a compatible file and may receive a startup
+incompatibility error. Namespace attach and table lifecycle belong to a
+separate API slice; `DbConnection`, `Executor`, row decoding, and migrations
+are not available for Lance yet.
 
 `lancedb` can coexist with `postgres`, `rusqlite`, or `libsql` in Cargo. The
 query crate exposes its existing executor only when one implemented driver is
