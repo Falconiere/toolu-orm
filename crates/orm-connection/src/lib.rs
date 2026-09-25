@@ -1,7 +1,7 @@
 //! Connection traits and implementations for libsql, rusqlite, and Postgres.
 //!
-//! No driver is enabled by default. The optional `lancedb` feature adds
-//! bundled DuckDB only; a Lance connection is not yet available.
+//! No driver is enabled by default. The optional `lancedb` feature opens
+//! embedded DuckDB with a caller-supplied pinned Lance extension.
 
 /// Synchronous connection trait.
 pub mod blocking_trait_def;
@@ -22,6 +22,10 @@ pub mod rusqlite_impl;
 /// PostgreSQL connection implementation.
 pub mod postgres_impl;
 
+#[cfg(feature = "lancedb")]
+/// Embedded DuckDB and Lance extension startup.
+pub mod lancedb;
+
 pub use blocking_trait_def::DbConnectionBlocking;
 pub use error::DbError;
 pub use trait_def::DbConnection;
@@ -37,3 +41,6 @@ pub use rusqlite_impl::{
 
 #[cfg(feature = "postgres")]
 pub use postgres_impl::{PgConfig, PgConnection, PgDatabase, PgTransaction};
+
+#[cfg(feature = "lancedb")]
+pub use lancedb::{LanceConnection, LanceStartupError};

@@ -12,7 +12,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Toolchain pinned in `rust-toolchain.toml`. Lints live in the root `Cargo.toml` (`[workspace.lints]`) and `clippy.toml`; every crate inherits them with `[lints] workspace = true`.
 
 ## Driver features
-- Features `libsql`, `rusqlite`, `postgres`, and `lancedb` exist on the facade, core, macros, query, connection, CLI and facade-consumer; the dependents forward them to orm-core. `lancedb` currently wires bundled DuckDB only; it has no production connection or row decoder and does not change the existing three-driver `FromRow` shape. The sqlite-vec register helper has no driver features.
+- Features `libsql`, `rusqlite`, `postgres`, and `lancedb` exist on the facade, core, macros, query, connection, CLI and facade-consumer; the dependents forward them to orm-core. `lancedb` provides `LanceConnection::open(path)` for bundled DuckDB plus a caller-supplied pinned Lance extension, but no namespace attach, `DbConnection`, or row decoder; it does not change the existing three-driver `FromRow` shape. The sqlite-vec register helper has no driver features.
 - Consumers activate the drivers they need on every crate they depend on. For libsql/rusqlite query execution, keep core and query on the same single driver: query's scalar decoders implement the single-driver `FromRow` shape.
 - `FromRow` changes shape per driver set: one driver on orm-core gives `from_row(&Row)`; two or more give `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`. `#[derive(FromRow)]` follows that shape — it emits one decoder per driver and hands all of them to `toolu_orm_core::impl_derived_from_row!`, whose eight definitions are `#[cfg]`-gated on orm-core's own features (`crates/orm-core/src/row/derived.rs`). Deriving it therefore never pins a suite to a lane. Hand-written impls stay supported and stay covered (orm-cli's `migrate/store/applied.rs`, orm-connection's rusqlite fixtures, orm-query's `integration_test`).
 - orm-query uses `cfg_single_backend!` for executors and their execute/fetch builder methods only when exactly one implemented driver is active and `lancedb` is absent. Filter building remains available across feature combinations; libsql transactions have the same single-driver gate.
@@ -65,5 +65,5 @@ bash scripts/check-file-length.sh
 ```
 
 The separate `lancedb-smoke` CI job runs `bash scripts/check-lancedb-smoke.sh`
-and `bash scripts/check-lancedb-feature.sh` for the pinned real Lance probe and
-optional dependency feature rule.
+and `bash scripts/check-lancedb-feature.sh` for the pinned real Lance probe,
+production startup tests, and optional dependency feature rule.
