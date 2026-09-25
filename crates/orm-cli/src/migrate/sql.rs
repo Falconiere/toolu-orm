@@ -6,7 +6,7 @@ use toolu_orm_core::dialect::Dialect;
 #[must_use]
 pub(super) fn insert_migration_sql(dialect: Dialect) -> &'static str {
   match dialect {
-    Dialect::Sqlite => "INSERT INTO _migrations (name, hash) VALUES (?1, ?2)",
+    Dialect::Sqlite | Dialect::Lance => "INSERT INTO _migrations (name, hash) VALUES (?1, ?2)",
     Dialect::Postgres => "INSERT INTO _migrations (name, hash) VALUES ($1, $2)",
   }
 }
@@ -16,8 +16,11 @@ pub(super) fn insert_migration_sql(dialect: Dialect) -> &'static str {
 /// history it is about to skip, and one statement serves both readings.
 pub(super) const SELECT_APPLIED_MIGRATIONS: &str = "SELECT name, hash FROM _migrations ORDER BY id";
 
+/// Start the migration transaction.
 pub(super) const BEGIN: &str = "BEGIN";
+/// Commit the migration transaction.
 pub(super) const COMMIT: &str = "COMMIT";
+/// Roll back the migration transaction.
 pub(super) const ROLLBACK: &str = "ROLLBACK";
 
 /// Reads SQLite's current foreign-key enforcement as a single `0`/`1` row.

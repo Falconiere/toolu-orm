@@ -14,6 +14,7 @@ use super::postgres::alter_column_statements_postgres;
 
 /// Separator between several statements rendered for one operation.
 const BREAKPOINT: &str = "\n\n--> statement-breakpoint\n\n";
+const LANCE_UNSUPPORTED: &str = "-- Lance migration SQL is unsupported; see issue #181";
 
 /// One operation as SQL. An operation a dialect cannot express renders as a
 /// `--` comment, and an operation the SQLite rebuild planner already absorbed
@@ -70,6 +71,7 @@ fn drop_enum_sql(name: &str, dialect: Dialect) -> String {
   match dialect {
     Dialect::Postgres => format!("DROP TYPE IF EXISTS \"{name}\";"),
     Dialect::Sqlite => format!("-- drop enum \"{name}\" (no-op on SQLite)"),
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
   }
 }
 
@@ -78,6 +80,7 @@ fn drop_column_sql(table: &str, column: &str, dialect: Dialect) -> String {
   match dialect {
     Dialect::Postgres => format!("ALTER TABLE \"{table}\" DROP COLUMN IF EXISTS \"{column}\";"),
     Dialect::Sqlite => format!("ALTER TABLE \"{table}\" DROP COLUMN \"{column}\";"),
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
   }
 }
 
@@ -88,6 +91,7 @@ fn drop_foreign_key_sql(table: &str, name: &str, dialect: Dialect) -> String {
     Dialect::Sqlite => {
       format!("-- drop FOREIGN KEY \"{name}\" on \"{table}\" (SQLite: rebuild table)")
     },
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
   }
 }
 
@@ -100,6 +104,7 @@ fn add_check_constraint_sql(table: &str, name: &str, expr: &str, dialect: Dialec
     Dialect::Sqlite => {
       format!("-- ADD CHECK \"{name}\" on \"{table}\" ({expr}) — SQLite may require table rebuild")
     },
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
   }
 }
 
@@ -110,6 +115,7 @@ fn drop_check_constraint_sql(table: &str, name: &str, dialect: Dialect) -> Strin
     Dialect::Sqlite => {
       format!("-- DROP CHECK \"{name}\" on \"{table}\" (SQLite may require table rebuild)")
     },
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
   }
 }
 
@@ -125,6 +131,7 @@ fn create_enum_sql(name: &str, variants: &[String], dialect: Dialect) -> String 
       format!("CREATE TYPE \"{name}\" AS ENUM ({vals});")
     },
     Dialect::Sqlite => format!("-- enum \"{name}\" (SQLite: TEXT + CHECK)"),
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
   }
 }
 
@@ -146,6 +153,7 @@ fn alter_enum_sql(name: &str, added: &[String], removed: &[String], dialect: Dia
           "-- ALTER ENUM \"{name}\" add variants (SQLite: adjust CHECK)\n"
         ));
       },
+      Dialect::Lance => s.push_str(LANCE_UNSUPPORTED),
     }
   }
   if !removed.is_empty() {
@@ -156,6 +164,7 @@ fn alter_enum_sql(name: &str, added: &[String], removed: &[String], dialect: Dia
         s.push('\n');
       },
       Dialect::Sqlite => s.push_str("-- SQLite: adjust CHECK for enum variant removal\n"),
+      Dialect::Lance => s.push_str(LANCE_UNSUPPORTED),
     }
   }
   s.trim_end().to_owned()
@@ -178,6 +187,7 @@ fn alter_column_sql(
       alter_column_statements_postgres(table, changes, table_def).join(BREAKPOINT)
     },
     Dialect::Sqlite => String::new(),
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
   }
 }
 
@@ -189,6 +199,7 @@ fn add_foreign_key_sql(table: &str, fk: &ForeignKeyDef, dialect: Dialect) -> Str
       "-- FOREIGN KEY \"{}\" on \"{table}\" (SQLite: rebuild table to attach constraint)",
       fk.name
     ),
+    Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
     Dialect::Postgres => {
       let cols = quoted_csv(&fk.columns);
       let ref_cols = quoted_csv(&fk.references_columns);

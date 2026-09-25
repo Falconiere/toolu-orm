@@ -40,6 +40,7 @@ A suite can also be missing for a reason no lane explains: `query_column_test` w
 | Lane | Binary | Test |
 |---|---|---|
 | libsql-only | executor_test | insert_and_select |
+| libsql-only | executor_test | built_in_libsql_executor_reports_sqlite |
 | libsql-only | executor_test | select_empty_returns_empty_vec |
 | libsql-only | executor_test | fetch_one_returns_single |
 | libsql-only | executor_test | fetch_one_empty_returns_not_found |

@@ -1,5 +1,6 @@
 //! The `SELECT` projection list: plain columns, raw fragments, and scalars.
 
+use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::alias::QualifiedColumn;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Scalar};
@@ -61,7 +62,7 @@ impl SelectBuilder {
     let mut parts: Vec<String> = self.columns.clone();
     for (expr, alias) in &self.column_exprs {
       let fragment = expr.render_into(params, dialect);
-      parts.push(format!(r#"{fragment} AS "{alias}""#));
+      parts.push(format!("{fragment} AS {}", quote_ident(alias)));
     }
     parts.join(", ")
   }

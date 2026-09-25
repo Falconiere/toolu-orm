@@ -6,13 +6,20 @@
 //! - [`PgTransaction`] — transaction wrapper implementing [`Executor`]
 
 use toolu_orm_core::error::DbCoreError;
+use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::row::FromRow;
 use toolu_orm_core::value::Value;
 
 use crate::QueryError;
 
 #[async_trait::async_trait]
+/// Async SQL executor implemented by PostgreSQL clients and transactions.
 pub trait Executor {
+  /// Dialect selected by this executor; override for a runtime-selected backend.
+  fn dialect(&self) -> Dialect {
+    Dialect::CURRENT
+  }
+
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, QueryError>;
 
   async fn query_map<T: FromRow + Send>(
@@ -22,6 +29,7 @@ pub trait Executor {
   ) -> Result<Vec<T>, QueryError>;
 }
 
+/// Borrow encoded PostgreSQL parameters for one driver call.
 pub(crate) fn pg_param_slice(
   pg_params: &[Box<dyn tokio_postgres::types::ToSql + Sync + Send>],
 ) -> Vec<&(dyn tokio_postgres::types::ToSql + Sync)> {
@@ -59,6 +67,10 @@ async fn pg_query_map<T: FromRow + Send>(
 
 #[async_trait::async_trait]
 impl Executor for tokio_postgres::Client {
+  fn dialect(&self) -> Dialect {
+    Dialect::Postgres
+  }
+
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, QueryError> {
     pg_execute(self, sql, params).await
   }
@@ -78,6 +90,7 @@ pub struct PgTransaction<'a> {
 }
 
 impl<'a> PgTransaction<'a> {
+  /// Wrap an open PostgreSQL transaction for query-builder execution.
   pub fn new(txn: tokio_postgres::Transaction<'a>) -> Self {
     Self { inner: txn }
   }
@@ -107,6 +120,10 @@ impl<'a> PgTransaction<'a> {
 
 #[async_trait::async_trait]
 impl<'a> Executor for PgTransaction<'a> {
+  fn dialect(&self) -> Dialect {
+    Dialect::Postgres
+  }
+
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, QueryError> {
     pg_execute(&self.inner, sql, params).await
   }

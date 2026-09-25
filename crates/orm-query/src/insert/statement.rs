@@ -1,16 +1,7 @@
-//! The full `INSERT` statement: how [`InsertBuilder`] renders its clauses and
-//! numbers their parameters.
+//! `INSERT` clause rendering with one statement-wide [`BoundParams`] ledger.
 //!
-//! One rule governs the numbering, the same one every other builder in this
-//! workspace follows: position lives in the statement-wide
-//! [`BoundParams`](toolu_orm_core::expr::BoundParams), and each clause takes
-//! `next_index()` at the moment it writes. A caller never adds an offset on
-//! top of it, which would double-count, so clauses can be added, removed or
-//! reordered without renumbering anything after them.
-//!
-//! A [`SharedBind`](toolu_orm_core::expr::SharedBind) is the one thing that
-//! may not advance the length: a repeat occurrence renders the index it
-//! already took.
+//! Each clause numbers binds when written; a reused `SharedBind` keeps its
+//! original index.
 
 use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
@@ -26,7 +17,7 @@ impl InsertBuilder {
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     match dialect {
       Dialect::Sqlite => self.to_sql_sqlite(),
-      Dialect::Postgres => self.to_sql_postgres(),
+      Dialect::Postgres | Dialect::Lance => self.to_sql_postgres_style(dialect),
     }
   }
 
@@ -64,15 +55,15 @@ impl InsertBuilder {
 
   /// `INSERT INTO <target> <rows> [<conflict>] [<returning>]`.
   ///
-  /// Postgres has no `INSERT OR …` keyword, so every conflict policy renders
-  /// as an `ON CONFLICT` clause after the rows.
-  fn to_sql_postgres(&self) -> (String, Vec<Value>) {
+  /// Postgres and Lance have no SQLite `INSERT OR …` keyword. Lance capability
+  /// validation is owned by #174; this keeps requested conflict clauses visible.
+  fn to_sql_postgres_style(&self, dialect: Dialect) -> (String, Vec<Value>) {
     let mut sql = String::new();
 
     sql.push_str("INSERT INTO ");
     self.push_target(&mut sql);
     let mut params = BoundParams::new();
-    self.push_rows(&mut sql, &mut params, Dialect::Postgres);
+    self.push_rows(&mut sql, &mut params, dialect);
 
     match &self.conflict_mode {
       ConflictMode::None => {},
@@ -80,7 +71,7 @@ impl InsertBuilder {
       ConflictMode::Replace => {
         push_legacy_postgres_replace(&mut sql, self.active_columns(), &self.conflict_cols);
       },
-      ConflictMode::Clause(clause) => clause.push_sql(&mut sql, &mut params, Dialect::Postgres),
+      ConflictMode::Clause(clause) => clause.push_sql(&mut sql, &mut params, dialect),
     }
     self.push_returning(&mut sql);
 

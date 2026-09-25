@@ -10,20 +10,15 @@ use toolu_orm_core::vec0;
 use super::SelectBuilder;
 
 impl SelectBuilder {
-  /// `embedding MATCH ? AND k = ?` as two top-level WHERE conjuncts.
+  /// Add top-level `embedding MATCH ? AND k = ?` vec0 predicates.
   ///
-  /// `k` is a hidden scan parameter of the `vec0` module, not a filter: this
-  /// method pushes it next to the `MATCH` so it cannot be nested under an
-  /// `OR`. When other predicates narrow the result, neighbours are fetched
-  /// then filtered — pass a `k` larger than `LIMIT` (oversample) if you need
-  /// a full page after filtering.
-  ///
-  /// Executing the generated SQL requires the `sqlite-vec` extension on the
-  /// connection.
+  /// `k` controls the scan before other filters; oversample for a full page.
+  /// Execution requires the `sqlite-vec` extension.
   ///
   /// # Errors
   ///
-  /// - [`DbCoreError::Vec0UnsupportedDialect`] for [`Dialect::Postgres`]
+  /// - [`DbCoreError::Vec0UnsupportedDialect`] for [`Dialect::Postgres`] or
+  ///   [`Dialect::Lance`]
   /// - [`DbCoreError::Vec0InvalidArgument`] when `k <= 0` or `.knn` was
   ///   already applied on this builder
   pub fn knn_for<V: Into<Value>>(

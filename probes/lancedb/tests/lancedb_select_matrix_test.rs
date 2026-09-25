@@ -3,6 +3,8 @@ pub mod lance;
 #[path = "fixtures/matrix_support.rs"]
 pub mod support;
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use toolu_orm_core::{
   dialect::Dialect,
   expr::{OrderBy, Scalar},
@@ -24,7 +26,7 @@ fn bound_filter_projection_order_and_page_return_expected_rows() -> TestResult {
     .order_by(ITEM_ID.asc())
     .limit(2)
     .offset(1)
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     sql,
     r#"SELECT "items"."id", "items"."name" FROM "items" WHERE "items"."score" > ?1 ORDER BY "items"."id" ASC LIMIT ?2 OFFSET ?3"#
@@ -44,6 +46,48 @@ fn bound_filter_projection_order_and_page_return_expected_rows() -> TestResult {
 }
 
 #[test]
+fn offset_without_limit_uses_lance_syntax() -> TestResult {
+  let fixture = Fixture::new()?;
+  let (sql, params) = SelectBuilder::new("items")
+    .columns_qualified(&[&ITEM_ID])
+    .order_by(ITEM_ID.asc())
+    .offset(2)
+    .to_sql_for(Dialect::Lance);
+  assert_eq!(
+    sql,
+    r#"SELECT "items"."id" FROM "items" ORDER BY "items"."id" ASC OFFSET ?1"#
+  );
+  assert_eq!(params, vec![Value::Integer(2)]);
+  assert_eq!(
+    fixture.rows(&sql, &params, |row| row.get::<_, i64>(0))?,
+    vec![3, 4]
+  );
+  Ok(())
+}
+
+#[test]
+fn now_epoch_expression_matches_the_system_clock() -> TestResult {
+  let fixture = Fixture::new()?;
+  let (sql, params) = SelectBuilder::raw()
+    .column_expr(Dialect::Lance.now_epoch(), "epoch")
+    .to_sql_for(Dialect::Lance);
+  assert_eq!(sql, r#"SELECT floor(epoch(now()))::bigint AS "epoch""#);
+  assert!(params.is_empty());
+  let before: i64 = SystemTime::now()
+    .duration_since(UNIX_EPOCH)?
+    .as_secs()
+    .try_into()?;
+  let epochs = fixture.rows(&sql, &params, |row| row.get::<_, i64>(0))?;
+  let after: i64 = SystemTime::now()
+    .duration_since(UNIX_EPOCH)?
+    .as_secs()
+    .try_into()?;
+  assert_eq!(epochs.len(), 1);
+  assert!((before..=after).contains(&epochs[0]));
+  Ok(())
+}
+
+#[test]
 fn inner_and_left_join_preserve_matches_and_unmatched_rows() -> TestResult {
   let fixture = Fixture::new()?;
   let inner = SelectBuilder::new("items")
@@ -52,7 +96,7 @@ fn inner_and_left_join_preserve_matches_and_unmatched_rows() -> TestResult {
     .join("groups", GROUP_ID.equals(&ITEM_GROUP))
     .filter(GROUP_LABEL.eq("alpha"))
     .order_by(ITEM_ID.asc())
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     inner.0,
     r#"SELECT "items"."id", "groups"."label" AS "label" FROM "items" INNER JOIN "groups" ON "groups"."id" = "items"."group_id" WHERE "groups"."label" = ?1 ORDER BY "items"."id" ASC"#
@@ -68,7 +112,7 @@ fn inner_and_left_join_preserve_matches_and_unmatched_rows() -> TestResult {
     .column_as(&GROUP_LABEL, "label")
     .left_join("groups", GROUP_ID.equals(&ITEM_GROUP))
     .filter(ITEM_ID.eq(4_i64))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     left.0,
     r#"SELECT "items"."id", "groups"."label" AS "label" FROM "items" LEFT JOIN "groups" ON "groups"."id" = "items"."group_id" WHERE "items"."id" = ?1"#
@@ -89,7 +133,7 @@ fn distinct_group_by_and_having_apply_bound_filters() -> TestResult {
     .distinct()
     .filter(ITEM_SCORE.gt(15_i64))
     .order_by(ITEM_GROUP.asc())
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     distinct.0,
     r#"SELECT DISTINCT "items"."group_id" FROM "items" WHERE "items"."score" > ?1 ORDER BY "items"."group_id" ASC"#
@@ -104,7 +148,7 @@ fn distinct_group_by_and_having_apply_bound_filters() -> TestResult {
     .filter(ITEM_SCORE.gt(5_i64))
     .group_by(&ITEM_GROUP)
     .having(Scalar::count_star().gt(Scalar::bind(1_i64)))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     grouped.0,
     r#"SELECT "items"."group_id", COUNT(*) AS "n" FROM "items" WHERE "items"."score" > ?1 GROUP BY "items"."group_id" HAVING COUNT(*) > ?2"#
@@ -130,7 +174,7 @@ fn cte_subquery_and_union_keep_bind_order_across_selects() -> TestResult {
     ))
     .filter(Scalar::sql(r#""hits"."id""#).lt(Scalar::bind(4_i64)))
     .order_by(OrderBy::alias_asc("id"))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     cte.0,
     r#"WITH "hits" AS (SELECT "items"."id" FROM "items" WHERE "items"."score" > ?1) SELECT "id" FROM "hits" WHERE "hits"."id" < ?2 ORDER BY "id" ASC"#
@@ -151,7 +195,7 @@ fn cte_subquery_and_union_keep_bind_order_across_selects() -> TestResult {
           .filter(ITEM_GROUP.eq(2_i64)),
       ),
     )
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     nested.0,
     r#"SELECT "items"."id" FROM "items" WHERE "items"."score" > ?1 AND "items"."id" IN (SELECT "items"."id" FROM "items" WHERE "items"."group_id" = ?2)"#
@@ -171,7 +215,7 @@ fn cte_subquery_and_union_keep_bind_order_across_selects() -> TestResult {
         .filter(ITEM_SCORE.gt(15_i64)),
     )
     .order_by(OrderBy::alias_asc("id"))
-    .to_sql_for(Dialect::Sqlite);
+    .to_sql_for(Dialect::Lance);
   assert_eq!(
     union.0,
     r#"SELECT "items"."id" FROM "items" WHERE "items"."group_id" = ?1 UNION SELECT "items"."id" FROM "items" WHERE "items"."score" > ?2 ORDER BY "id" ASC"#

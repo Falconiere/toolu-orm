@@ -4,7 +4,7 @@
 //! Statement rendering lives in `super::statement`; the counted and existence
 //! forms in `super::count_exists`.
 
-use toolu_orm_core::alias::TableRef;
+use toolu_orm_core::alias::{quote_ident, TableRef};
 use toolu_orm_core::expr::{Expr, JoinCondition, OrderBy, Scalar};
 use toolu_orm_core::query_column::ColumnRef;
 
@@ -16,6 +16,7 @@ use super::join_clause::JoinClause;
 
 // ── SelectBuilder ─────────────────────────────────────────────────────────────
 
+/// Typed SELECT query builder.
 pub struct SelectBuilder {
   pub(super) table: TableRef,
   /// Select-list items, already rendered: `"id"` or `"users"."id"`.
@@ -43,6 +44,7 @@ pub struct SelectBuilder {
 impl_filter!(SelectBuilder);
 
 impl SelectBuilder {
+  /// Start a SELECT from a table name.
   pub fn new(table: &str) -> Self {
     Self::from_table(table)
   }
@@ -71,6 +73,7 @@ impl SelectBuilder {
     }
   }
 
+  /// Start a SELECT with no FROM source.
   pub fn raw() -> Self {
     Self {
       is_raw: true,
@@ -78,8 +81,9 @@ impl SelectBuilder {
     }
   }
 
+  /// Project bare column names, escaping each identifier.
   pub fn columns_raw(mut self, cols: &[&str]) -> Self {
-    self.columns = cols.iter().map(|c| format!(r#""{c}""#)).collect();
+    self.columns = cols.iter().map(|c| quote_ident(c)).collect();
     self
   }
 
@@ -89,7 +93,7 @@ impl SelectBuilder {
   /// have an `id`, use [`Self::columns_qualified`] — a bare name is ambiguous
   /// there and the database rejects the statement.
   pub fn columns_typed(mut self, cols: &[&dyn ColumnRef]) -> Self {
-    self.columns = cols.iter().map(|c| format!(r#""{}""#, c.name())).collect();
+    self.columns = cols.iter().map(|c| quote_ident(c.name())).collect();
     self
   }
 
@@ -111,11 +115,13 @@ impl SelectBuilder {
     self
   }
 
+  /// Bound the number of returned rows.
   pub fn limit(mut self, n: i64) -> Self {
     self.limit_val = Some(n);
     self
   }
 
+  /// Skip this many rows before returning results.
   pub fn offset(mut self, n: i64) -> Self {
     self.offset_val = Some(n);
     self

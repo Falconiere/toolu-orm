@@ -5,7 +5,7 @@ Migration tooling for toolu-orm — generates, applies, and checks migration sta
 ## Crate Type
 - Library
 - Internal deps: toolu-orm-core, toolu-orm-connection
-- Features: `libsql` (default), `rusqlite`, `postgres`; blocking migration/status APIs use rusqlite
+- Features: `libsql` (default), `rusqlite`, `postgres`, dependency-only `lancedb`; blocking migration/status APIs use rusqlite. Lance migrations are unsupported (issue #181).
 
 ## Crate-Specific Rules
 - Migrations are split on `"--> statement-breakpoint"` separator for multi-statement execution

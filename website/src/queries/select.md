@@ -1,7 +1,7 @@
 # Select
 
-`SelectBuilder` renders a `SELECT` for either dialect and, when a single driver
-is active, executes it.
+`SelectBuilder` renders a `SELECT` for SQLite, Postgres, or Lance and, when a
+single implemented driver is active, executes it.
 
 ```rust
 use toolu_orm_core::dialect::Dialect;
@@ -30,7 +30,7 @@ Column references are table-qualified and quoted; `limit` and `offset` are bound
 as parameters, not interpolated.
 
 An offset without a limit is supported: SQLite adds the literal `LIMIT -1`
-before the bound offset; Postgres renders `OFFSET` alone.
+before the bound offset; Postgres and Lance render `OFFSET` alone.
 
 ## Building
 
@@ -131,7 +131,7 @@ Every builder renders to `(String, Vec<Value>)`:
 
 | Method | Returns |
 |---|---|
-| `.to_sql_for(dialect)` | SQL for that dialect — `?N` for `Dialect::Sqlite`, `$N` for `Dialect::Postgres`. |
+| `.to_sql_for(dialect)` | SQL for that dialect — `?N` for `Dialect::Sqlite` and `Dialect::Lance`, `$N` for `Dialect::Postgres`. |
 | `.to_sql()` | Same, for `Dialect::CURRENT` (the dialect implied by the active features). |
 | `.to_count_sql_for(dialect)` / `.to_count_sql()` | Count matching rows; distinct, grouped and compound queries count a derived table. Drops outer ordering and pagination. |
 | `.to_exists_sql_for(dialect)` / `.to_exists_sql()` | Check for a matching row or group, ignoring outer ordering and pagination. |
@@ -139,6 +139,10 @@ Every builder renders to `(String, Vec<Value>)`:
 
 Rendering never touches the database, which is why the builders compile with any
 feature combination and are straightforward to unit test.
+Explicit Lance rendering also works when both `postgres` and `lancedb` features
+are enabled; `CURRENT` follows the compile-time feature choice. The
+[session-selected dialect scenarios](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/session-selected-dialect.md)
+cover parameter order, identifier escaping, and the pinned Lance SQL matrix.
 
 ## Executing
 
@@ -148,6 +152,12 @@ They take an `Executor`: `libsql::Connection`, `rusqlite::Connection`,
 `toolu_orm_connection::RusqliteConnection` also implements `Executor` directly.
 For libsql's connection wrapper, pass `conn.inner_conn()`.
 See [Connections](../drivers/index.md) and [Transactions](transactions.md).
+
+The builder asks its executor for `dialect()` and renders that dialect before
+execution. Built-in libsql and rusqlite executors select SQLite; the Postgres
+client and query transaction select Postgres. There is no production Lance
+executor in this crate yet. In particular, Lance `ON CONFLICT` and ordinary
+DML `RETURNING` need capability rejection before execution.
 
 ```rust
 let all: Vec<User> = UsersTable::select_for::<User>().fetch_all(&conn).await?;

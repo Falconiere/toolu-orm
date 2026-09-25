@@ -1,5 +1,6 @@
 //! DELETE query builder with dialect-aware SQL generation and `RETURNING`.
 
+use toolu_orm_core::alias::quote_ident;
 use toolu_orm_core::dialect::Dialect;
 use toolu_orm_core::expr::{BoundParams, Expr};
 use toolu_orm_core::query_column::Column;
@@ -13,6 +14,7 @@ cfg_single_backend! {
 
 // ── DeleteBuilder ─────────────────────────────────────────────────────────────
 
+/// Typed DELETE query builder.
 pub struct DeleteBuilder {
   table: String,
   filters: Vec<Expr>,
@@ -23,6 +25,7 @@ pub struct DeleteBuilder {
 impl_filter!(DeleteBuilder);
 
 impl DeleteBuilder {
+  /// Start a DELETE for a table name.
   pub fn new(table: &str) -> Self {
     Self {
       table: table.to_owned(),
@@ -49,17 +52,19 @@ impl DeleteBuilder {
     self
   }
 
+  /// Render this DELETE for an explicit dialect.
   pub fn to_sql_for(&self, dialect: Dialect) -> (String, Vec<Value>) {
     let mut sql = String::new();
     let mut params = BoundParams::new();
 
-    sql.push_str(&format!(r#"DELETE FROM "{}""#, self.table));
+    sql.push_str(&format!("DELETE FROM {}", quote_ident(&self.table)));
     append_where_for(&self.filters, &mut sql, &mut params, dialect);
     append_returning(&self.returning, &mut sql);
 
     (sql, params.into_values())
   }
 
+  /// Render this DELETE for the compile-time default dialect.
   pub fn to_sql(&self) -> (String, Vec<Value>) {
     self.to_sql_for(Dialect::CURRENT)
   }

@@ -63,3 +63,4 @@ test, update its page.
 | [Lance extension startup](lancedb-extension-startup.md) | Production startup loads the pinned extension from a local path, returns named errors for missing and corrupt files before table mutation, and prepares Lance SQL after the caller attaches a real namespace. |
 | [LanceDB DDL, constraints, and search SQL](lancedb-ddl-constraints-search.md) | Real Rust SQL matrix for schema/index persistence, constraint refusal, transaction boundaries, vector and FTS ranking/filter behavior. |
 | [Rust DuckDB–Lance SQL matrix](lancedb-sql-matrix.md) | Builder-generated SELECT and DML forms with bound values against real local Lance tables, including unsupported write errors and parity references. |
+| [Session-selected query dialect](session-selected-dialect.md) | One builder rendered for SQLite, PostgreSQL, and Lance; existing executors supply their dialect and a mixed-feature test keeps Lance independent of `CURRENT`. |
