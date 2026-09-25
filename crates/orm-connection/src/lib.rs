@@ -23,7 +23,7 @@ pub mod rusqlite_impl;
 pub mod postgres_impl;
 
 #[cfg(feature = "lancedb")]
-/// Embedded DuckDB and Lance extension startup.
+/// Embedded DuckDB and Lance extension startup and local namespace lifecycle.
 pub mod lancedb;
 
 pub use blocking_trait_def::DbConnectionBlocking;
@@ -43,4 +43,7 @@ pub use rusqlite_impl::{
 pub use postgres_impl::{PgConfig, PgConnection, PgDatabase, PgTransaction};
 
 #[cfg(feature = "lancedb")]
-pub use lancedb::{LanceConnection, LanceStartupError};
+pub use lancedb::{
+  LanceColumn, LanceColumnType, LanceConnection, LanceNamespace, LanceNamespaceError,
+  LanceStartupError,
+};

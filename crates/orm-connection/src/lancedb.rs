@@ -3,6 +3,11 @@
 use duckdb::Connection;
 use std::path::Path;
 
+mod namespace;
+mod sql;
+
+pub use namespace::{LanceColumn, LanceColumnType, LanceNamespace, LanceNamespaceError};
+
 const DUCKDB_VERSION: &str = "v1.5.5";
 const LANCE_VERSION: &str = "2f167ea";
 
@@ -38,8 +43,8 @@ pub enum LanceStartupError {
 
 /// An in-memory DuckDB connection with the pinned Lance extension loaded.
 ///
-/// Startup does not attach a Lance directory or create any tables. Callers can
-/// use [`Self::connection`] to prepare SQL after they attach a namespace.
+/// Startup does not attach a Lance directory or create any tables. Call
+/// [`Self::attach`] to select a local directory for unqualified table SQL.
 pub struct LanceConnection {
   connection: Connection,
 }
@@ -99,5 +104,19 @@ impl LanceConnection {
   #[must_use]
   pub fn connection(&self) -> &Connection {
     &self.connection
+  }
+
+  /// Attach an existing local Lance directory and select it for unqualified SQL.
+  ///
+  /// # Errors
+  ///
+  /// Returns [`LanceNamespaceError`] when the directory or namespace is invalid,
+  /// or when DuckDB cannot attach or select the catalog. No table is created.
+  pub fn attach(
+    self,
+    directory: impl AsRef<Path>,
+    namespace: &str,
+  ) -> Result<LanceNamespace, LanceNamespaceError> {
+    LanceNamespace::attach(self.connection, directory.as_ref(), namespace)
   }
 }

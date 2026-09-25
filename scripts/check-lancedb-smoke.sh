@@ -110,8 +110,31 @@ if [[ -z "$actual" || -z "$documented" ]] || \
   exit 1
 fi
 
+actual=$(printf '%s\n' "$listed" | awk '
+  /^toolu-orm-connection::lancedb_namespace_test / {
+    sub(/^toolu-orm-connection::/, "")
+    print
+  }
+' | sort)
+documented=$(awk -F'|' '
+  $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ && \
+  $3 ~ /^[[:space:]]*lancedb_namespace_test[[:space:]]*$/ {
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
+    print $3 " " $4
+  }
+' docs/scenarios/lancedb-namespace-lifecycle.md | sort)
+if [[ -z "$actual" || -z "$documented" ]] || \
+  ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
+  printf 'lancedb-smoke: production namespace scenario docs and test names differ\n' >&2
+  exit 1
+fi
+
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   --manifest-path probes/lancedb/Cargo.toml --locked --success-output immediate
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   -p toolu-orm-connection --no-default-features --features lancedb \
   -E 'binary(lancedb_startup_test)' --success-output immediate
+LANCE_EXTENSION_PATH="$extension" cargo nextest run \
+  -p toolu-orm-connection --no-default-features --features lancedb \
+  -E 'binary(lancedb_namespace_test)' --success-output immediate

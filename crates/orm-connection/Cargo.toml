@@ -65,6 +65,11 @@ name = "lancedb_startup_test"
 path = "tests/lancedb_startup_test.rs"
 required-features = ["lancedb"]
 
+[[test]]
+name = "lancedb_namespace_test"
+path = "tests/lancedb_namespace_test.rs"
+required-features = ["lancedb"]
+
 # Release benchmark for issue #88: compares uncached/cached rusqlite
 # statement preparation, and the blocking vs async RusqliteConnection paths.
 [[example]]
