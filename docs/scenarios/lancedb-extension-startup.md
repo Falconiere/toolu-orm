@@ -10,6 +10,11 @@ The production startup API accepts an explicit local extension path and verifies
 Paths containing backslashes or NUL are rejected before `LOAD` so SQL literal parsing cannot treat those characters as escapes.
 
 Run `bash scripts/check-lancedb-smoke.sh` to provision the pinned artifact, compile the production `lancedb` lane, and run these tests.
+CI also runs `bash scripts/check-lancedb-missing-extension.sh`, which selects
+the positive startup test with an absent artifact path and requires the
+`cargo nextest` command itself to fail with `LanceDependencyUnavailable`.
+The positive test opens the supplied path before copying the file into its
+quoted-path fixture, so a missing artifact reaches the production setup error.
 
 ## Tests
 

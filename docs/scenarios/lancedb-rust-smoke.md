@@ -33,7 +33,16 @@ The failure test passes a nonexistent extension file to the same loader. It rece
 bash scripts/check-lancedb-smoke.sh
 ```
 
-This command checks formatting and Clippy for the isolated package, downloads the platform artifact, verifies its SHA-256, checks the test names below and in the [SELECT/DML matrix](lancedb-sql-matrix.md) and [DDL, constraint, and search matrix](lancedb-ddl-constraints-search.md) against `cargo nextest list`, and runs the real probes. CI runs it in the `lancedb-smoke` job. The production connection belongs to later epic issues.
+This command checks formatting and Clippy for the isolated package, downloads the platform artifact, verifies its SHA-256, checks the test names below and in the [SELECT/DML matrix](lancedb-sql-matrix.md) and [DDL, constraint, and search matrix](lancedb-ddl-constraints-search.md) against `cargo nextest list`, and runs the real probes plus the production startup and namespace tests from issues #158 and #159. CI runs it in the `lancedb-smoke` job.
+
+The same CI job then runs `bash scripts/check-lancedb-missing-extension.sh`.
+It gives the production startup test a path inside a new temporary directory
+with no extension file. The check passes only when `cargo nextest` fails for
+`pinned_extension_prepares_lance_sql_after_startup` with
+`LanceDependencyUnavailable`. The startup test opens the provisioned artifact
+directly before copying it into its quoted-path fixture, so a missing CI
+artifact reaches the production setup error rather than failing during copy.
+Compilation errors, an unselected test, or an unexpected pass fail the check.
 
 ## Tests
 

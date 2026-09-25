@@ -8,11 +8,16 @@
 | postgres | The seven-package Postgres command in [the quality gate](../../CLAUDE.md#quality-gate) | orm-core postgres+libsql (the two-driver derive shape), orm-query postgres alone, every live-Postgres suite and the facade-only consumer |
 | libsql-only | `cargo nextest run -p toolu-orm-query --features libsql` | orm-query's libsql executor, `run_transaction`, fetch methods |
 | rusqlite-only | `cargo nextest run -p toolu-orm-query --features rusqlite,sqlite-vec` and `-p toolu-orm-connection --features rusqlite,sqlite-vec` and `-p toolu-orm-cli --no-default-features --features rusqlite` | orm-query's sync rusqlite executor (raw + `RusqliteConnection`), live sqlite-vec, `DbConnectionBlocking`, and blocking migrate/status/baseline twins (see [Blocking connection](blocking-connection.md)) |
+| lancedb-smoke | `bash scripts/check-lancedb-smoke.sh`, `bash scripts/check-lancedb-missing-extension.sh`, and `bash scripts/check-lancedb-feature.sh` | SHA-256 verified DuckDB v1.5.5 Lance extension on Ubuntu 24.04 `linux_amd64`, real temporary Lance datasets through the Rust probe and production connection, command-level failure on a missing extension, and optional feature wiring |
 
-Between them these four lanes give orm-core only four of the eight driver
-combinations — libsql, postgres+libsql, rusqlite and postgres — so the other
-four shapes of `FromRow` are never exercised by a lane. Two compile-only checks
-cover the gap:
+The `rust` CI job runs the repository format, Clippy, nextest, test-target,
+and file-length gates. The separate `lancedb-smoke` job runs the real Lance
+checks above; a failure in either job fails the workflow.
+
+Between them the four ordinary-driver lanes give orm-core only four of the
+eight driver combinations — libsql, postgres+libsql, rusqlite and postgres —
+so the other four shapes of `FromRow` are never exercised by a lane. Two
+compile-only checks cover the gap:
 
 - `bash scripts/check-derive-matrix.sh` compiles `#[derive(FromRow)]` against all
   eight (see [FromRow derive](from-row-derive.md)).

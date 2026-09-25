@@ -64,6 +64,8 @@ bash scripts/check-test-targets.sh
 bash scripts/check-file-length.sh
 ```
 
-The separate `lancedb-smoke` CI job runs `bash scripts/check-lancedb-smoke.sh`
-and `bash scripts/check-lancedb-feature.sh` for the pinned real Lance probe,
-production startup tests, and optional dependency feature rule.
+The separate `lancedb-smoke` CI job runs `bash scripts/check-lancedb-smoke.sh`,
+`bash scripts/check-lancedb-missing-extension.sh`, and
+`bash scripts/check-lancedb-feature.sh` for the pinned real Lance probe,
+production startup tests, a command-level missing-extension failure check, and
+the optional dependency feature rule.
