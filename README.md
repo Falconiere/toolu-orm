@@ -145,9 +145,10 @@ different `toolu_orm_core` crates in the graph, whose types do not interoperate.
 
 ### Depending on the crates directly
 
-Every crate exposes the same driver features (`libsql`, `rusqlite`, `postgres`)
-and forwards them to `toolu-orm-core`. **Enable the drivers you need on every
-crate you depend on** so Cargo unifies them into one shape.
+The facade, core, macros, query, connection, CLI, and facade-consumer crates
+expose `libsql`, `rusqlite`, `postgres`, and `lancedb`. Dependents forward these
+features to `toolu-orm-core`. **Enable the drivers you need on every crate you
+depend on** so Cargo unifies them into one shape.
 
 ```toml
 [dependencies]
@@ -163,6 +164,15 @@ For Postgres, replace `"libsql"` with `"postgres"`. `toolu-orm-core` and
 `toolu-orm-cli` default to `libsql`; the other crates have no default driver.
 Keep core and query on the same single SQLite driver for execution: query's
 libsql/rusqlite scalar decoders require core's single-driver `FromRow` shape.
+
+The optional `lancedb` feature currently wires the bundled Rust `duckdb`
+`1.10505.0` dependency through `toolu-orm-connection` and the facade. Its
+bundled engine is DuckDB v1.5.5; the [Rust Lance smoke probe](docs/scenarios/lancedb-rust-smoke.md)
+pins Lance extension build `2f167ea`. This feature does not yet load the
+extension or provide a Lance connection or query executor. It may be enabled
+with an existing driver feature, but query execution is available only when
+exactly one implemented driver (`libsql`, `rusqlite`, or `postgres`) is enabled
+and `lancedb` is absent. The CLI likewise has no Lance migration backend yet.
 
 ---
 
@@ -768,7 +778,7 @@ binding rules. The short version:
 5. One concern per file. No `utils.rs` / `helpers.rs` / `common.rs`.
 6. `cargo nextest run`, never `cargo test`.
 
-The quality gate is what CI runs: four feature lanes plus five checks. SQL
+The `rust` CI job runs four implemented-driver lanes plus five checks. SQL
 rendering, schema diffs and macro compilation have database-free tests; driver
 integration tests use in-memory libsql, in-memory rusqlite or live Postgres.
 Start the test Postgres first:
@@ -796,6 +806,10 @@ bash scripts/check-scenario-docs.sh
 bash scripts/check-test-targets.sh
 bash scripts/check-file-length.sh
 ```
+
+The `lancedb-smoke` CI job also runs `bash scripts/check-lancedb-smoke.sh`
+against a real local Lance directory and `bash scripts/check-lancedb-feature.sh`
+for facade dependency resolution and feature coexistence.
 
 `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, and `TEST_DB_PASSWORD` point the
 Postgres suites at another server. Each feature scenario is documented in

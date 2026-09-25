@@ -29,6 +29,7 @@ postgres = [
   "toolu-orm-core/postgres",
   "toolu-orm-connection/postgres",
 ]
+lancedb = ["toolu-orm-core/lancedb", "toolu-orm-connection/lancedb"]
 
 [[test]]
 name = "migrate_test"

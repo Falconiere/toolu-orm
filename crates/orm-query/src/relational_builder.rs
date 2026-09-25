@@ -1,8 +1,8 @@
-//! Type-state `RelationalQuery` built on [`RelationalSelectBuilder`].
+//! Type-state `RelationalQuery` built on [`RelationalSelectBuilder`](crate::select::RelationalSelectBuilder).
 //!
 //! # Public API
 //!
-//! - [`RelationalQuery`]
+//! - [`RelationalQuery`](crate::relational_builder::RelationalQuery)
 
 use std::marker::PhantomData;
 

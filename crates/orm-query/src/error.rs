@@ -3,11 +3,13 @@
 use toolu_orm_core::error::DbCoreError;
 
 #[derive(Debug, thiserror::Error)]
+/// Errors from query construction and execution.
 pub enum QueryError {
   #[cfg(all(
     feature = "libsql",
     not(feature = "rusqlite"),
-    not(feature = "postgres")
+    not(feature = "postgres"),
+    not(feature = "lancedb")
   ))]
   #[error("database error: {0}")]
   Driver(#[from] libsql::Error),
@@ -15,7 +17,8 @@ pub enum QueryError {
   #[cfg(all(
     feature = "rusqlite",
     not(feature = "libsql"),
-    not(feature = "postgres")
+    not(feature = "postgres"),
+    not(feature = "lancedb")
   ))]
   #[error("database error: {0}")]
   Driver(#[from] rusqlite::Error),
@@ -23,7 +26,8 @@ pub enum QueryError {
   #[cfg(all(
     feature = "postgres",
     not(feature = "libsql"),
-    not(feature = "rusqlite")
+    not(feature = "rusqlite"),
+    not(feature = "lancedb")
   ))]
   #[error("database error: {0}")]
   Driver(#[from] tokio_postgres::Error),
@@ -42,7 +46,8 @@ pub enum QueryError {
   #[cfg(all(
     feature = "rusqlite",
     not(feature = "libsql"),
-    not(feature = "postgres")
+    not(feature = "postgres"),
+    not(feature = "lancedb")
   ))]
   #[error("database error: {0}")]
   Connection(String),

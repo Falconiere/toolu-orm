@@ -12,10 +12,10 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Toolchain pinned in `rust-toolchain.toml`. Lints live in the root `Cargo.toml` (`[workspace.lints]`) and `clippy.toml`; every crate inherits them with `[lints] workspace = true`.
 
 ## Driver features
-- Features `libsql`, `rusqlite`, `postgres` exist on the facade, core, macros, query, connection, CLI and facade-consumer; the dependents forward them to orm-core. The sqlite-vec register helper has no driver features.
+- Features `libsql`, `rusqlite`, `postgres`, and `lancedb` exist on the facade, core, macros, query, connection, CLI and facade-consumer; the dependents forward them to orm-core. `lancedb` currently wires bundled DuckDB only; it has no production connection or row decoder and does not change the existing three-driver `FromRow` shape. The sqlite-vec register helper has no driver features.
 - Consumers activate the drivers they need on every crate they depend on. For libsql/rusqlite query execution, keep core and query on the same single driver: query's scalar decoders implement the single-driver `FromRow` shape.
 - `FromRow` changes shape per driver set: one driver on orm-core gives `from_row(&Row)`; two or more give `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`. `#[derive(FromRow)]` follows that shape — it emits one decoder per driver and hands all of them to `toolu_orm_core::impl_derived_from_row!`, whose eight definitions are `#[cfg]`-gated on orm-core's own features (`crates/orm-core/src/row/derived.rs`). Deriving it therefore never pins a suite to a lane. Hand-written impls stay supported and stay covered (orm-cli's `migrate/store/applied.rs`, orm-connection's rusqlite fixtures, orm-query's `integration_test`).
-- orm-query compiles its executor, transaction, and fetch code only when exactly one driver feature is active (`cfg_single_backend!`), which is why the libsql-only and rusqlite-only lanes exist.
+- orm-query compiles its executor, transaction, and fetch code only when exactly one implemented driver feature is active and `lancedb` is absent (`cfg_single_backend!`), which is why the libsql-only and rusqlite-only lanes exist.
 - Crates that only *call* `FromRow` never name one of its methods: they go through `toolu_orm_core::row::from_{postgres,libsql,rusqlite}_row`, whose `#[cfg]`s are evaluated while compiling orm-core and so read the unified set by construction. Selecting a method from a crate's own feature flags is a proxy, and it drifts the moment one crate forwards a driver feature to orm-core but not to its sibling (issue #124).
 - orm-core emits `DEP_TOOLU_ORM_CORE_HAS_*` build metadata (`links = "toolu_orm_core"`) so orm-cli's `build.rs` can see which features Cargo actually unified. That mechanism is for crates that must *implement* `FromRow` for their own types (`orm-cli`'s `migrate/store/applied.rs`, `migrate/pragma_row.rs`) and so cannot delegate to a helper.
 
@@ -42,7 +42,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 - Use `cargo nextest run`, never `cargo test`.
 
 ## Quality gate
-Four lanes plus five checks, exactly what `.github/workflows/ci.yml` runs. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight and `scripts/check-driver-matrix.sh` compiles the driver-dependent crates against all eight (orm-cli skips the unsupported no-driver case), plus six orm-connection builds where orm-core carries an extra driver. `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares. `scripts/check-file-length.sh` fails when any `*.rs` file under `crates/` — `src/` and `tests/` alike — is longer than 250 lines, which no clippy lint can express.
+Four existing-driver lanes plus five checks run in the `rust` CI job. The postgres lane needs the live server: `docker compose -f docker-compose.test.yaml up -d --wait` and `export TEST_DB_PORT=5434`. The lanes cover only four of the eight driver combinations, so `scripts/check-derive-matrix.sh` compiles the `FromRow` derive against all eight and `scripts/check-driver-matrix.sh` compiles the driver-dependent crates against all eight (orm-cli skips the unsupported no-driver case), plus six orm-connection builds where orm-core carries an extra driver. `scripts/check-test-targets.sh` fails when a test file is one no cargo target builds — a `tests/<dir>/` whose entry file is not `main.rs`, a flat test file in a crate with `autotests = false`, or a module file nothing declares. `scripts/check-file-length.sh` fails when any `*.rs` file under `crates/` — `src/` and `tests/` alike — is longer than 250 lines, which no clippy lint can express.
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -63,3 +63,7 @@ bash scripts/check-scenario-docs.sh
 bash scripts/check-test-targets.sh
 bash scripts/check-file-length.sh
 ```
+
+The separate `lancedb-smoke` CI job runs `bash scripts/check-lancedb-smoke.sh`
+and `bash scripts/check-lancedb-feature.sh` for the pinned real Lance probe and
+optional dependency feature rule.

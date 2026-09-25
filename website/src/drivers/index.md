@@ -20,6 +20,22 @@ crate's wrapper; functions accepting `DbConnection` take the connection crate's.
 crate can enable several drivers together. Its blocking trait also supports
 `run_migrate_blocking` and `get_status_blocking` without an async runtime.
 
+## LanceDB dependency feature
+
+The optional `lancedb` Cargo feature is forwarded by the `toolu-orm` facade to
+its core, macro, query, and connection crates. It adds a bundled Rust `duckdb`
+`1.10505.0` dependency (DuckDB v1.5.5). The separate
+[Rust smoke probe](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-rust-smoke.md)
+pins and tests Lance extension build `2f167ea` on a real local directory.
+The feature does not yet load that extension or provide a production Lance
+connection, `DbConnection`, `Executor`, row decoder, or migration backend.
+
+`lancedb` can coexist with `postgres`, `rusqlite`, or `libsql` in Cargo. The
+query crate exposes its existing executor only when one implemented driver is
+enabled **without** `lancedb`; mixed feature sets have no legacy executor or
+libsql transaction module. This prevents an application from accidentally
+running a query through another backend while Lance is selected.
+
 `DbConnection` is the portable, driver-agnostic surface:
 
 ```rust

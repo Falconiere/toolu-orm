@@ -22,6 +22,7 @@ tokio = { workspace = true, features = ["rt", "time", "sync"] }
 # `Builder::new_synced_database` and `Database::sync`. No other crate needs them.
 libsql = { workspace = true, optional = true, features = ["remote", "replication", "sync", "tls"] }
 rusqlite = { workspace = true, optional = true }
+duckdb = { workspace = true, optional = true }
 tokio-postgres = { workspace = true, optional = true }
 deadpool-postgres = { workspace = true, optional = true }
 postgres-types = { workspace = true, optional = true }
@@ -43,6 +44,7 @@ postgres = [
   "dep:rustls-native-certs",
   "toolu-orm-core/postgres",
 ]
+lancedb = ["dep:duckdb", "toolu-orm-core/lancedb"]
 # Statically linked sqlite-vec for live vec0 suites (register helper only;
 # SelectBuilder live KNN lives in orm-query's `sqlite-vec` feature).
 sqlite-vec = ["dep:toolu-orm-sqlite-vec-register"]

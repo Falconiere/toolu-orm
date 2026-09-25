@@ -34,6 +34,12 @@ postgres = [
   "toolu-orm-query/postgres",
   "toolu-orm-connection/postgres",
 ]
+lancedb = [
+  "toolu-orm-core/lancedb",
+  "toolu-orm-macros/lancedb",
+  "toolu-orm-query/lancedb",
+  "toolu-orm-connection/lancedb",
+]
 
 [[test]]
 name = "facade_test"

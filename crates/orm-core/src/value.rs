@@ -2,7 +2,7 @@
 
 use crate::error::DbCoreError;
 
-/// Which Postgres JSON type a [`Value::Json`](Value::Json) payload binds as.
+/// Which Postgres JSON type a [`Value::Json`] payload binds as.
 ///
 /// SQLite stores either one as text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -14,6 +14,7 @@ pub enum JsonStorage {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+/// Portable scalar value and driver binding representation.
 pub enum Value {
   Null,
   Integer(i64),

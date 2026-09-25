@@ -21,6 +21,7 @@ default = []
 libsql = ["toolu-orm/libsql"]
 rusqlite = ["toolu-orm/rusqlite"]
 postgres = ["toolu-orm/postgres"]
+lancedb = ["toolu-orm/lancedb"]
 
 [[test]]
 name = "facade_only_test"

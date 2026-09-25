@@ -33,6 +33,7 @@ default = []
 libsql = ["toolu-orm-core/libsql"]
 rusqlite = ["toolu-orm-core/rusqlite"]
 postgres = ["toolu-orm-core/postgres"]
+lancedb = ["toolu-orm-core/lancedb"]
 
 # No driver gate: the FromRow derive expands to whatever shape orm-core
 # compiled (src/from_row_expand.rs), so this runs on every lane, including the
