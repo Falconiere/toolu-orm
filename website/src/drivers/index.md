@@ -101,6 +101,16 @@ offline run and pass its path to each new connection. The smoke script's
 download lives only for that test run; it does not fill a persistent cache.
 Other platforms must supply a compatible file and may receive a startup
 incompatibility error. Extension paths containing backslashes are rejected.
+
+For prepared SQL, `toolu_orm::to_duckdb_params(&values)?` converts portable
+`Value` inputs before execution. It binds NULL, integer, real, text, binary,
+and boolean values; `TimestampEpoch`, `TimestampText`, `Json`, `Uuid`, and
+`Numeric` return `LanceValueError::Unsupported { kind }`. Pass the converted
+slice to `duckdb::params_from_iter(params.iter())`. See the
+[real scalar binding scenario](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-scalar-binding.md)
+for prepared insert and filter coverage. The tagged codecs remain outside
+epic #145.
+
 `DbConnection`, portable query execution, row decoding, and migrations are not
 available for Lance yet.
 

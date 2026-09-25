@@ -27,6 +27,18 @@ case "$(uname -s)/$(uname -m)" in
     fi
     expected=cae58f5c0831454b44b973875d0d457bf96574b0c629875b732ef4578fb07080
     ;;
+  Linux/aarch64|Linux/arm64)
+    platform=linux_arm64
+    if [[ ! -r /etc/os-release ]]; then
+      dependency_error "cannot read Linux OS release metadata"
+    fi
+    platform_version=$(source /etc/os-release && printf '%s' "${VERSION_ID:-}") || \
+      dependency_error "cannot read Linux OS release metadata"
+    if [[ -z "$platform_version" ]]; then
+      dependency_error "Linux OS release version is missing"
+    fi
+    expected=9592a76d4b24bc1cdd801afe436bc76998f6b99184162153edbb77431f2b5e56
+    ;;
   *)
     dependency_error "lance extension has no pinned artifact for $(uname -s)/$(uname -m)"
     ;;
@@ -130,6 +142,26 @@ if [[ -z "$actual" || -z "$documented" ]] || \
   exit 1
 fi
 
+actual=$(printf '%s\n' "$listed" | awk '
+  /^toolu-orm-connection::lancedb_value_test / {
+    sub(/^toolu-orm-connection::/, "")
+    print
+  }
+' | sort)
+documented=$(awk -F'|' '
+  $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ && \
+  $3 ~ /^[[:space:]]*lancedb_value_test[[:space:]]*$/ {
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
+    print $3 " " $4
+  }
+' docs/scenarios/lancedb-scalar-binding.md | sort)
+if [[ -z "$actual" || -z "$documented" ]] || \
+  ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
+  printf 'lancedb-smoke: production scalar binding scenario docs and test names differ\n' >&2
+  exit 1
+fi
+
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   --manifest-path probes/lancedb/Cargo.toml --locked --success-output immediate
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
@@ -138,3 +170,6 @@ LANCE_EXTENSION_PATH="$extension" cargo nextest run \
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   -p toolu-orm-connection --no-default-features --features lancedb \
   -E 'binary(lancedb_namespace_test)' --success-output immediate
+LANCE_EXTENSION_PATH="$extension" cargo nextest run \
+  -p toolu-orm-connection --no-default-features --features lancedb \
+  -E 'binary(lancedb_value_test)' --success-output immediate

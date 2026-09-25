@@ -179,6 +179,13 @@ before table mutation. The [startup scenario](docs/scenarios/lancedb-extension-s
 and [namespace lifecycle scenario](docs/scenarios/lancedb-namespace-lifecycle.md)
 show the real checks; the [Rust probe](docs/scenarios/lancedb-rust-smoke.md)
 checks extension loading.
+
+`to_duckdb_params(&values)` converts portable `Value` slices for prepared DuckDB
+statements. It binds NULL, integer, real, text, binary, and boolean values; UUID,
+JSON, temporal, and decimal variants return `LanceValueError::Unsupported`
+before execution. The [scalar binding scenario](docs/scenarios/lancedb-scalar-binding.md)
+shows the real prepared insert and filter tests, including quoted text and NULL.
+
 Pinned artifacts are verified on macOS arm64, Linux amd64, and Linux arm64;
 other platforms need a compatible local file. Paths containing backslashes are rejected during
 startup. For offline use, provision the file ahead of

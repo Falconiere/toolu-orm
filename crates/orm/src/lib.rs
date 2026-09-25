@@ -11,6 +11,9 @@ pub use toolu_orm_connection as connection;
 pub use toolu_orm_core as core;
 pub use toolu_orm_query as query;
 
+#[cfg(feature = "lancedb")]
+pub use toolu_orm_connection::{to_duckdb_params, LanceValueError};
+
 pub use toolu_orm_macros::{fts5_table, table, vec0_table, ColumnEnum, FromRow, Relational};
 
 /// The macros plus the crate names they used to require.
