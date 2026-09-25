@@ -33,7 +33,7 @@ The failure test passes a nonexistent extension file to the same loader. It rece
 bash scripts/check-lancedb-smoke.sh
 ```
 
-This command checks formatting and Clippy for the isolated package, downloads the platform artifact, verifies its SHA-256, checks the test names below and in [the DDL, constraint, and search matrix](lancedb-ddl-constraints-search.md) against `cargo nextest list`, and runs the tests. CI runs it in the `lancedb-smoke` job. The production connection belongs to later epic issues.
+This command checks formatting and Clippy for the isolated package, downloads the platform artifact, verifies its SHA-256, checks the test names below and in the [SELECT/DML matrix](lancedb-sql-matrix.md) and [DDL, constraint, and search matrix](lancedb-ddl-constraints-search.md) against `cargo nextest list`, and runs the real probes. CI runs it in the `lancedb-smoke` job. The production connection belongs to later epic issues.
 
 ## Tests
 

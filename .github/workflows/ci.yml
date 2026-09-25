@@ -163,5 +163,5 @@ jobs:
         with:
           tool: cargo-nextest
 
-      - name: LanceDB Rust smoke
+      - name: LanceDB Rust SQL capability probes
         run: bash scripts/check-lancedb-smoke.sh

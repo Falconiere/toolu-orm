@@ -9,6 +9,8 @@ publish = false
 [dependencies]
 duckdb = { version = "=1.10505.0", features = ["bundled"] }
 tempfile = "3.22"
+toolu-orm-core = { path = "../../crates/orm-core", default-features = false }
+toolu-orm-query = { path = "../../crates/orm-query", default-features = false }
 
 [[test]]
 name = "lancedb_smoke_test"
@@ -17,6 +19,14 @@ path = "tests/lancedb_smoke_test.rs"
 [[test]]
 name = "lancedb_capability_test"
 path = "tests/lancedb_capability_test.rs"
+
+[[test]]
+name = "lancedb_select_matrix_test"
+path = "tests/lancedb_select_matrix_test.rs"
+
+[[test]]
+name = "lancedb_dml_matrix_test"
+path = "tests/lancedb_dml_matrix_test.rs"
 
 [profile.dev]
 debug = 0

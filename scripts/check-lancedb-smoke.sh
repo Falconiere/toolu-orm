@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run issue #146's isolated Rust smoke test against a pinned DuckDB core extension.
+# Run the pinned Rust DuckDB-Lance SQL capability probes.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -64,18 +64,19 @@ if ! listed=$(cargo nextest list --manifest-path probes/lancedb/Cargo.toml --loc
   exit 1
 fi
 actual=$(printf '%s\n' "$listed" | awk '
-  /^toolu-orm-lancedb-probe::lancedb_(smoke|capability)_test / {
+  /^toolu-orm-lancedb-probe::lancedb_(smoke|capability|select_matrix|dml_matrix)_test / {
     sub(/^toolu-orm-lancedb-probe::/, "")
     print
   }
 ' | sort)
 documented=$(awk -F'|' '
-  $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ {
+  $2 ~ /^[[:space:]]*lancedb-(smoke|matrix)[[:space:]]*$/ {
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
     print $3 " " $4
   }
-' docs/scenarios/lancedb-rust-smoke.md docs/scenarios/lancedb-ddl-constraints-search.md | sort)
+' docs/scenarios/lancedb-rust-smoke.md docs/scenarios/lancedb-ddl-constraints-search.md \
+  docs/scenarios/lancedb-sql-matrix.md | sort)
 if [[ -z "$actual" || -z "$documented" ]] || \
   ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
   printf 'lancedb-smoke: scenario docs and Rust test names differ\n' >&2

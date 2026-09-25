@@ -61,3 +61,4 @@ test, update its page.
 | [SQLite maintenance operations](sqlite-maintenance-ops.md) | `VACUUM INTO`, `PRAGMA quick_check`, quoted `ATTACH` with a `Drop`-guaranteed `DETACH`, and typed `page_count` / `page_size` on a borrowed `rusqlite::Connection` — plus the documented FFI exception for the FTS5 tokenizer handshake. |
 | [Rust DuckDB–Lance smoke probe](lancedb-rust-smoke.md) | Pinned Rust binding and Lance extension load, attach, insert, prepared bound SELECT after reopen, and named missing-extension failure on real local directories. |
 | [LanceDB DDL, constraints, and search SQL](lancedb-ddl-constraints-search.md) | Real Rust SQL matrix for schema/index persistence, constraint refusal, transaction boundaries, vector and FTS ranking/filter behavior. |
+| [Rust DuckDB–Lance SQL matrix](lancedb-sql-matrix.md) | Builder-generated SELECT and DML forms with bound values against real local Lance tables, including unsupported write errors and parity references. |
