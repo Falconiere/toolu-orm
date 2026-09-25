@@ -2,8 +2,8 @@
 //!
 //! # Public API
 //!
-//! - [`InsertBuilder`] — fluent builder for INSERT statements
-//! - [`OnConflict`] — `ON CONFLICT (…) [WHERE …] DO NOTHING | DO UPDATE SET … [WHERE …]`,
+//! - [`InsertBuilder`](crate::insert::InsertBuilder) — fluent builder for INSERT statements
+//! - [`OnConflict`](crate::insert::OnConflict) — `ON CONFLICT (…) [WHERE …] DO NOTHING | DO UPDATE SET … [WHERE …]`,
 //!   rendered identically on SQLite and Postgres
 //! - `InsertBuilder::select` — `INSERT INTO "t" ("a", "b") SELECT …`, a
 //!   set-based copy whose rows are never decoded into Rust

@@ -28,6 +28,7 @@ default = ["libsql"]
 libsql = ["dep:libsql"]
 rusqlite = ["dep:rusqlite"]
 postgres = ["dep:tokio-postgres", "dep:postgres-types", "dep:bytes"]
+lancedb = []
 
 [lints]
 workspace = true

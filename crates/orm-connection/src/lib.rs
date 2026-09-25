@@ -1,27 +1,25 @@
-//! Database connection trait and backend implementations for toolu-orm.
+//! Connection traits and implementations for libsql, rusqlite, and Postgres.
 //!
-//! ## Features
-//!
-//! No backend is enabled by default. Enable one or more as needed; each
-//! implementation is independently feature-gated. Query-builder execution in
-//! `toolu-orm-query` separately requires exactly one driver on that crate:
-//!
-//! - `libsql`    -- async libsql (Turso embedded replica)
-//! - `rusqlite`  -- sync rusqlite (native `DbConnectionBlocking`, wrapped with
-//!   spawn_blocking for `DbConnection`)
-//! - `postgres`  -- async tokio-postgres + deadpool connection pool
+//! No driver is enabled by default. The optional `lancedb` feature adds
+//! bundled DuckDB only; a Lance connection is not yet available.
 
+/// Synchronous connection trait.
 pub mod blocking_trait_def;
+/// Connection errors.
 pub mod error;
+/// Asynchronous connection trait.
 pub mod trait_def;
 
 #[cfg(feature = "libsql")]
+/// Libsql connection implementation.
 pub mod libsql_impl;
 
 #[cfg(feature = "rusqlite")]
+/// Rusqlite connection implementation.
 pub mod rusqlite_impl;
 
 #[cfg(feature = "postgres")]
+/// PostgreSQL connection implementation.
 pub mod postgres_impl;
 
 pub use blocking_trait_def::DbConnectionBlocking;

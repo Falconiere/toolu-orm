@@ -165,3 +165,6 @@ jobs:
 
       - name: LanceDB Rust SQL capability probes
         run: bash scripts/check-lancedb-smoke.sh
+
+      - name: LanceDB feature wiring
+        run: bash scripts/check-lancedb-feature.sh

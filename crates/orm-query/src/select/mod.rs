@@ -1,18 +1,5 @@
-//! SELECT query builder.
-//!
-//! # Public API
-//!
-//! - [`SelectBuilder`] — fluent builder for SELECT queries
-//! - [`Cte`] — one member of a `WITH` / `WITH RECURSIVE` prefix
-//!
-//! # Usage
-//!
-//! ```ignore
-//! let (sql, params) = SelectBuilder::new("users")
-//!     .columns_raw(&["id", "name"])
-//!     .limit(10)
-//!     .to_sql();
-//! ```
+//! SELECT builders, including [`SelectBuilder`](crate::select::SelectBuilder)
+//! and [`Cte`](crate::select::Cte).
 
 mod builder;
 mod compound;
@@ -23,6 +10,7 @@ mod join_clause;
 mod knn;
 mod ordering;
 mod projection;
+/// Relation-aware SELECT builder.
 pub mod relational;
 mod row_limit;
 mod source;

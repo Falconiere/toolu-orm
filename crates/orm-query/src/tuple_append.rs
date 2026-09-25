@@ -2,7 +2,7 @@
 //!
 //! # Public API
 //!
-//! - [`TupleAppend`]
+//! - [`TupleAppend`](crate::tuple_append::TupleAppend)
 
 /// Append a value to a tuple, producing a tuple one element longer.
 pub trait TupleAppend<T> {

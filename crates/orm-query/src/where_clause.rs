@@ -61,6 +61,7 @@ pub(crate) fn append_returning(columns: &[String], sql: &mut String) {
 macro_rules! impl_filter {
   ($ty:ty) => {
     impl $ty {
+      /// Adds a predicate to this query.
       pub fn filter(mut self, expr: toolu_orm_core::expr::Expr) -> Self {
         self.filters.push(expr);
         self
@@ -71,16 +72,19 @@ macro_rules! impl_filter {
 
 pub(crate) use impl_filter;
 
-/// Wraps items with `#[cfg(any(single-libsql, single-rusqlite, single-postgres))]`.
+/// Wraps items when one implemented backend and no Lance feature is active.
 ///
 /// Used for modules and imports that require exactly one backend feature active.
 macro_rules! cfg_single_backend {
   ($($item:item)*) => {
     $(
-      #[cfg(any(
-        all(feature = "libsql", not(feature = "rusqlite"), not(feature = "postgres")),
-        all(feature = "rusqlite", not(feature = "libsql"), not(feature = "postgres")),
-        all(feature = "postgres", not(feature = "libsql"), not(feature = "rusqlite")),
+      #[cfg(all(
+        not(feature = "lancedb"),
+        any(
+          all(feature = "libsql", not(feature = "rusqlite"), not(feature = "postgres")),
+          all(feature = "rusqlite", not(feature = "libsql"), not(feature = "postgres")),
+          all(feature = "postgres", not(feature = "libsql"), not(feature = "rusqlite")),
+        )
       ))]
       $item
     )*

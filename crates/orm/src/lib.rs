@@ -1,45 +1,9 @@
-//! Single entry point for the toolu-orm workspace.
+//! Re-exports schema, query, connection, and macro crates through one facade.
 //!
-//! `toolu-orm` is a facade: it contains no logic of its own, only re-exports
-//! of the four library crates, all pinned to one version.
-//!
-//! ```toml
-//! toolu-orm = { version = "0.9", features = ["postgres"] }
-//! ```
-//!
-//! | Re-export | Crate | Holds |
-//! |---|---|---|
-//! | [`core`] | `toolu-orm-core` | schema, columns, migrations, driver traits |
-//! | [`query`] | `toolu-orm-query` | select / insert / update / delete builders |
-//! | [`connection`] | `toolu-orm-connection` | pools and driver adapters |
-//! | [`table`], [`ColumnEnum`], [`FromRow`], [`Relational`] | `toolu-orm-macros` | proc macros |
-//!
-//! ## Features
-//!
-//! `libsql`, `rusqlite` and `postgres` forward to every re-exported crate, so
-//! one feature list drives the whole stack. Enable exactly one: `toolu-orm-query`
-//! compiles its executor and transaction code only for a single driver.
-//!
-//! ## Macro paths
-//!
-//! The proc macros expand to absolute paths resolved against the consuming
-//! crate's `Cargo.toml`: `::toolu_orm::core::…` when this facade is the
-//! dependency, `::toolu_orm_core::…` when the crates are named directly. So
-//! `toolu-orm` on its own is enough — import the macro and nothing else:
-//!
-//! ```ignore
-//! use toolu_orm::core::column::{Integer, Text};
-//! use toolu_orm::table;
-//!
-//! #[table(name = "users")]
-//! pub struct User {
-//!   pub id: Integer,
-//!   pub email: Text,
-//! }
-//! ```
-//!
-//! The [`prelude`] remains for code that names `toolu_orm_core`,
-//! `toolu_orm_query` or the driver crate itself; the macros do not need it.
+//! `libsql`, `rusqlite`, `postgres`, and `lancedb` forward to all four crates.
+//! Query execution needs exactly one implemented driver with `lancedb` absent.
+//! The `lancedb` feature adds bundled DuckDB but no production executor yet.
+//! Proc macros resolve through this facade when it is the only dependency.
 
 pub use toolu_orm_connection as connection;
 pub use toolu_orm_core as core;

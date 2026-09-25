@@ -36,6 +36,7 @@ postgres = [
   "dep:tokio-postgres",
   "toolu-orm-core/postgres",
 ]
+lancedb = ["toolu-orm-core/lancedb"]
 # Live sqlite-vec lane: implies rusqlite + register helper + from_connection.
 sqlite-vec = [
   "rusqlite",

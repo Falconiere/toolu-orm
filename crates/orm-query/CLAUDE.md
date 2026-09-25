@@ -5,7 +5,7 @@ Type-safe query builders for toolu-orm — Select, Insert, Update, Delete with f
 ## Crate Type
 - Library
 - Internal deps: toolu-orm-core; toolu-orm-connection under `rusqlite`; sqlite-vec register helper under `sqlite-vec`
-- No default driver. Features: `libsql` (async), `rusqlite` (sync), `postgres` (async); execution requires exactly one driver on this crate
+- No default driver. Features: `libsql` (async), `rusqlite` (sync), `postgres` (async), and dependency-only `lancedb`; execution requires exactly one implemented driver on this crate with `lancedb` absent
 
 ## Crate-Specific Rules
 - The libsql/rusqlite scalar decoders require the matching single-driver shape on orm-core; do not enable extra core drivers behind a single-driver SQLite query build.
