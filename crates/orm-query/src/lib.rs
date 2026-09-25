@@ -22,15 +22,9 @@ cfg_single_backend! {
   pub mod executor;
   /// Helpers shared by active backend executors.
   pub(crate) mod exec_helpers;
+  /// Libsql transaction wrapper when libsql is the sole active backend.
+  #[cfg(feature = "libsql")]
+  pub mod transaction;
 }
-
-#[cfg(all(
-  feature = "libsql",
-  not(feature = "rusqlite"),
-  not(feature = "postgres")
-))]
-#[cfg(not(feature = "lancedb"))]
-/// Libsql transaction wrapper for the sole active backend.
-pub mod transaction;
 
 pub use error::QueryError;

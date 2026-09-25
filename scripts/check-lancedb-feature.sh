@@ -67,7 +67,7 @@ EOF
     Driver) expected='no variant or associated item named `Driver` found' ;;
     *) printf 'lancedb-feature: unknown import %s\n' "$item" >&2; exit 1 ;;
   esac
-  if ! rg --fixed-strings --quiet "$expected" "$fixture_dir/build.log"; then
+  if ! grep -Fq -- "$expected" "$fixture_dir/build.log"; then
     tail -30 "$fixture_dir/build.log" >&2
     printf 'lancedb-feature: %s failed for a reason other than absent query::%s\n' \
       "$driver" "$item" >&2
