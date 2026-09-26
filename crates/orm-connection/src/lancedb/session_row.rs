@@ -20,7 +20,7 @@ pub(super) fn portable_row(names: &[String], row: &Row<'_>) -> Result<LanceRow, 
 fn scalar(name: &str, native: ValueRef<'_>) -> Result<Value, DbError> {
   let overflow = |_| {
     DbError::RowMapping(format!(
-      "Lance column {name}: integer outside expected i64 range"
+      "Lance column {name}: integer outside portable i64 range"
     ))
   };
   Ok(match native {

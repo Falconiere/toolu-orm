@@ -32,7 +32,7 @@ fn integer_widths_are_checked_and_aliases_are_case_insensitive() -> Result<(), B
       .err()
       .ok_or("overflow accepted")?;
     assert!(
-      matches!(error, DbError::RowMapping(ref message) if message.contains("value") && message.contains("i64")),
+      matches!(error, DbError::RowMapping(ref message) if message.contains("value") && message.contains("portable i64")),
       "{error}"
     );
   }

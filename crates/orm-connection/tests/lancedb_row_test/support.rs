@@ -82,8 +82,8 @@ pub struct Integer(pub i64);
 impl FromRow for Integer {
   const REQUIRED_COLUMNS: &'static [&'static str] = &["value"];
   fn from_lance_row(row: &LanceRow) -> Result<Self, DbCoreError> {
-    let typed: i64 = row.get_typed("VALUE")?;
-    assert_eq!(row.get("value")?, &Value::Integer(typed));
+    let typed: i64 = row.get_typed("value")?;
+    assert_eq!(row.get("VALUE")?, &Value::Integer(typed));
     Ok(Self(typed))
   }
 }
