@@ -78,13 +78,6 @@ impl DbConnectionBlocking for LanceDbConnection {
       .as_ref()
       .ok_or_else(|| DbError::Query("Lance query returned no statement metadata".into()))?
       .column_names();
-    for required in T::REQUIRED_COLUMNS {
-      if !names.iter().any(|name| name.eq_ignore_ascii_case(required)) {
-        return Err(DbError::RowMapping(format!(
-          "missing Lance result column {required}"
-        )));
-      }
-    }
     let mut results = Vec::new();
     while let Some(row) = rows
       .next()

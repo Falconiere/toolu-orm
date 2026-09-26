@@ -96,3 +96,8 @@ required-features = ["rusqlite"]
 
 [lints]
 workspace = true
+
+[[test]]
+name = "lancedb_row_test"
+path = "tests/lancedb_row_test/main.rs"
+required-features = ["lancedb"]
