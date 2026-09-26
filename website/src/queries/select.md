@@ -156,8 +156,9 @@ See [Connections](../drivers/index.md) and [Transactions](transactions.md).
 The builder asks its executor for `dialect()` and renders that dialect before
 execution. Built-in libsql and rusqlite executors select SQLite; the Postgres
 client and query transaction select Postgres. There is no production Lance
-executor in this crate yet. In particular, Lance `ON CONFLICT` and ordinary
-DML `RETURNING` need capability rejection before execution.
+executor in this crate yet. Shared write builders separately reject Lance
+conflict policies and ordinary DML `RETURNING` before execution; see
+[Runtime capability checks](mutations.md#runtime-capability-checks).
 
 ```rust
 let all: Vec<User> = UsersTable::select_for::<User>().fetch_all(&conn).await?;

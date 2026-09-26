@@ -35,6 +35,24 @@ pub struct InsertBuilder {
 }
 
 impl InsertBuilder {
+  /// Check structured conflict and RETURNING state before execution.
+  ///
+  /// # Errors
+  /// Returns a named unsupported capability, checking conflict policy first.
+  pub fn validate_for(
+    &self,
+    dialect: toolu_orm_core::dialect::Dialect,
+  ) -> Result<(), toolu_orm_connection::DbError> {
+    use toolu_orm_connection::{require_capabilities, Capability};
+    if !matches!(self.conflict_mode, ConflictMode::None) {
+      require_capabilities(dialect, &[Capability::OnConflict])?;
+    }
+    if !self.returning.is_empty() {
+      require_capabilities(dialect, &[Capability::DmlReturning])?;
+    }
+    Ok(())
+  }
+
   pub fn new(table: &str) -> Self {
     Self::into_table(table)
   }

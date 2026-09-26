@@ -27,6 +27,20 @@ pub struct UpdateBuilder {
 impl_filter!(UpdateBuilder);
 
 impl UpdateBuilder {
+  /// Check the structured RETURNING projection before execution.
+  ///
+  /// # Errors
+  /// Returns a named unsupported capability when this backend cannot return DML rows.
+  pub fn validate_for(&self, dialect: Dialect) -> Result<(), toolu_orm_connection::DbError> {
+    if !self.returning.is_empty() {
+      toolu_orm_connection::require_capabilities(
+        dialect,
+        &[toolu_orm_connection::Capability::DmlReturning],
+      )?;
+    }
+    Ok(())
+  }
+
   /// Start an UPDATE for a table name.
   pub fn new(table: &str) -> Self {
     Self {

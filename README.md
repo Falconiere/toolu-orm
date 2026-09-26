@@ -551,7 +551,8 @@ It renders with that connection's runtime dialect and returns
 `Result<u64, DbError>`, so the same write builder can run through libsql,
 rusqlite, Postgres, or Lance sessions, including when multiple driver features
 are enabled. This path executes the statement only: it does not fetch
-`RETURNING` rows or add database capability checks.
+`RETURNING` rows. Unsupported structured Lance operations return a named
+[capability error](docs/scenarios/backend-capabilities.md) before execution.
 
 **Legacy executor calls.** All four builders retain `.execute(exec)`, where `exec` is
 the driver connection (`&libsql::Connection`, `&rusqlite::Connection`,

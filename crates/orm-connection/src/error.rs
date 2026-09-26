@@ -4,10 +4,21 @@ use toolu_orm_core::error::DbCoreError;
 
 /// Errors produced by database connection operations.
 ///
-/// This enum covers all failure modes across all backends (libsql, rusqlite, postgres).
-/// Backend-specific errors are stringified into the appropriate variant.
+/// This enum covers connection failures and structured capability refusals across
+/// libsql, rusqlite, PostgreSQL, and Lance. Driver errors carry their diagnostics.
 #[derive(Debug, thiserror::Error)]
 pub enum DbError {
+  /// A structured operation requires a guarantee this backend cannot provide.
+  #[error("unsupported capability {capability_name} on {backend_name}: {alternative}",
+    capability_name = .capability.as_str(), backend_name = .backend.as_str(),
+    alternative = .capability.alternative())]
+  UnsupportedCapability {
+    /// Backend selected by the connection.
+    backend: toolu_orm_core::dialect::Dialect,
+    /// Missing guarantee with a stable name and explicit alternative.
+    capability: crate::capability::Capability,
+  },
+
   /// Connection establishment or configuration failure.
   #[error("connection failed: {0}")]
   Connection(String),

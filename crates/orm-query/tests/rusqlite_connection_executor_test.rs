@@ -71,6 +71,8 @@ fn bad_sql_maps_to_query_error() -> TestResult {
     .columns_raw(&["id", "name"])
     .fetch_all::<User>(&conn)
     .expect_err("missing table");
-  assert!(matches!(err, QueryError::Connection(_)));
+  assert!(
+    matches!(err, QueryError::Connection(ref message) if message.contains("query:") && message.contains("no such table: nope"))
+  );
   Ok(())
 }

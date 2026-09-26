@@ -32,4 +32,13 @@ pub async fn write(conn: &impl DbConnection) -> Result<u64, DbError> {
 #[test]
 fn shared_writes_compile_with_facade_only() {
   // Building this test crate type-checks `write` with default (no-driver) features.
+  use toolu_orm::connection::{require_capabilities, Capability};
+  use toolu_orm::core::dialect::Dialect;
+  assert!(matches!(
+    require_capabilities(Dialect::Lance, &[Capability::OnConflict]),
+    Err(DbError::UnsupportedCapability {
+      capability: Capability::OnConflict,
+      ..
+    })
+  ));
 }

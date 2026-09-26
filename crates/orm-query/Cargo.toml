@@ -500,3 +500,7 @@ workspace = true
 [[test]]
 name = "portable_write_test"
 path = "tests/portable_write_test/main.rs"
+
+[[test]]
+name = "capability_test"
+path = "tests/capability_test.rs"

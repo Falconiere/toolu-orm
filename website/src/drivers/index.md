@@ -24,7 +24,8 @@ crate can enable several drivers together. Its blocking trait also supports
 `.execute_on(&impl DbConnection) -> Result<u64, DbError>`. This path is
 available for every query feature set, including mixed-driver builds, and uses
 the connection's dialect to render SQL. It executes writes only: it does not
-fetch `RETURNING` rows or reject unsupported database capabilities. Built-in
+fetch `RETURNING` rows. Unsupported structured Lance conflict policies and DML
+`RETURNING` produce named capability errors before driver execution. Built-in
 connections report their actual dialect; custom `DbConnection` implementations
 should override `dialect()` for runtime selection because its compatibility
 default remains `Dialect::CURRENT`.

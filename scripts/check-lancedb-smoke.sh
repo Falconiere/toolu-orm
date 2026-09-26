@@ -274,7 +274,8 @@ if [[ -z "$actual" || -z "$documented" ]] || \
 fi
 
 # Shared write builders must execute against the attached Lance catalog.
-cargo clippy -p toolu-orm-query --no-default-features --features lancedb --lib -- -D warnings
+cargo clippy -p toolu-orm-query --no-default-features --features lancedb \
+  --lib --test portable_write_test -- -D warnings
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   -p toolu-orm-query --no-default-features --features lancedb \
   --test portable_write_test --success-output immediate
