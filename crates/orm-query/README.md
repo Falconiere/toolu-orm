@@ -6,11 +6,19 @@ builders render SQLite, Postgres, or Lance SQL without a database connection.
 ## Driver features
 
 No driver is enabled by default. Enable exactly one of `libsql`, `rusqlite`, or
-`postgres` for execution and row fetching. libsql and Postgres are async;
+`postgres` for legacy execution and row fetching. libsql and Postgres are async;
 rusqlite is synchronous. With zero or multiple driver features, builders and
-explicit `to_sql_for(Dialect::...)` rendering remain available, but executors
-and fetch methods are not compiled. The `lancedb` feature can coexist with
-`postgres` for rendering; it does not provide a Lance executor in this crate.
+explicit `to_sql_for(Dialect::...)` rendering remain available, but legacy
+executors and fetch methods are not compiled. The `lancedb` feature can coexist
+with other drivers for rendering; it does not provide a Lance `Executor` in this
+crate.
+
+`InsertBuilder`, `UpdateBuilder`, and `DeleteBuilder` always provide async
+`execute_on(&impl DbConnection) -> Result<u64, DbError>`. This shared write API
+renders using the connection's runtime dialect, works with any feature set, and
+forwards parameters to the connection. It does not fetch `RETURNING` rows or
+perform database capability checks; `.execute()` and fetch methods keep their
+legacy feature gates.
 
 The `sqlite-vec` feature enables `rusqlite` and the sqlite-vec registration
 dependency. The query API uses `toolu-orm-core` types: `Expr`, `Scalar`,
@@ -104,9 +112,9 @@ explicit `to_sql_for(Dialect::Lance)` path uses `?N` even when Postgres and
 Lance features are both enabled. `to_sql()` remains a shorthand for
 `Dialect::CURRENT`, which reflects compile-time features. A custom executor
 can override `dialect()` when its runtime backend differs from `CURRENT`.
-Lance supports offset-only SQL without SQLite's `LIMIT -1` prefix. Lance
-`ON CONFLICT` and ordinary DML `RETURNING` need capability rejection before
-execution; see [the Lance matrix](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-sql-matrix.md).
+Lance supports offset-only SQL without SQLite's `LIMIT -1` prefix. `execute_on`
+does not yet reject Lance `ON CONFLICT` or ordinary DML `RETURNING` before
+execution; capability guards belong to issue #174. See [the Lance matrix](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-sql-matrix.md).
 
 `on_conflict` updates in place on either dialect. SQLite's `or_replace` deletes
 and reinserts the conflicting row, which can reset omitted columns and cascade

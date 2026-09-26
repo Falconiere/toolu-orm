@@ -118,6 +118,9 @@ impl LibsqlConnection {
 
 #[async_trait::async_trait]
 impl DbConnection for LibsqlConnection {
+  fn dialect(&self) -> toolu_orm_core::dialect::Dialect {
+    toolu_orm_core::dialect::Dialect::Sqlite
+  }
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
     let libsql_params: Vec<libsql::Value> = params.into_iter().map(Into::into).collect();
     let affected = self

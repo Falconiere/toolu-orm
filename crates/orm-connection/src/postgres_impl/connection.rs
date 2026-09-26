@@ -178,6 +178,9 @@ async fn pg_execute_batch(client: &(impl GenericClient + Send), sql: &str) -> Re
 
 #[async_trait::async_trait]
 impl DbConnection for PgConnection {
+  fn dialect(&self) -> toolu_orm_core::dialect::Dialect {
+    toolu_orm_core::dialect::Dialect::Postgres
+  }
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
     pg_execute_sql(&self.client, sql, params).await
   }
@@ -197,6 +200,9 @@ impl DbConnection for PgConnection {
 
 #[async_trait::async_trait]
 impl DbConnection for PgTransaction<'_> {
+  fn dialect(&self) -> toolu_orm_core::dialect::Dialect {
+    toolu_orm_core::dialect::Dialect::Postgres
+  }
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
     pg_execute_sql(&self.inner, sql, params).await
   }

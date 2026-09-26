@@ -114,6 +114,9 @@ jobs:
       - name: Test (orm-cli, rusqlite only)
         run: cargo nextest run -p toolu-orm-cli --no-default-features --features rusqlite
 
+      - name: Shared writes select each connection in a mixed-driver build
+        run: cargo nextest run -p toolu-orm-query --features postgres,rusqlite,sqlite-vec --test portable_write_test
+
       # The four lanes above only give orm-core four of the eight driver
       # combinations, so half of `impl_derived_from_row!`'s definitions are
       # never expanded by one. This compiles the FromRow derive against all

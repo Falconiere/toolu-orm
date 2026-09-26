@@ -21,31 +21,31 @@ libsql = { workspace = true, optional = true }
 rusqlite = { workspace = true, optional = true }
 tokio-postgres = { workspace = true, optional = true }
 toolu-orm-sqlite-vec-register = { path = "../orm-connection/sqlite-vec-register", version = "0.11.0", optional = true }
-toolu-orm-connection = { path = "../orm-connection", version = "0.11.0", optional = true, default-features = false }
+toolu-orm-connection = { path = "../orm-connection", version = "0.11.0", default-features = false }
 
 [features]
 default = []
-libsql = ["dep:libsql", "dep:tokio", "toolu-orm-core/libsql"]
+libsql = ["dep:libsql", "dep:tokio", "toolu-orm-core/libsql", "toolu-orm-connection/libsql"]
 rusqlite = [
   "dep:rusqlite",
   "toolu-orm-core/rusqlite",
-  "dep:toolu-orm-connection",
   "toolu-orm-connection/rusqlite",
 ]
 postgres = [
   "dep:tokio-postgres",
   "toolu-orm-core/postgres",
+  "toolu-orm-connection/postgres",
 ]
-lancedb = ["toolu-orm-core/lancedb"]
+lancedb = ["toolu-orm-core/lancedb", "toolu-orm-connection/lancedb"]
 # Live sqlite-vec lane: implies rusqlite + register helper + from_connection.
 sqlite-vec = [
   "rusqlite",
   "dep:toolu-orm-sqlite-vec-register",
-  "dep:toolu-orm-connection",
   "toolu-orm-connection/rusqlite",
 ]
 
 [dev-dependencies]
+tempfile = "3"
 # `macros` for #[tokio::test]; `rt` for its runtime and for tokio::spawn in the
 # postgres fixtures.
 tokio = { workspace = true, features = ["rt", "macros"] }
@@ -496,3 +496,7 @@ required-features = ["postgres"]
 
 [lints]
 workspace = true
+
+[[test]]
+name = "portable_write_test"
+path = "tests/portable_write_test/main.rs"

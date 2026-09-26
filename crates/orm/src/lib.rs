@@ -1,10 +1,14 @@
 //! Re-exports schema, query, connection, and macro crates through one facade.
 //!
 //! `libsql`, `rusqlite`, `postgres`, and `lancedb` forward to all four crates.
-//! Query execution needs exactly one implemented driver with `lancedb` absent.
+//! Legacy query execution and fetching need exactly one implemented driver with
+//! `lancedb` absent. `InsertBuilder`, `UpdateBuilder`, and `DeleteBuilder` also
+//! provide async `execute_on(&impl connection::DbConnection)`, which is available
+//! for every feature set and renders a write through the connection's dialect.
 //! The `lancedb` feature exposes Lance extension startup, local namespace
 //! lifecycle, and an attached-catalog `DbConnection` session through
-//! `toolu_orm::connection`. Portable query builders remain separate work.
+//! `toolu_orm::connection`. Shared portable write execution does not fetch
+//! `RETURNING` rows or add database capability checks.
 //! Proc macros resolve through this facade when it is the only dependency.
 
 pub use toolu_orm_connection as connection;

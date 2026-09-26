@@ -70,3 +70,7 @@ path = "tests/facade_only_missing_docs_test.rs"
 
 [lints]
 workspace = true
+
+[[test]]
+name = "facade_only_write_test"
+path = "tests/facade_only_write_test.rs"

@@ -225,3 +225,35 @@ LANCE_EXTENSION_PATH="$extension" cargo nextest run \
 cargo nextest run -p toolu-orm-facade-consumer \
   --no-default-features --features lancedb \
   -E 'binary(facade_only_lance_session_test)' --success-output immediate
+
+# Keep the shared Lance write scenario registered in the real extension lane.
+listed_writes=$(cargo nextest list -p toolu-orm-query --features lancedb \
+  --test portable_write_test --color never)
+actual=$(printf '%s\n' "$listed_writes" | awk '
+  /^toolu-orm-query::portable_write_test / {
+    sub(/^toolu-orm-query::/, "")
+    print
+  }
+' | sort)
+documented=$(awk -F'|' '
+  $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ && \
+  $3 ~ /^[[:space:]]*portable_write_test[[:space:]]*$/ {
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
+    print $3 " " $4
+  }
+' docs/scenarios/portable-writes.md | sort)
+if [[ -z "$actual" || -z "$documented" ]] || \
+  ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
+  printf 'lancedb-smoke: shared write scenario docs and test names differ\n' >&2
+  exit 1
+fi
+
+# Shared write builders must execute against the attached Lance catalog.
+cargo clippy -p toolu-orm-query --no-default-features --features lancedb --lib -- -D warnings
+LANCE_EXTENSION_PATH="$extension" cargo nextest run \
+  -p toolu-orm-query --no-default-features --features lancedb \
+  --test portable_write_test --success-output immediate
+cargo check -p toolu-orm-query --features postgres,rusqlite,lancedb --lib
+cargo nextest run -p toolu-orm-facade-consumer --features lancedb \
+  --test facade_only_write_test
