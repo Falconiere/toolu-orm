@@ -53,7 +53,13 @@ impl LanceRow {
   /// is absent, NULL for a required field, or incompatible with `T`.
   pub fn get_typed<T: FromLanceValue>(&self, name: &str) -> Result<T, DbCoreError> {
     let expected = std::any::type_name::<T>();
-    let value = self.get(name)?;
+    let value = self.get(name).map_err(|error| {
+      if let DbCoreError::RowMapping(message) = error {
+        DbCoreError::RowMapping(format!("{message}; expected {expected}"))
+      } else {
+        error
+      }
+    })?;
     T::from_lance_value(value).ok_or_else(|| {
       let reason = if matches!(value, Value::Null) {
         "NULL"
