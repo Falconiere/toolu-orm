@@ -31,5 +31,5 @@ pub async fn write(conn: &impl DbConnection) -> Result<u64, DbError> {
 
 #[test]
 fn shared_writes_compile_with_facade_only() {
-  // Rust checks the generic public function body even with no driver enabled.
+  // Building this test crate type-checks `write` with default (no-driver) features.
 }
