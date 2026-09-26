@@ -180,6 +180,17 @@ and [namespace lifecycle scenario](docs/scenarios/lancedb-namespace-lifecycle.md
 show the real checks; the [Rust probe](docs/scenarios/lancedb-rust-smoke.md)
 checks extension loading.
 
+`LanceDbConnection::from_namespace(namespace)` consumes an attached namespace
+and implements async `DbConnection` and synchronous `DbConnectionBlocking`.
+Both serialize SQL on one DuckDB connection. The shared methods accept bound
+`Value` parameters; `query_map` uses a manually implemented
+`FromRow::from_lance_row` with named `LanceRow` values for BIGINT, VARCHAR, and
+NULL results. `execute_batch` can create tables that persist after reopening
+the catalog. Full scalar decoding, derive support, portable query builders,
+and migrations are separate work. See the
+[connection scenario](docs/scenarios/lancedb-dbconnection.md) for the supported
+surface, errors, and real database tests.
+
 `to_duckdb_params(&values)` converts portable `Value` slices for prepared DuckDB
 statements. It binds NULL, integer, real, text, binary, and boolean values; UUID,
 JSON, temporal, and decimal variants return `LanceValueError::Unsupported`
@@ -761,6 +772,7 @@ migrations/
 | `libsql` | [libsql](https://crates.io/crates/libsql) | async; local file, `:memory:`, or Turso embedded replica | `Database::init_local(path)` · `Database::init_remote(RemoteConfig)` |
 | `rusqlite` | [rusqlite](https://crates.io/crates/rusqlite) (bundled) | sync natively (`DbConnectionBlocking`), wrapped in `spawn_blocking` for the async `DbConnection` | `RusqliteConnection::from_connection(conn)` (no runtime) · `::open(path)` · `::open_in_memory()` |
 | `postgres` | [tokio-postgres](https://crates.io/crates/tokio-postgres) + [deadpool](https://crates.io/crates/deadpool-postgres) | async pool, rustls TLS | `PgDatabase::init(&PgConfig)` then `.connect()` |
+| `lancedb` | [duckdb](https://crates.io/crates/duckdb) with a local Lance extension | embedded; blocking and async `DbConnection` methods on one serialized connection | `LanceConnection::open(extension)?.attach(directory, namespace)` then `LanceDbConnection::from_namespace(attachment)` |
 
 ```rust
 // Turso embedded replica: local file kept in sync with the remote

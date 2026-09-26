@@ -4,10 +4,13 @@ use duckdb::Connection;
 use std::path::Path;
 
 mod namespace;
+mod session;
+mod session_row;
 mod sql;
 mod value;
 
 pub use namespace::{LanceColumn, LanceColumnType, LanceNamespace, LanceNamespaceError};
+pub use session::LanceDbConnection;
 pub use value::{LanceValueError, to_duckdb_params};
 
 const DUCKDB_VERSION: &str = "v1.5.5";

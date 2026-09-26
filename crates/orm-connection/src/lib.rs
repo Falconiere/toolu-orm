@@ -1,7 +1,8 @@
-//! Connection traits and implementations for libsql, rusqlite, and Postgres.
+//! Connection traits and implementations for libsql, rusqlite, Postgres, and Lance.
 //!
 //! No driver is enabled by default. The optional `lancedb` feature opens
-//! embedded DuckDB with a caller-supplied pinned Lance extension.
+//! embedded DuckDB with a caller-supplied pinned Lance extension and an
+//! attached-catalog `DbConnection` session.
 
 /// Synchronous connection trait.
 pub mod blocking_trait_def;
@@ -44,6 +45,6 @@ pub use postgres_impl::{PgConfig, PgConnection, PgDatabase, PgTransaction};
 
 #[cfg(feature = "lancedb")]
 pub use lancedb::{
-  LanceColumn, LanceColumnType, LanceConnection, LanceNamespace, LanceNamespaceError,
-  LanceStartupError, LanceValueError, to_duckdb_params,
+  LanceColumn, LanceColumnType, LanceConnection, LanceDbConnection, LanceNamespace,
+  LanceNamespaceError, LanceStartupError, LanceValueError, to_duckdb_params,
 };

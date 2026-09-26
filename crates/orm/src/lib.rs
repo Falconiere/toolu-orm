@@ -2,9 +2,9 @@
 //!
 //! `libsql`, `rusqlite`, `postgres`, and `lancedb` forward to all four crates.
 //! Query execution needs exactly one implemented driver with `lancedb` absent.
-//! The `lancedb` feature exposes Lance extension startup and local namespace
-//! table lifecycle through `toolu_orm::connection::LanceConnection`, but no
-//! portable query executor yet.
+//! The `lancedb` feature exposes Lance extension startup, local namespace
+//! lifecycle, and an attached-catalog `DbConnection` session through
+//! `toolu_orm::connection`. Portable query builders remain separate work.
 //! Proc macros resolve through this facade when it is the only dependency.
 
 pub use toolu_orm_connection as connection;

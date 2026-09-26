@@ -72,6 +72,7 @@ cargo fmt --manifest-path probes/lancedb/Cargo.toml -- --check
 cargo clippy --manifest-path probes/lancedb/Cargo.toml --locked --all-targets -- -D warnings
 cargo fmt -p toolu-orm-connection -- --check
 cargo clippy -p toolu-orm-connection --no-default-features --features lancedb --all-targets -- -D warnings
+cargo clippy -p toolu-orm-facade-consumer --no-default-features --features lancedb --all-targets -- -D warnings
 
 if ! listed=$(cargo nextest list --manifest-path probes/lancedb/Cargo.toml --locked --color never); then
   printf 'lancedb-smoke: cannot list Rust tests\n' >&2
@@ -162,6 +163,51 @@ if [[ -z "$actual" || -z "$documented" ]] || \
   exit 1
 fi
 
+actual=$(printf '%s\n' "$listed" | awk '
+  /^toolu-orm-connection::lancedb_dbconnection_test / {
+    sub(/^toolu-orm-connection::/, "")
+    print
+  }
+' | sort)
+documented=$(awk -F'|' '
+  $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ && \
+  $3 ~ /^[[:space:]]*lancedb_dbconnection_test[[:space:]]*$/ {
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
+    print $3 " " $4
+  }
+' docs/scenarios/lancedb-dbconnection.md | sort)
+if [[ -z "$actual" || -z "$documented" ]] || \
+  ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
+  printf 'lancedb-smoke: DbConnection scenario docs and test names differ\n' >&2
+  exit 1
+fi
+
+if ! listed_consumer=$(cargo nextest list -p toolu-orm-facade-consumer \
+  --no-default-features --features lancedb --color never); then
+  printf 'lancedb-smoke: cannot list facade-only Lance tests\n' >&2
+  exit 1
+fi
+actual=$(printf '%s\n' "$listed_consumer" | awk '
+  /^toolu-orm-facade-consumer::facade_only_lance_session_test / {
+    sub(/^toolu-orm-facade-consumer::/, "")
+    print
+  }
+' | sort)
+documented=$(awk -F'|' '
+  $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ && \
+  $3 ~ /^[[:space:]]*facade_only_lance_session_test[[:space:]]*$/ {
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
+    print $3 " " $4
+  }
+' docs/scenarios/lancedb-dbconnection.md | sort)
+if [[ -z "$actual" || -z "$documented" ]] || \
+  ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
+  printf 'lancedb-smoke: facade-only Lance scenario docs and test names differ\n' >&2
+  exit 1
+fi
+
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   --manifest-path probes/lancedb/Cargo.toml --locked --success-output immediate
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
@@ -173,3 +219,9 @@ LANCE_EXTENSION_PATH="$extension" cargo nextest run \
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   -p toolu-orm-connection --no-default-features --features lancedb \
   -E 'binary(lancedb_value_test)' --success-output immediate
+LANCE_EXTENSION_PATH="$extension" cargo nextest run \
+  -p toolu-orm-connection --no-default-features --features lancedb \
+  -E 'binary(lancedb_dbconnection_test)' --success-output immediate
+cargo nextest run -p toolu-orm-facade-consumer \
+  --no-default-features --features lancedb \
+  -E 'binary(facade_only_lance_session_test)' --success-output immediate
