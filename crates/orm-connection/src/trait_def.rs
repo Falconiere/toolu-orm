@@ -13,6 +13,15 @@ use toolu_orm_core::value::Value;
 /// internally to satisfy the async interface.
 #[async_trait::async_trait]
 pub trait DbConnection: Send + Sync {
+  /// SQL dialect selected by this connection, independent of other enabled drivers.
+  ///
+  /// Built-in connections override this. Custom connections should override it
+  /// for runtime selection; the default preserves the compile-time behavior of
+  /// existing implementations.
+  fn dialect(&self) -> toolu_orm_core::dialect::Dialect {
+    toolu_orm_core::dialect::Dialect::CURRENT
+  }
+
   /// Execute a write statement (INSERT/UPDATE/DELETE) and return affected row count.
   ///
   /// Parameters are passed as `Vec<Value>` and converted to the driver's

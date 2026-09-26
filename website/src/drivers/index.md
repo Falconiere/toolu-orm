@@ -5,7 +5,7 @@ saves a compile error.
 
 | Trait | Crate | Implemented for | Used by |
 |---|---|---|---|
-| `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `toolu_orm_connection::PgTransaction`, `LanceDbConnection` | `run_migrate` and `get_status` on supported migration drivers; your own SQL on all listed drivers |
+| `DbConnection` | `toolu-orm-connection` | `LibsqlConnection`, `RusqliteConnection`, `PgConnection`, `toolu_orm_connection::PgTransaction`, `LanceDbConnection` | `run_migrate` and `get_status` on supported migration drivers; shared write-builder `.execute_on()` and your own SQL on all listed drivers |
 | `DbConnectionBlocking` | `toolu-orm-connection` | `RusqliteConnection`, `LanceDbConnection` | blocking migration/status APIs on rusqlite; your own SQL on either driver |
 | `Executor` | `toolu-orm-query` | `libsql::Connection`, `rusqlite::Connection`, `RusqliteConnection`, `tokio_postgres::Client`, `toolu_orm_query::transaction::Transaction` (libsql only), `toolu_orm_query::executor::PgTransaction` (Postgres only) | the query builders' `.execute()` and `fetch_*` |
 
@@ -19,6 +19,15 @@ crate's wrapper; functions accepting `DbConnection` take the connection crate's.
 **exactly one** driver feature is enabled on `toolu-orm-query`. The connection
 crate can enable several drivers together. Its blocking trait also supports
 `run_migrate_blocking` and `get_status_blocking` without an async runtime.
+
+`InsertBuilder`, `UpdateBuilder`, and `DeleteBuilder` also have async
+`.execute_on(&impl DbConnection) -> Result<u64, DbError>`. This path is
+available for every query feature set, including mixed-driver builds, and uses
+the connection's dialect to render SQL. It executes writes only: it does not
+fetch `RETURNING` rows or reject unsupported database capabilities. Built-in
+connections report their actual dialect; custom `DbConnection` implementations
+should override `dialect()` for runtime selection because its compatibility
+default remains `Dialect::CURRENT`.
 
 ## Lance extension and local namespace
 

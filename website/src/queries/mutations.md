@@ -1,9 +1,22 @@
 # Insert, update, delete
 
 The three write builders mirror `SelectBuilder`: build, render with `to_sql_for`,
-execute with `.execute(conn)` — which returns the number of affected rows.
+and execute either through a shared connection or a legacy query executor.
 
-Execution requires exactly one query driver feature. `conn` implements that
+`InsertBuilder`, `UpdateBuilder`, and `DeleteBuilder` always provide async
+`.execute_on(&conn)`, where `conn` implements `DbConnection`. It returns
+`Result<u64, DbError>` and renders SQL using that connection's dialect, so it is
+available with no query-driver default and in mixed-driver builds. It does not
+fetch `RETURNING` rows or add capability checks before executing the statement.
+
+```rust
+let affected = InsertBuilder::new("users")
+  .set(&users::id, "u_1")
+  .execute_on(&conn)
+  .await?;
+```
+
+Legacy `.execute(conn)` requires exactly one query driver feature. `conn` implements that
 driver's `Executor`: `libsql::Connection`, `rusqlite::Connection`,
 `tokio_postgres::Client`, or a supported query transaction wrapper.
 `toolu_orm_connection::RusqliteConnection` also works directly. On rusqlite the
@@ -180,5 +193,6 @@ UsersTable::update().set(&users::email, "x@y.z").filter(users::id.eq("u_1")).exe
 UsersTable::delete().filter(users::id.eq("u_1")).execute(&conn).await?;
 ```
 
-All three take the same executor as select — a connection, or a transaction. See
+All three take the same legacy executor as select — a connection, or a transaction.
+They also take any `DbConnection` through async `.execute_on(&conn)`. See
 [Transactions](transactions.md).

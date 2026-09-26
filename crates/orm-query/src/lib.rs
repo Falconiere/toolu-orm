@@ -1,3 +1,5 @@
+mod portable_execute;
+
 /// DELETE query builder.
 pub mod delete;
 /// Query execution errors.

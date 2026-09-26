@@ -59,7 +59,7 @@ row types and database-specific expressions still need the matching driver API.
 | 🔁 **Diff-driven migrations** | `run_generate` diffs your registry against the last `*.snapshot.json` and writes numbered SQL with a `--> statement-breakpoint` separator. `run_migrate` / `run_migrate_blocking` apply pending files in one transaction each; `get_status` / `get_status_blocking` list applied and pending. |
 | 🔐 **Tamper-evident journal** | `_journal.json` stores a `sha256:` hash per migration, and `_migrations` keeps the hash each applied migration ran with. Runs re-check declared applied entries whose hashes can be verified: an edited file stops the run with `MigrateError::HashMismatch`, a rewritten journal entry with `MigrateError::HistoryMismatch`. |
 | 🧮 **Typed columns, typed expressions** | Generated `Column<T>` constants (`users::email`) build `Expr` trees: `eq` / `ne` / `in_list` / `not_in` / `is_null` on every column, `like` on text, `gt` / `lt` / `gte` / `lte` / `between` on numbers, combined with `.and()` / `.or()`. Table-qualified, always quoted. |
-| 🏗️ **Four builders, one executor** | `SelectBuilder` (filters, joins, ordering, paging, `distinct` / `group_by` / `having` with typed aggregates), `InsertBuilder` (explicit `on_conflict`, `RETURNING`, `INSERT … SELECT`, plus `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. All share `.execute()`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
+| 🏗️ **Four builders, shared writes** | `SelectBuilder` (filters, joins, ordering, paging, `distinct` / `group_by` / `having` with typed aggregates), `InsertBuilder` (explicit `on_conflict`, `RETURNING`, `INSERT … SELECT`, plus `or_ignore` / `or_replace`), `UpdateBuilder` (`set` / `set_expr`), `DeleteBuilder`. The write builders also share async `.execute_on(&impl DbConnection)`; select adds `fetch_all`, `fetch_one`, `fetch_optional`, `count`, `exists`. |
 | 🌐 **Dialect-aware SQL** | `to_sql_for(Dialect::Sqlite)` emits `?N` placeholders; `Dialect::Postgres` emits `$N`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`, and `LEFT JOIN LATERAL` + `json_agg` for relations. |
 | 🕸️ **Relational loads without N+1** | `#[derive(Relational)]` decodes relation JSON; `RelationalQuery::with_many` / `with_one` build the single-statement loads. `#[many_to_many]` metadata is parsed, but requires hand-written join SQL. |
 | 🔎 **Full-text search** | `#[fts5_table]` (or the `Fts5Table` builder) declares an SQLite FTS5 virtual table with `UNINDEXED` columns, a free-form tokenizer, and external content. Migrations emit `CREATE VIRTUAL TABLE ... USING fts5(...)`. |
@@ -203,11 +203,12 @@ startup. For offline use, provision the file ahead of
 time and pass its path to every new connection. The smoke script downloads to
 a temporary directory for tests and does not populate a persistent cache.
 
-This slice does not yet provide `DbConnection`, a query executor, portable
-schema rendering, or a CLI migration backend. `lancedb` may be enabled with an existing
-driver feature, but query execution is available only when exactly one
-implemented driver (`libsql`, `rusqlite`, or `postgres`) is enabled and
-`lancedb` is absent.
+This slice does not yet provide portable query fetching, portable schema
+rendering, or a CLI migration backend. `lancedb` may be enabled with an existing
+driver feature. `InsertBuilder`, `UpdateBuilder`, and `DeleteBuilder` can execute
+through any `DbConnection` with async `.execute_on(&conn)`, including mixed-driver
+builds; select fetching and legacy `.execute()` remain limited to exactly one
+implemented query driver (`libsql`, `rusqlite`, or `postgres`) with `lancedb` absent.
 
 ---
 
@@ -543,7 +544,15 @@ For an update that preserves the existing row, use
 methods. `InsertBuilder::select` inserts a whole SELECT result. See
 [Upsert](docs/scenarios/upsert.md) and [INSERT … SELECT](docs/scenarios/insert-select.md).
 
-**Executing.** All four builders share `.execute(exec)`, where `exec` is
+**Shared connection writes.** `InsertBuilder`, `UpdateBuilder`, and
+`DeleteBuilder` provide async `.execute_on(&conn)` for any `DbConnection`.
+It renders with that connection's runtime dialect and returns
+`Result<u64, DbError>`, so the same write builder can run through libsql,
+rusqlite, Postgres, or Lance sessions, including when multiple driver features
+are enabled. This path executes the statement only: it does not fetch
+`RETURNING` rows or add database capability checks.
+
+**Legacy executor calls.** All four builders retain `.execute(exec)`, where `exec` is
 the driver connection (`&libsql::Connection`, `&rusqlite::Connection`,
 `&tokio_postgres::Client`, or a supported transaction). The rusqlite
 `RusqliteConnection` wrapper also implements `Executor` directly. Calls return

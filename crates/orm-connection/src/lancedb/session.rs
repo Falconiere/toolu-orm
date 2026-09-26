@@ -122,6 +122,10 @@ where
 
 #[async_trait::async_trait]
 impl DbConnection for LanceDbConnection {
+  fn dialect(&self) -> toolu_orm_core::dialect::Dialect {
+    toolu_orm_core::dialect::Dialect::Lance
+  }
+
   async fn execute_sql(&self, sql: &str, params: Vec<Value>) -> Result<u64, DbError> {
     let sql = sql.to_owned();
     gated(self, move |conn| {
