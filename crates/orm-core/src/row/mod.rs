@@ -9,6 +9,8 @@ mod decode_rusqlite;
 mod derived;
 #[cfg(feature = "lancedb")]
 mod lance;
+#[cfg(feature = "lancedb")]
+mod lance_value;
 #[cfg(feature = "postgres")]
 mod pg_count_scalar;
 mod traits;
@@ -21,6 +23,8 @@ pub use decode_postgres::from_postgres_row;
 pub use decode_rusqlite::from_rusqlite_row;
 #[cfg(feature = "lancedb")]
 pub use lance::LanceRow;
+#[cfg(feature = "lancedb")]
+pub use lance_value::FromLanceValue;
 #[cfg(feature = "postgres")]
 pub use pg_count_scalar::PgCountScalar;
 pub use traits::FromRow;
