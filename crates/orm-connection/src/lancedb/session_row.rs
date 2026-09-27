@@ -1,4 +1,4 @@
-//! Convert supported Lance result scalars to portable owned row values.
+//! Convert supported Lance scalars and FLOAT arrays to portable owned row values.
 
 use duckdb::{Row, types::ValueRef};
 use toolu_orm_core::{row::LanceRow, value::Value};
@@ -44,6 +44,7 @@ fn scalar(name: &str, native: ValueRef<'_>) -> Result<Value, DbError> {
         .to_owned(),
     ),
     ValueRef::Blob(bytes) => Value::Blob(bytes.to_vec()),
+    ValueRef::Array(..) => super::vector::decode(name, native)?,
     ValueRef::Decimal(_)
     | ValueRef::Timestamp(..)
     | ValueRef::Geometry(_)
@@ -53,7 +54,6 @@ fn scalar(name: &str, native: ValueRef<'_>) -> Result<Value, DbError> {
     | ValueRef::List(..)
     | ValueRef::Enum(..)
     | ValueRef::Struct(..)
-    | ValueRef::Array(..)
     | ValueRef::Map(..)
     | ValueRef::Union(..)
     | _ => {
