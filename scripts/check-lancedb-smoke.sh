@@ -307,9 +307,11 @@ if [[ -z "$actual" || -z "$documented" ]] || \
   printf 'lancedb-smoke: facade-only derive scenario docs and test names differ\n' >&2
   exit 1
 fi
+# libsql-ffi and libsqlite3-sys each bundle SQLite, so a linked binary with
+# both libsql and rusqlite fails with duplicate sqlite3_* symbols on Linux.
+# Those two subsets stay compile-checked by scripts/check-derive-matrix.sh.
 for drivers in lancedb lancedb,postgres lancedb,libsql lancedb,rusqlite \
-  lancedb,postgres,libsql lancedb,postgres,rusqlite lancedb,libsql,rusqlite \
-  lancedb,postgres,libsql,rusqlite; do
+  lancedb,postgres,libsql lancedb,postgres,rusqlite; do
   LANCE_EXTENSION_PATH="$extension" cargo nextest run \
     -p toolu-orm-facade-consumer --no-default-features --features "$drivers" \
     --test facade_only_lance_from_row_test --success-output immediate

@@ -17,25 +17,9 @@
 - **All sixteen driver combinations compile**, in two packages, guarded by `scripts/check-derive-matrix.sh`. `toolu-orm-facade-consumer` is the decisive one: `toolu-orm` is its only dependency, so in the rusqlite-only build `tokio-postgres` is absent from its dependency graph entirely (`cargo tree` finds no occurrence), yet the derive — which names `tokio_postgres::Row` in its postgres decoder unconditionally — still compiles. That is what pins the claim that an inactive driver's decoder costs nothing: its tokens are bound to a `$…:block` the surviving macro arm never interpolates, so they are dropped before name resolution rather than resolved and discarded. `toolu-orm-macros` covers the wider derive surface (`#[from_row(with)]`, renamed columns, several structs) but cannot prove absence, since its dev-dependencies pull in all three driver crates.
 
 - **External consumer without local features:** the derive compiles with `lancedb` enabled only on its dependency and `unexpected_cfgs` denied. A rusqlite-only `i32` field also proves inactive Lance tokens impose no Lance scalar bound.
-- **Facade-only Lance reads:** all portable scalar types, optional NULL/present values, reordered and case-varied projection names, and empty results decode through the derive against a real attached Lance table. Missing required or optional fields, required NULL, wrong scalar types and rejected custom conversions produce column-level errors. The smoke lane executes this binary in all eight Lance-enabled feature subsets. The two subsets with rusqlite and without libsql also decode a real SQLite row into the same struct; opening rusqlite when libsql is linked would pull in both native SQLite implementations and cause duplicate symbols on Linux.
+- **Facade-only Lance reads:** all portable scalar types, optional NULL/present values, reordered and case-varied projection names, and empty results decode through the derive against a real attached Lance table. Missing required or optional fields, required NULL, wrong scalar types and rejected custom conversions produce column-level errors. The smoke lane executes this binary in the six Lance-enabled feature subsets that link at most one bundled SQLite; the two with both `libsql` and `rusqlite` are compile-checked by the derive matrix only, because `libsql-ffi` and `libsqlite3-sys` each bundle SQLite and a linked binary with both fails with duplicate `sqlite3_*` symbols on Linux. The two subsets with rusqlite also decode a real SQLite row into the same struct.
 
 ## How to run
-
-The workspace's dev and test profiles optimize the rusqlite Rust wrapper at
-level 1. On Linux, unoptimized shared generic helpers can otherwise pull unused
-rusqlite archive members into a Lance binary before dead-section elimination,
-colliding with libSQL's bundled SQLite symbols even without a SQLite query.
-The mixed-feature tests select Lance; they do not claim that both bundled
-SQLite engines can operate together in one process. External consumers running
-the same mixed-feature tests need the equivalent setting in their root manifest:
-
-```toml
-[profile.dev.package.rusqlite]
-opt-level = 1
-
-[profile.test.package.rusqlite]
-opt-level = 1
-```
 
 The derive matrix checks each of the sixteen combinations, including the no-driver arm and all eight Lance-enabled subsets. The four CI lanes
 give `toolu-orm-core` only four of them, so this guard is what keeps the other

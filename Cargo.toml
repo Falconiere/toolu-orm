@@ -115,13 +115,6 @@ opt-level = 2
 [profile.dev.package.serde_json]
 opt-level = 2
 
-# Unoptimized shared Rust helpers can pull unused rusqlite archive members into
-# Lance binaries before Linux linkers discard dead sections. Optimize this Rust
-# wrapper so mixed libsql+rusqlite feature builds do not link a second SQLite
-# engine merely to decode a Lance row.
-[profile.dev.package.rusqlite]
-opt-level = 1
-
 [profile.dev.package."*"]
 debug = 0
 
@@ -130,9 +123,6 @@ opt-level = 0
 incremental = true
 debug = 0              # Tests rarely need debuginfo — saves compile time and disk
 codegen-units = 256
-
-[profile.test.package.rusqlite]
-opt-level = 1
 
 [profile.release]
 opt-level = 3

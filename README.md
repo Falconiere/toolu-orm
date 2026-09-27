@@ -191,7 +191,7 @@ builds. Missing columns and required NULL report the field and expected type.
 `execute_batch` can create tables that persist after reopening
 the catalog. Portable SELECT builders and migrations are separate work.
 The [derive scenario](docs/scenarios/from-row-derive.md) covers real Lance
-reads across all eight Lance-enabled feature subsets. See the
+reads across every Lance-enabled feature subset that links one bundled SQLite. See the
 [connection scenario](docs/scenarios/lancedb-dbconnection.md) for the supported
 surface, errors, and real database tests.
 
