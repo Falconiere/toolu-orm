@@ -1,6 +1,6 @@
 # LanceDB scalar result decoding
 
-`LanceDbConnection::query_map` (blocking or async) materializes real DuckDB–Lance results into an owned `LanceRow`. Implement `FromRow::from_lance_row` manually and call `row.get_typed::<T>("column")?` for each field. The raw `row.get("column")?` remains available. Derive support is separate (#161).
+`LanceDbConnection::query_map` (blocking or async) materializes real DuckDB–Lance results into an owned `LanceRow`. For a manual `FromRow::from_lance_row` implementation, call `row.get_typed::<T>("column")?` for each field. The raw `row.get("column")?` remains available. For facade-only `#[derive(FromRow)]` and mixed-driver coverage, see the [derive scenario](from-row-derive.md).
 
 | DuckDB result | Portable value | Rust field |
 |---|---|---|

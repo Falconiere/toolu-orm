@@ -16,7 +16,7 @@ positional reads line up.
 
 ## The shape depends on the driver set
 
-The trait is feature-gated on `toolu-orm-core`:
+The relational method shape is feature-gated on `toolu-orm-core`:
 
 | Drivers active | Methods |
 |---|---|
@@ -29,7 +29,10 @@ The trait is feature-gated on `toolu-orm-core`:
 | `libsql` + `rusqlite` | `from_libsql_row`, `from_rusqlite_row` |
 | all three | `from_pg_row`, `from_libsql_row`, `from_rusqlite_row` |
 
-Applications that execute queries usually select one driver, so `from_row`
+Enabling `lancedb` adds `from_lance_row(&LanceRow)` to every row shape above,
+including the no-relational-driver shape. It does not rename relational methods.
+
+Applications that execute queries usually select one relational driver, so `from_row`
 is the usual shape. With no drivers, schema and SQL-rendering builds retain
 `REQUIRED_COLUMNS` but cannot decode database rows.
 `#[derive(FromRow)]` follows this table: it expands to whichever shape the
@@ -50,7 +53,7 @@ pub struct User {
 ```
 
 `REQUIRED_COLUMNS` is filled from the field names in declaration order, and each
-field is read positionally at its own index with the field's own Rust type, so an
+relational field is read positionally at its own index with the field's own Rust type, so an
 `Option<T>` field decodes SQL `NULL` as `None`.
 
 Each driver gets a real decoder, spelled the way that driver reads a column:
@@ -72,12 +75,45 @@ list when writing raw SQL.
 How the derive knows the shape is worth a note, because it cannot see
 `toolu-orm-core`'s features: it expands inside *your* crate, where
 `feature = "postgres"` means your feature. So it emits one decoder per driver
-and hands all three to `toolu_orm_core::impl_derived_from_row!`, a macro whose
+and hands all four to `toolu_orm_core::impl_derived_from_row!`, a macro whose
 eight definitions are each `#[cfg]`-gated on `toolu-orm-core`'s own features.
 A `macro_rules!` definition is compiled with its defining crate's features, so
 the surviving definition is the one matching the shape that build compiled, and
 the decoders for inactive drivers are dropped without ever being expanded. You
-need no build script and no feature flags on the derive.
+need no build script and no feature flags on the derive. A second core-selected
+helper includes the Lance decoder only when core enables `lancedb`.
+
+### Lance rows through the facade
+
+With `toolu-orm = { version = "0.11", features = ["lancedb"] }`, derive using
+`toolu_orm::FromRow`. `LanceDbConnection` supports typed reads through
+`DbConnection::query_map` or `DbConnectionBlocking::query_map`:
+
+```rust
+use toolu_orm::{
+    connection::{DbConnectionBlocking, DbError, LanceDbConnection},
+    FromRow,
+};
+
+#[derive(Debug, FromRow)]
+pub struct Item {
+    pub id: i64,
+    pub label: Option<String>,
+}
+
+pub fn read_items(conn: &LanceDbConnection) -> Result<Vec<Item>, DbError> {
+    // Lance matches field names, even when projection order differs.
+    DbConnectionBlocking::query_map(conn, "SELECT label, id FROM items", vec![])
+}
+```
+
+Lance uses case-insensitive field names and supports `i64`, `f64`, `String`,
+`bool`, `Vec<u8>` and `Option<T>` for those types. Missing columns, including
+optional columns, fail with the field name and expected Rust type. Required
+NULL and mismatched scalar kinds also fail; optional NULL becomes `None`.
+The same derive works when Lance is combined with relational drivers, provided
+each field type supports every enabled decoder. Handwritten implementations
+that omit `from_lance_row` keep a default error for Lance reads.
 
 ### Converting a field
 

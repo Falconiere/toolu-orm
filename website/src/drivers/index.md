@@ -134,12 +134,14 @@ epic #145.
 and exposes async `DbConnection` plus runtime-free `DbConnectionBlocking`.
 Calls share one serialized DuckDB connection; async calls wait for admission
 before entering the blocking pool. Bound `Value` inputs use prepared SQL.
-For `query_map`, implement `FromRow::from_lance_row` and read named `LanceRow`
-values through `get_typed`: `i64`, `f64`, `String`, `bool`, `Vec<u8>`, and `Option<T>`.
+For `query_map`, use `#[derive(toolu_orm::FromRow)]` or implement
+`FromRow::from_lance_row` manually. The derive reads named `LanceRow` values
+through `get_typed`: `i64`, `f64`, `String`, `bool`, `Vec<u8>`, and `Option<T>`.
 Missing, NULL, or mismatched required fields report the column and expected Rust type.
 Batch SQL can create tables that persist after reopen, while unsupported statements
-return a typed query error. Derive support, portable
-query builders, and migrations remain separate work. The
+return a typed query error. Lance derives work with the facade as the only
+dependency, including mixed-driver builds. Portable SELECT builders and
+migrations remain separate work. The
 [Lance connection scenario](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-dbconnection.md)
 records the API limits and real tests.
 

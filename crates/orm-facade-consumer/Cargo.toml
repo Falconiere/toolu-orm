@@ -74,3 +74,8 @@ workspace = true
 [[test]]
 name = "facade_only_write_test"
 path = "tests/facade_only_write_test.rs"
+
+[[test]]
+name = "facade_only_lance_from_row_test"
+path = "tests/facade_only_lance_from_row_test.rs"
+required-features = ["lancedb"]

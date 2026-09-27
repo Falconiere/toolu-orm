@@ -13,7 +13,9 @@
 //! partitions as the trait in [`super::traits`], and only the one matching the
 //! shape this build of `toolu-orm-core` compiled survives. What it expands to
 //! carries no `cfg` at all, which is why the consumer needs neither a build
-//! script nor a registered cfg to derive `FromRow`.
+//! script nor a registered cfg to derive `FromRow`. A second core-selected
+//! helper adds `from_lance_row` when Lance is enabled without changing these
+//! relational partitions.
 //!
 //! Each decoder arrives as `|row| { … }` rather than as a body alone, because
 //! the caller's block names the row: `macro_rules!` hygiene keeps a `row` this
@@ -45,9 +47,11 @@
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
       fn from_row($p: &$crate::tokio_postgres::Row)
         -> Result<Self, $crate::error::DbCoreError> $pb
     }
@@ -63,9 +67,11 @@ macro_rules! impl_derived_from_row {
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
       fn from_row($l: &$crate::libsql::Row) -> Result<Self, $crate::error::DbCoreError> $lb
     }
   };
@@ -80,9 +86,11 @@ macro_rules! impl_derived_from_row {
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
       fn from_row($r: &$crate::rusqlite::Row<'_>) -> Result<Self, $crate::error::DbCoreError> $rb
     }
   };
@@ -93,9 +101,11 @@ macro_rules! impl_derived_from_row {
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
       fn from_pg_row($p: &$crate::tokio_postgres::Row)
         -> Result<Self, $crate::error::DbCoreError> $pb
       fn from_libsql_row($l: &$crate::libsql::Row)
@@ -109,9 +119,11 @@ macro_rules! impl_derived_from_row {
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
       fn from_pg_row($p: &$crate::tokio_postgres::Row)
         -> Result<Self, $crate::error::DbCoreError> $pb
       fn from_rusqlite_row($r: &$crate::rusqlite::Row<'_>)
@@ -125,9 +137,11 @@ macro_rules! impl_derived_from_row {
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
       fn from_libsql_row($l: &$crate::libsql::Row)
         -> Result<Self, $crate::error::DbCoreError> $lb
       fn from_rusqlite_row($r: &$crate::rusqlite::Row<'_>)
@@ -141,9 +155,11 @@ macro_rules! impl_derived_from_row {
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
       fn from_pg_row($p: &$crate::tokio_postgres::Row)
         -> Result<Self, $crate::error::DbCoreError> $pb
       fn from_libsql_row($l: &$crate::libsql::Row)
@@ -154,9 +170,9 @@ macro_rules! impl_derived_from_row {
   };
 }
 
-/// [`crate::impl_derived_from_row!`] for a build with no driver: the fallback trait
-/// has no decoding method, so only `REQUIRED_COLUMNS` is emitted and all three
-/// decoders are dropped.
+/// [`crate::impl_derived_from_row!`] for a build with no relational driver: the fallback trait
+/// has no relational decoding method, so the three relational decoders are
+/// dropped. The helper still includes Lance decoding when enabled.
 #[cfg(not(any(
   all(
     feature = "postgres",
@@ -181,9 +197,11 @@ macro_rules! impl_derived_from_row {
 #[macro_export]
 macro_rules! impl_derived_from_row {
   ($ty:ty, $cols:expr, postgres = |$p:ident| $pb:block,
-    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block $(,)?) => {
+    libsql = |$l:ident| $lb:block, rusqlite = |$r:ident| $rb:block,
+    lance = |$a:ident| $ab:block $(,)?) => {
     impl $crate::row::FromRow for $ty {
       const REQUIRED_COLUMNS: &'static [&'static str] = $cols;
+      $crate::impl_derived_lance_row!(|$a| $ab);
     }
   };
 }
