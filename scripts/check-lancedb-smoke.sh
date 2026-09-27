@@ -279,6 +279,10 @@ cargo clippy -p toolu-orm-query --no-default-features --features lancedb \
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   -p toolu-orm-query --no-default-features --features lancedb \
   --test portable_write_test --test lance_update_test --success-output immediate
-cargo check -p toolu-orm-query --features postgres,rusqlite,lancedb --lib
+cargo clippy -p toolu-orm-query --no-default-features --features postgres,rusqlite,lancedb \
+  --lib --test lance_update_test -- -D warnings
+LANCE_EXTENSION_PATH="$extension" cargo nextest run \
+  -p toolu-orm-query --no-default-features --features postgres,rusqlite,lancedb \
+  --test lance_update_test --success-output immediate
 cargo nextest run -p toolu-orm-facade-consumer --features lancedb \
   --test facade_only_write_test

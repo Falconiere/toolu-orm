@@ -1,5 +1,5 @@
 //! Real Lance portable UPDATE persistence and affected-row contract.
-#![cfg(not(any(feature = "postgres", feature = "libsql", feature = "rusqlite")))]
+#![cfg(feature = "lancedb")]
 
 #[path = "fixtures/lance_update.rs"]
 pub mod fixture;
@@ -55,9 +55,9 @@ async fn selective_scalar_assignments_persist_after_reopen() -> TestResult {
     Value::Null,
   ]);
   let expected = vec![original(1), changed];
-  assert_eq!(rows(&conn).await?, expected);
+  assert_eq!(rows(directory.path())?, expected);
   drop(conn);
-  assert_eq!(rows(&open(directory.path())?).await?, expected);
+  assert_eq!(rows(directory.path())?, expected);
   Ok(())
 }
 
@@ -79,7 +79,7 @@ async fn computed_and_raw_assignments_bind_before_typed_filters() -> TestResult 
   drop(conn);
   let conn = open(directory.path())?;
   assert_eq!(
-    rows(&conn).await?,
+    rows(directory.path())?,
     vec![
       original(1),
       stored(2, "computed ?3 $4", 7.5, Value::Text("original".into()))
@@ -95,7 +95,7 @@ async fn computed_and_raw_assignments_bind_before_typed_filters() -> TestResult 
   );
   drop(conn);
   assert_eq!(
-    rows(&open(directory.path())?).await?,
+    rows(directory.path())?,
     vec![
       original(1),
       stored(2, "computed ?3 $4", 15.0, Value::Text("original".into()))
@@ -119,7 +119,7 @@ async fn no_match_same_value_and_unfiltered_counts_persist() -> TestResult {
   );
   drop(conn);
   let conn = open(directory.path())?;
-  assert_eq!(rows(&conn).await?, vec![original(1), original(2)]);
+  assert_eq!(rows(directory.path())?, vec![original(1), original(2)]);
   assert_eq!(
     UpdateBuilder::new("insert_source")
       .set(&LABEL, TEXT)
@@ -128,7 +128,7 @@ async fn no_match_same_value_and_unfiltered_counts_persist() -> TestResult {
       .await?,
     1
   );
-  assert_eq!(rows(&conn).await?, vec![original(1), original(2)]);
+  assert_eq!(rows(directory.path())?, vec![original(1), original(2)]);
   assert_eq!(
     UpdateBuilder::new("insert_source")
       .set(&LABEL, "")
@@ -138,7 +138,7 @@ async fn no_match_same_value_and_unfiltered_counts_persist() -> TestResult {
   );
   drop(conn);
   assert_eq!(
-    rows(&open(directory.path())?).await?,
+    rows(directory.path())?,
     vec![
       stored(1, "", -12.5, Value::Text("original".into())),
       stored(2, "", -12.5, Value::Text("original".into()))
@@ -163,7 +163,7 @@ async fn invalid_updates_preserve_rows_and_session_recovers() -> TestResult {
     assert!(
       matches!(result, Err(DbError::Query(message)) if message.contains("Lance UPDATE does not support literal type BLOB"))
     );
-    assert_eq!(rows(&conn).await?, vec![original(1), original(2)]);
+    assert_eq!(rows(directory.path())?, vec![original(1), original(2)]);
   }
   for statement in [
     UpdateBuilder::new("missing_table").set(&LABEL, "bad"),
@@ -174,7 +174,7 @@ async fn invalid_updates_preserve_rows_and_session_recovers() -> TestResult {
     assert!(
       matches!(statement.execute_on(&conn).await, Err(DbError::Query(message)) if !message.is_empty())
     );
-    assert_eq!(rows(&conn).await?, vec![original(1), original(2)]);
+    assert_eq!(rows(directory.path())?, vec![original(1), original(2)]);
   }
   assert_eq!(
     UpdateBuilder::new("insert_source")
@@ -186,7 +186,7 @@ async fn invalid_updates_preserve_rows_and_session_recovers() -> TestResult {
   );
   drop(conn);
   assert_eq!(
-    rows(&open(directory.path())?).await?,
+    rows(directory.path())?,
     vec![
       original(1),
       stored(2, TEXT, -12.5, Value::Text("recovered".into()))

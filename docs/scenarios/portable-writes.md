@@ -79,5 +79,6 @@ the dedicated `lance_update_test` target.
 | default | facade_only_write_test | shared_writes_compile_with_facade_only |
 
 The facade proof compiles with only `toolu-orm` as a direct dependency. The Lance
-smoke script also compiles mixed `postgres,rusqlite,lancedb` query features.
-
+smoke script also runs all four UPDATE tests with mixed
+`postgres,rusqlite,lancedb` query features. Their snapshots read the persisted
+Lance catalog through independent native connections.

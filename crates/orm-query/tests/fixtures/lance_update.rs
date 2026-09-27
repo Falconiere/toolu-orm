@@ -1,9 +1,7 @@
-use toolu_orm_connection::{DbConnection, LanceConnection, LanceDbConnection};
+use toolu_orm_connection::{DbConnection, LanceConnection, LanceDbConnection, LanceNamespace};
 use toolu_orm_core::{
   column::{Blob, Boolean, Integer, Real, Text},
-  error::DbCoreError,
   query_column::Column,
-  row::{FromRow, LanceRow},
   value::Value,
 };
 use toolu_orm_query::insert::InsertBuilder;
@@ -16,21 +14,14 @@ pub const LIVE: Column<Boolean> = Column::new("insert_source", "live");
 pub const BYTES: Column<Blob> = Column::new("insert_source", "bytes");
 pub const NOTE: Column<Text> = Column::new("insert_source", "note");
 pub const TEXT: &str = "O'Brien ?1 $2; DROP TABLE insert_source; -- 東京";
-const COLUMNS: &[&str] = &["id", "label", "score", "live", "bytes", "note"];
 
 #[derive(Debug, PartialEq)]
 pub struct Stored(pub Vec<Value>);
 
-impl FromRow for Stored {
-  const REQUIRED_COLUMNS: &'static [&'static str] = COLUMNS;
-
-  fn from_lance_row(row: &LanceRow) -> Result<Self, DbCoreError> {
-    COLUMNS
-      .iter()
-      .map(|name| row.get(name).cloned())
-      .collect::<Result<Vec<_>, _>>()
-      .map(Self)
-  }
+fn namespace(directory: &std::path::Path) -> Result<LanceNamespace, Box<dyn std::error::Error>> {
+  let extension =
+    std::env::var_os("LANCE_EXTENSION_PATH").ok_or("LANCE_EXTENSION_PATH required")?;
+  Ok(LanceConnection::open(extension)?.attach(directory, "data")?)
 }
 
 /// Open the real Lance fixture, including previously persisted tables.
@@ -38,26 +29,31 @@ impl FromRow for Stored {
 /// # Errors
 /// Propagates missing extension configuration, startup and attach failures.
 pub fn open(directory: &std::path::Path) -> Result<LanceDbConnection, Box<dyn std::error::Error>> {
-  let extension =
-    std::env::var_os("LANCE_EXTENSION_PATH").ok_or("LANCE_EXTENSION_PATH required")?;
-  Ok(LanceDbConnection::from_namespace(
-    LanceConnection::open(extension)?.attach(directory, "data")?,
-  ))
+  Ok(LanceDbConnection::from_namespace(namespace(directory)?))
 }
 
-/// Read every column in deterministic ID order.
+/// Read every persisted column through an independent connection in ID order.
 ///
 /// # Errors
 /// Propagates query and scalar decoding failures.
-pub async fn rows(conn: &LanceDbConnection) -> Result<Vec<Stored>, Box<dyn std::error::Error>> {
-  Ok(
-    conn
-      .query_map(
-        "SELECT id, label, score, live, bytes, note FROM insert_source ORDER BY id",
-        vec![],
-      )
-      .await?,
-  )
+pub fn rows(directory: &std::path::Path) -> Result<Vec<Stored>, Box<dyn std::error::Error>> {
+  let namespace = namespace(directory)?;
+  let mut statement = namespace
+    .connection()
+    .prepare("SELECT id, label, score, live, bytes, note FROM insert_source ORDER BY id")?;
+  let rows = statement.query_map([], |row| {
+    Ok(Stored(vec![
+      Value::Integer(row.get(0)?),
+      Value::Text(row.get(1)?),
+      Value::Real(row.get(2)?),
+      Value::Boolean(row.get(3)?),
+      Value::Blob(row.get(4)?),
+      row
+        .get::<_, Option<String>>(5)?
+        .map_or(Value::Null, Value::Text),
+    ]))
+  })?;
+  Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
 /// Create a real table and insert two distinguishable rows.
