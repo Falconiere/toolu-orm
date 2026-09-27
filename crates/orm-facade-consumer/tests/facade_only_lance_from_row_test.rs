@@ -147,7 +147,7 @@ mod scalars {
       vec![]
     )?
     .is_empty());
-    #[cfg(feature = "rusqlite")]
+    #[cfg(all(feature = "rusqlite", not(feature = "libsql")))]
     {
       // The same derived type also chooses its relational decoder in mixed builds.
       let sqlite = toolu_orm::core::rusqlite::Connection::open_in_memory()?;
