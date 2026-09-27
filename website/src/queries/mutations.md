@@ -138,10 +138,27 @@ let copy = InsertBuilder::new("user_archive")
 
 The target list must match the source projection's number and order. Once a
 select source is set, all `set*` values are ignored, including later calls.
-Conflict policies and `returning` still work. For a database-qualified target,
+Conflict policies and `returning` remain subject to backend capabilities. For a database-qualified target,
 use `InsertBuilder::into_table(TableRef::new("users").in_database("main"))`;
 `"main.users"` passed to `new` is one identifier, not a qualifier.
 See [INSERT … SELECT](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/insert-select.md).
+
+### Plain INSERT on Lance
+
+Use `.execute_on(&conn).await?` with an attached `LanceDbConnection` for bound
+VALUES and INSERT SELECT. Scalar integer, real, text, boolean, blob and NULL
+values persist after reopening the dataset. Each VALUES builder inserts one row;
+repeat it for several rows, with no multi-statement atomicity guarantee.
+
+Execute the `copy` builder above with `copy.execute_on(&conn).await?` to transfer
+matching rows in one database statement without materializing the source in
+Rust. The returned count is the number inserted; an empty source returns zero.
+The target column count and order must match the source projection.
+
+Lance conflict policies and ordinary `returning` fail with a named capability
+error before execution, including when the source would select no rows. Missing
+tables, incompatible projections and deferred scalar codecs propagate errors.
+See [shared-write evidence](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/portable-writes.md).
 
 ## Update
 
