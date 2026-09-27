@@ -16,9 +16,14 @@ crate.
 `InsertBuilder`, `UpdateBuilder`, and `DeleteBuilder` always provide async
 `execute_on(&impl DbConnection) -> Result<u64, DbError>`. This shared write API
 renders using the connection's runtime dialect, works with any feature set, and
-forwards parameters to the connection. It does not fetch `RETURNING` rows or
-perform database capability checks; `.execute()` and fetch methods keep their
-legacy feature gates.
+forwards parameters to the connection after checking structured capability
+requirements. It does not fetch `RETURNING` rows; `.execute()` and fetch methods
+keep their legacy feature gates.
+
+Lance returns `DbError::UnsupportedCapability` with a stable name and alternative
+for unsupported structured conflict/RETURNING requests. `validate_for(Dialect)`
+exposes the same preflight for manual rendering. Raw SQL fragments are caller-owned.
+See [capability boundaries](../../docs/scenarios/backend-capabilities.md).
 
 The `sqlite-vec` feature enables `rusqlite` and the sqlite-vec registration
 dependency. The query API uses `toolu-orm-core` types: `Expr`, `Scalar`,
@@ -113,8 +118,8 @@ Lance features are both enabled. `to_sql()` remains a shorthand for
 `Dialect::CURRENT`, which reflects compile-time features. A custom executor
 can override `dialect()` when its runtime backend differs from `CURRENT`.
 Lance supports offset-only SQL without SQLite's `LIMIT -1` prefix. `execute_on`
-does not yet reject Lance `ON CONFLICT` or ordinary DML `RETURNING` before
-execution; capability guards belong to issue #174. See [the Lance matrix](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-sql-matrix.md).
+rejects Lance conflict policies and ordinary DML `RETURNING` before execution
+with `DbError::UnsupportedCapability`. See [the Lance matrix](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-sql-matrix.md).
 
 `on_conflict` updates in place on either dialect. SQLite's `or_replace` deletes
 and reinserts the conflicting row, which can reset omitted columns and cascade

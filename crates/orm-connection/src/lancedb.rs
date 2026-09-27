@@ -7,6 +7,7 @@ mod namespace;
 mod session;
 mod session_row;
 mod sql;
+mod transaction;
 mod value;
 
 pub use namespace::{LanceColumn, LanceColumnType, LanceNamespace, LanceNamespaceError};

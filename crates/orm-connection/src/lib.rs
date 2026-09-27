@@ -6,6 +6,8 @@
 
 /// Synchronous connection trait.
 pub mod blocking_trait_def;
+/// Structured backend portability requirements.
+pub mod capability;
 /// Connection errors.
 pub mod error;
 /// Asynchronous connection trait.
@@ -28,6 +30,7 @@ pub mod postgres_impl;
 pub mod lancedb;
 
 pub use blocking_trait_def::DbConnectionBlocking;
+pub use capability::{Capability, require_capabilities};
 pub use error::DbError;
 pub use trait_def::DbConnection;
 

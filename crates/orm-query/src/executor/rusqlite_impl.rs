@@ -93,5 +93,6 @@ fn map_db(err: DbError) -> QueryError {
     DbError::Query(message) => QueryError::Connection(format!("query: {message}")),
     DbError::Transaction(message) => QueryError::Connection(format!("transaction: {message}")),
     DbError::Pool(message) => QueryError::Connection(format!("pool: {message}")),
+    error @ DbError::UnsupportedCapability { .. } => QueryError::Connection(error.to_string()),
   }
 }

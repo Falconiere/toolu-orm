@@ -15,7 +15,7 @@ libsql use real in-memory databases (the sqlite-vec lane also checks the loaded 
 with the pinned extension. Missing services or artifacts fail the tests.
 
 This entry returns affected counts, not RETURNING rows. It adds no conflict,
-transaction, or unsupported-capability emulation; #174 owns capability guards.
+transaction, or unsupported-capability emulation. [Capability guards](backend-capabilities.md) reject unsupported structured Lance operations before execution.
 
 ## Tests
 
@@ -25,6 +25,8 @@ transaction, or unsupported-capability emulation; #174 owns capability guards.
 | rusqlite-only | portable_write_test | sqlite::bound_writes_counts_and_errors |
 | libsql-only | portable_write_test | libsql::bound_writes_counts_and_errors |
 | lancedb-smoke | portable_write_test | lance::bound_writes_counts_and_errors |
+| lancedb-smoke | portable_write_test | lance_capabilities::unsupported_mutations_preserve_rows_after_reopen |
+| lancedb-smoke | portable_write_test | lance_capabilities::transaction_and_constraint_requirements_refuse_before_writes |
 | default | facade_only_write_test | shared_writes_compile_with_facade_only |
 
 The facade proof compiles with only `toolu-orm` as a direct dependency. The Lance

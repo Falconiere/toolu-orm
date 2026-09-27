@@ -7,7 +7,8 @@ and execute either through a shared connection or a legacy query executor.
 `.execute_on(&conn)`, where `conn` implements `DbConnection`. It returns
 `Result<u64, DbError>` and renders SQL using that connection's dialect, so it is
 available with no query-driver default and in mixed-driver builds. It does not
-fetch `RETURNING` rows or add capability checks before executing the statement.
+fetch `RETURNING` rows. It rejects unsupported structured Lance operations
+before rendering or driver execution; see [capability checks](#runtime-capability-checks).
 
 ```rust
 let affected = InsertBuilder::new("users")
@@ -196,3 +197,22 @@ UsersTable::delete().filter(users::id.eq("u_1")).execute(&conn).await?;
 All three take the same legacy executor as select — a connection, or a transaction.
 They also take any `DbConnection` through async `.execute_on(&conn)`. See
 [Transactions](transactions.md).
+
+## Runtime capability checks
+
+Shared `execute_on` checks structured builder state before rendering or calling
+the driver. On Lance, `OnConflict`, `or_ignore`, `or_replace`, and ordinary DML
+`returning` produce `connection::DbError::UnsupportedCapability { backend,
+capability }`, including INSERT SELECT and zero-match mutations. An insert
+requesting both reports `Capability::OnConflict` first. Errors include a stable
+capability name and an explicit alternative: use PostgreSQL/SQLite for enforced
+unique-key conflict handling, or write without RETURNING and SELECT separately
+(the latter is not atomic with the write).
+
+Use `builder.validate_for(conn.dialect())` before manual rendering. Raw SQL and
+raw fragments are caller-owned and are not inspected; `to_sql_for` still only
+renders. `connection::require_capabilities` and
+`DbConnection::require_capabilities` also expose named constraint and transaction
+preflight for callers that must check guarantees before their own side effects.
+They do not automatically integrate schema/migration builders or enable SQLite
+constraint settings.

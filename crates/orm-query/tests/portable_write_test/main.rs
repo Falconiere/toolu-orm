@@ -4,6 +4,11 @@
 //! (`postgres,rusqlite,sqlite-vec`) plus each single-driver lane below.
 #[cfg(feature = "lancedb")]
 mod lance;
+#[cfg(all(
+  feature = "lancedb",
+  not(any(feature = "postgres", feature = "libsql", feature = "rusqlite"))
+))]
+mod lance_capabilities;
 #[cfg(feature = "libsql")]
 mod libsql;
 #[cfg(feature = "postgres")]

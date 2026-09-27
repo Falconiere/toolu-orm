@@ -16,9 +16,14 @@ macro_rules! impl_portable_execute {
       /// # Errors
       ///
       /// Propagates the connection's [`DbError`] unchanged for binding, database,
-      /// or connection failures. A failed operation never returns an affected count.
+      /// or connection failures. Unsupported structured capabilities return
+      /// [`DbError::UnsupportedCapability`] before rendering or driver execution.
+      /// Raw SQL fragments are caller-owned and are not inspected. A failed
+      /// operation never returns an affected count.
       pub async fn execute_on(&self, conn: &impl DbConnection) -> Result<u64, DbError> {
-        let (sql, params) = self.to_sql_for(conn.dialect());
+        let dialect = conn.dialect();
+        self.validate_for(dialect)?;
+        let (sql, params) = self.to_sql_for(dialect);
         conn.execute_sql(&sql, params).await
       }
     }

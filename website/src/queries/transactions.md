@@ -104,3 +104,13 @@ See [Without a runtime](../drivers/rusqlite.md#without-a-runtime).
 `run_migrate` does not need any of this: each migration file is applied inside
 its own `BEGIN` / `COMMIT`, so a failing statement rolls back that file. See
 [The migration loop](../migrations/overview.md).
+
+## Lance
+
+`LanceDbConnection::begin().await` refuses before any SQL with
+`DbError::UnsupportedCapability` and `Capability::MultiStatementTransaction`
+(stable name `multi_statement_transaction`). Its success type is `Infallible`;
+there is no portable Lance transaction handle. Use PostgreSQL or SQLite when
+multi-statement atomicity is required. Limited DML rollback observations do not
+establish general transaction support, particularly for DDL. Executing raw
+`BEGIN` SQL or batches remains an explicit escape hatch without this guarantee.

@@ -14,6 +14,7 @@ test, update its page.
 | Scenario | What it proves |
 |---|---|
 | [Upsert](upsert.md) | `or_replace` / `or_ignore` on all three drivers (`INSERT OR REPLACE`, `ON CONFLICT ... DO UPDATE SET ... = EXCLUDED`). |
+| [Backend capability refusal](backend-capabilities.md) | Structured Lance write refusal, named constraint preflight, and transaction refusal before writes, verified across reopen. |
 | [Mutation parity](mutation-parity.md) | `RETURNING` on `UPDATE` and `DELETE`, plus `ON CONFLICT` index predicates and update guards. `ORDER BY`/`LIMIT` on those statements stay out: bundled SQLite is not built with `SQLITE_ENABLE_UPDATE_DELETE_LIMIT`. |
 | [Relational loads](relational-loads.md) | `with_many` / `with_one` fetch parent and children in one statement, including empty and null relations and declared binary (`BLOB` / `bytea`) columns. |
 | [Value round-trip](value-round-trip.md) | Every `Value` variant binds as a parameter and reads back unchanged. |

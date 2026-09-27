@@ -1,6 +1,6 @@
 //! Database command executor abstraction (libsql, rusqlite, or postgres).
 //!
-//! - [`Executor`] -- trait implemented by the active driver connection type
+//! - `Executor` -- trait implemented by the active driver connection type
 //! - `PgTransaction` -- postgres-only transaction wrapper
 
 #[cfg(all(feature = "libsql", not(feature = "rusqlite"), not(feature = "postgres")))]

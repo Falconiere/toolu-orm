@@ -22,6 +22,14 @@ pub trait DbConnection: Send + Sync {
     toolu_orm_core::dialect::Dialect::CURRENT
   }
 
+  /// Validate structured requirements before an operation has side effects.
+  ///
+  /// # Errors
+  /// Returns [`DbError::UnsupportedCapability`] for the first missing guarantee.
+  fn require_capabilities(&self, requirements: &[crate::Capability]) -> Result<(), DbError> {
+    crate::require_capabilities(self.dialect(), requirements)
+  }
+
   /// Execute a write statement (INSERT/UPDATE/DELETE) and return affected row count.
   ///
   /// Parameters are passed as `Vec<Value>` and converted to the driver's
