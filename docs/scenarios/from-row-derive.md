@@ -37,7 +37,7 @@ opt-level = 1
 opt-level = 1
 ```
 
-Each of the sixteen combinations, including the no-driver arm and all eight Lance-enabled subsets. The four CI lanes
+The derive matrix checks each of the sixteen combinations, including the no-driver arm and all eight Lance-enabled subsets. The four CI lanes
 give `toolu-orm-core` only four of them, so this guard is what keeps the other
 four definitions of `impl_derived_from_row!` honest — it runs in CI and in the
 quality gate, and it fails naming the combination that broke:
