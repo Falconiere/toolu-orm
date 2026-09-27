@@ -7,6 +7,15 @@ Issue #159 adds explicit attachment and table lifecycle after startup; see the
 
 The production startup API accepts an explicit local extension path and verifies DuckDB `v1.5.5` and loaded Lance build `2f167ea`. A missing, directory, or corrupt file, or a non-UTF-8 path, returns `LanceStartupError::LanceDependencyUnavailable` before a target namespace exists. The successful test attaches a real temporary Lance namespace *after* startup and prepares a bound SELECT against a real row. Its extension path contains a quote, and the local file's bytes are unchanged after opening.
 
+Issue #176 configures `disabled_optimizers = 'filter_pushdown'` after version
+validation and before exposing the connection. The pinned extension otherwise
+loses or mis-maps DELETE predicates on non-leading columns. This session-wide
+correctness workaround may reduce query performance; callers must not re-enable
+it for the pinned extension. Configuration errors propagate as
+`LanceDependencyUnavailable` before attachment. Real regression evidence lives
+in the [portable DELETE scenarios](portable-writes.md#plain-lance-delete), which
+also verify new connections after reopening apply the workaround.
+
 Paths containing backslashes or NUL are rejected before `LOAD` so SQL literal parsing cannot treat those characters as escapes.
 
 Run `bash scripts/check-lancedb-smoke.sh` to provision the pinned artifact, compile the production `lancedb` lane, and run these tests.

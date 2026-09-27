@@ -219,6 +219,29 @@ Like an update, a delete with no filter affects every row. Both accept subquery
 predicates, such as `Scalar::col(&users::id).in_subquery(select)`, for set-based
 writes without loading the matching IDs into Rust.
 
+### Plain DELETE on Lance
+
+Use `.execute_on(&conn).await?` with an attached `LanceDbConnection`:
+
+```rust
+let affected = DeleteBuilder::new("users")
+  .filter(users::id.eq("user-1"))
+  .execute_on(&conn)
+  .await?;
+```
+
+Typed predicates bind user values, including quotes and SQL-looking text.
+Lance startup applies a session-wide optimizer workaround for the pinned
+extension's DELETE filter mapping defect; see [Lance connections](../drivers/index.md#lance-extension-and-local-namespace).
+Multiple `.filter()` calls combine with AND. Successful deletions persist after
+reopening. The returned count is the number of rows deleted: zero for no match
+or an empty table, one for one match, and the matching count for several rows.
+Omitting the filter deletes every row.
+
+Missing tables or columns and deferred bound codecs propagate query errors.
+Ordinary `returning` remains unsupported and is rejected before execution.
+See [real DELETE evidence](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/portable-writes.md#plain-lance-delete).
+
 ## From the table type
 
 The generated factories save the table name:
