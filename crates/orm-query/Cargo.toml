@@ -509,3 +509,8 @@ path = "tests/capability_test.rs"
 name = "lance_update_test"
 path = "tests/lance_update_test.rs"
 required-features = ["lancedb"]
+
+[[test]]
+name = "lance_delete_test"
+path = "tests/lance_delete_test.rs"
+required-features = ["lancedb"]

@@ -60,12 +60,17 @@ impl LanceConnection {
   ///
   /// The caller owns artifact download and caching. This method verifies the
   /// DuckDB engine and the loaded Lance build on every new connection.
+  /// It disables DuckDB's `filter_pushdown` optimization for this pinned build:
+  /// Lance DELETE otherwise mis-maps pushed filters and can delete extra rows.
+  /// This session-wide correctness workaround can reduce query performance;
+  /// callers must not re-enable that optimizer on the pinned extension.
   ///
   /// # Errors
   ///
   /// Returns [`LanceStartupError::DuckDbOpen`] if DuckDB cannot open, or
   /// [`LanceStartupError::LanceDependencyUnavailable`] for an absent or
-  /// incompatible extension. No namespace or table is changed on failure.
+  /// incompatible extension or a failed safety configuration. No namespace or
+  /// table is changed on failure.
   pub fn open(extension_path: impl AsRef<Path>) -> Result<Self, LanceStartupError> {
     let utf8_path = checked_extension_path(extension_path.as_ref())?;
 
@@ -102,6 +107,17 @@ impl LanceConnection {
         "lance extension version mismatch: expected loaded {LANCE_VERSION}, found {version}, loaded={loaded}"
       )));
     }
+
+    // Lance 2f167ea's DELETE planner feeds LogicalGet table filters into a
+    // scan-relative column mapper. Non-leading columns can lose their predicate
+    // or exchange values. Keep expression filters intact until the pin changes.
+    connection
+      .execute_batch("SET disabled_optimizers = 'filter_pushdown'")
+      .map_err(|error| {
+        LanceStartupError::LanceDependencyUnavailable(format!(
+          "lance DELETE filter safety configuration: {error}"
+        ))
+      })?;
 
     Ok(Self { connection })
   }

@@ -52,6 +52,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+Startup disables DuckDB's `filter_pushdown` optimizer for pinned Lance build
+`2f167ea`. Without this workaround, DELETE can lose or mis-map filters on
+non-leading columns and remove unintended rows. The setting applies to the whole
+connection, so other queries may lose that optimization and run more slowly.
+Do not re-enable it while using this pinned extension. Failure to configure it
+returns `LanceStartupError::LanceDependencyUnavailable` before attachment.
+The [DELETE scenarios](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/portable-writes.md#plain-lance-delete)
+verify exact quoted predicates and compound filters on persisted rows.
+
 `open` returns a loaded in-memory DuckDB connection. It never downloads or
 caches an artifact, attaches a namespace, or creates a table. After startup,
 attach an existing local directory to select it for unqualified SQL:

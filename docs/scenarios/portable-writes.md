@@ -59,6 +59,34 @@ fails without a partial write; INSERT blob support does not imply UPDATE support
 The same pinned `bash scripts/check-lancedb-smoke.sh` command checks and executes
 the dedicated `lance_update_test` target.
 
+## Plain Lance DELETE
+
+`DeleteBuilder::execute_on` preserves the typed filter call form on attached
+Lance tables. Deleting one ID from two seeded rows preserves every column of the
+other row after reopening. Quoted SQL-looking labels, placeholder text and
+Unicode remain bound values: only exact matches disappear. Plain and quoted
+absent labels leave all rows intact. Multiple filters combine with AND, including
+a contradictory predicate that deletes nothing and predicates whose column order
+differs from the table schema.
+
+The pinned extension mis-maps pushed DELETE filters for non-leading columns.
+Production startup disables DuckDB's `filter_pushdown` optimizer so predicates
+retain their correct column/value associations. The regression test fails on the
+unmodified startup path: an absent label removes all three rows. The workaround
+is session-wide and may reduce query performance; do not re-enable the optimizer
+for this pinned extension. See [startup](lancedb-extension-startup.md).
+
+The returned count is the number of deleted rows: zero for no match or an empty
+table, one for a selective deletion, and the matching count for multiple rows.
+Without a filter, DELETE removes every row. Missing tables/columns and deferred
+bound codecs propagate query errors, preserve existing rows and leave the
+session usable for a subsequent valid DELETE. MERGE and RETURNING support are
+outside this slice; existing RETURNING capability refusal remains unchanged.
+
+`bash scripts/check-lancedb-smoke.sh` runs all four `lance_delete_test` tests with
+single Lance and mixed `postgres,rusqlite,lancedb` features against the pinned
+real extension. Snapshots read persisted rows through independent connections.
+
 ## Tests
 
 | Lane | Binary | Test |
@@ -76,6 +104,10 @@ the dedicated `lance_update_test` target.
 | lancedb-smoke | lance_update_test | computed_and_raw_assignments_bind_before_typed_filters |
 | lancedb-smoke | lance_update_test | no_match_same_value_and_unfiltered_counts_persist |
 | lancedb-smoke | lance_update_test | invalid_updates_preserve_rows_and_session_recovers |
+| lancedb-smoke | lance_delete_test | selective_delete_persists_after_reopen |
+| lancedb-smoke | lance_delete_test | quoted_values_and_compound_filters_delete_only_exact_matches |
+| lancedb-smoke | lance_delete_test | no_match_multi_match_unfiltered_and_empty_counts_persist |
+| lancedb-smoke | lance_delete_test | invalid_deletes_preserve_rows_and_session_recovers |
 | default | facade_only_write_test | shared_writes_compile_with_facade_only |
 
 The facade proof compiles with only `toolu-orm` as a direct dependency. The Lance
