@@ -185,6 +185,24 @@ shows the SQLite form.
 An `UpdateBuilder` with no filter updates every row. There is no guard against
 that — add the `.filter()`.
 
+### Plain UPDATE on Lance
+
+Use `.execute_on(&conn).await?` with an attached `LanceDbConnection`. Bound
+`set` assignments and computed `set_scalar` assignments execute with typed
+filters and persist after reopening. SET values bind in assignment order,
+followed by WHERE values. `set_expr` also executes trusted raw SQL; the caller
+must choose an expression supported by the backend.
+
+The returned count is the number of matched rows, including assignments that
+keep the existing value. A filter matching nothing returns zero and leaves
+stored rows unchanged. With no filter, every row is updated. Missing tables or
+columns, an empty SET list, and deferred scalar codecs propagate query errors.
+Lance UPDATE rejects bound BLOB literals with `DbError::Query`, including empty
+blobs; the statement leaves rows unchanged. INSERT blob support does not imply
+UPDATE blob support. Ordinary `returning` remains unsupported and is rejected
+before execution.
+See [real UPDATE evidence](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/portable-writes.md#plain-lance-update).
+
 ## Delete
 
 ```rust

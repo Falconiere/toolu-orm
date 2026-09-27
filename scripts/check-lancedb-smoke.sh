@@ -252,16 +252,16 @@ LANCE_EXTENSION_PATH="$extension" cargo nextest run \
 
 # Keep the shared Lance write scenario registered in the real extension lane.
 listed_writes=$(cargo nextest list -p toolu-orm-query --features lancedb \
-  --test portable_write_test --color never)
+  --test portable_write_test --test lance_update_test --color never)
 actual=$(printf '%s\n' "$listed_writes" | awk '
-  /^toolu-orm-query::portable_write_test / {
+  /^toolu-orm-query::(portable_write_test|lance_update_test) / {
     sub(/^toolu-orm-query::/, "")
     print
   }
 ' | sort)
 documented=$(awk -F'|' '
   $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ && \
-  $3 ~ /^[[:space:]]*portable_write_test[[:space:]]*$/ {
+  $3 ~ /^[[:space:]]*(portable_write_test|lance_update_test)[[:space:]]*$/ {
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
     print $3 " " $4
@@ -275,10 +275,10 @@ fi
 
 # Shared write builders must execute against the attached Lance catalog.
 cargo clippy -p toolu-orm-query --no-default-features --features lancedb \
-  --lib --test portable_write_test -- -D warnings
+  --lib --test portable_write_test --test lance_update_test -- -D warnings
 LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   -p toolu-orm-query --no-default-features --features lancedb \
-  --test portable_write_test --success-output immediate
+  --test portable_write_test --test lance_update_test --success-output immediate
 cargo check -p toolu-orm-query --features postgres,rusqlite,lancedb --lib
 cargo nextest run -p toolu-orm-facade-consumer --features lancedb \
   --test facade_only_write_test
