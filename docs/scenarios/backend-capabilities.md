@@ -9,7 +9,8 @@ structured builder state, never SQL strings. An insert requesting both reports
 `OnConflict` first. Zero-match UPDATE/DELETE still refuse `RETURNING`.
 
 `validate_for(Dialect)` exposes the same preflight when callers render manually.
-`to_sql_for` itself remains a renderer. Bound SQL-looking text and conflict-column
+For those three builders, `to_sql_for` itself remains a renderer. MergeBuilder
+validates in `to_sql_for` as well. Bound SQL-looking text and conflict-column
 hints without an active conflict policy do not trigger refusal. Raw SQL and raw
 fragments remain caller-owned escape hatches; these checks do not parse them.
 
@@ -18,7 +19,8 @@ contains the backend, stable capability name below, and an explicit alternative.
 
 | Capability | Stable name | Alternative and limit |
 | --- | --- | --- |
-| `OnConflict` | `on_conflict` | PostgreSQL/SQLite for unique-key conflict handling; explicit raw Lance MERGE has different semantics and does not enforce uniqueness. |
+| `KeyMerge` | `key_merge` | Native MERGE on Lance/PostgreSQL 15+; SQLite ON CONFLICT remains a separate unique-key API. |
+| `OnConflict` | `on_conflict` | PostgreSQL/SQLite for unique-key conflict handling; explicit MergeBuilder has different semantics and does not enforce uniqueness. |
 | `DmlReturning` | `dml_returning` | Write without RETURNING then SELECT explicitly; the separate read is not atomic with the write. |
 | `PrimaryKey` | `primary_key` | PostgreSQL/SQLite for enforced uniqueness. |
 | `UniqueConstraint` | `unique_constraint` | PostgreSQL/SQLite for enforced uniqueness. |
@@ -30,8 +32,8 @@ contains the backend, stable capability name below, and an explicit alternative.
 
 `DbConnection::require_capabilities(&[Capability])` and the free
 `require_capabilities(Dialect, &[Capability])` support explicit preflight. Lance
-refuses the first requirement; an empty list passes, as for a filtered SELECT.
-SQLite/PostgreSQL pass this coarse backend check; it does not enable connection
+permits KeyMerge but refuses the other requirements; an empty list passes.
+SQLite refuses KeyMerge; PostgreSQL passes this coarse backend check. It does not enable connection
 settings or validate arbitrary statements. Constraint-bearing schema operations
 must call preflight before mutation. The current `LanceColumn` lifecycle API
 has no constraint declarations; automatic schema/migration integration is a
@@ -42,6 +44,12 @@ before SQL or locks. Its success type is `Infallible`: there is no portable Lanc
 transaction handle. Narrow DML rollback observations do not establish general
 transaction support, particularly with DDL. Raw batches do not acquire this
 portability guarantee.
+
+
+Native key-based MERGE uses the separate `KeyMerge` / `key_merge` capability.
+Lance and PostgreSQL 15+ support it; SQLite refuses it before execution. See
+[portable writes](portable-writes.md#explicit-key-based-merge) for policies,
+source-key validation and the absence of a uniqueness guarantee.
 
 ## Real-data evidence
 

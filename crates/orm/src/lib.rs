@@ -9,6 +9,8 @@
 //! lifecycle, and an attached-catalog `DbConnection` session through
 //! `toolu_orm::connection`. Shared portable write execution does not fetch
 //! `RETURNING` rows; it rejects unsupported structured Lance capabilities before execution.
+//! `query::merge::MergeBuilder` executes explicit key-based MERGE on Lance and
+//! PostgreSQL 15+; SQLite receives a typed capability refusal.
 //! Proc macros resolve through this facade when it is the only dependency.
 
 pub use toolu_orm_connection as connection;

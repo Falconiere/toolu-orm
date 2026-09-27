@@ -6,6 +6,8 @@ pub mod delete;
 pub mod error;
 /// INSERT query builder.
 pub mod insert;
+/// Explicit native key-based MERGE with declared branch policies.
+pub mod merge;
 /// Relation-aware query builder.
 pub mod relational_builder;
 /// SELECT query builder.

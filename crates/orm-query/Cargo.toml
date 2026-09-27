@@ -514,3 +514,17 @@ required-features = ["lancedb"]
 name = "lance_delete_test"
 path = "tests/lance_delete_test.rs"
 required-features = ["lancedb"]
+
+[[test]]
+name = "merge_sql_test"
+path = "tests/merge_sql_test.rs"
+
+[[test]]
+name = "lance_merge_test"
+path = "tests/lance_merge_test/main.rs"
+required-features = ["lancedb"]
+
+[[test]]
+name = "postgres_merge_test"
+path = "tests/postgres_merge_test.rs"
+required-features = ["postgres"]
