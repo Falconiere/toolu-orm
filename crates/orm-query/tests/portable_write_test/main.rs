@@ -9,6 +9,16 @@ mod lance;
   not(any(feature = "postgres", feature = "libsql", feature = "rusqlite"))
 ))]
 mod lance_capabilities;
+#[cfg(all(
+  feature = "lancedb",
+  not(any(feature = "postgres", feature = "libsql", feature = "rusqlite"))
+))]
+mod lance_insert;
+#[cfg(all(
+  feature = "lancedb",
+  not(any(feature = "postgres", feature = "libsql", feature = "rusqlite"))
+))]
+mod lance_insert_support;
 #[cfg(feature = "libsql")]
 mod libsql;
 #[cfg(feature = "postgres")]

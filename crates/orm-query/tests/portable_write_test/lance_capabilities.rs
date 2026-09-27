@@ -126,6 +126,20 @@ async fn unsupported_mutations_preserve_rows_after_reopen() -> TestResult {
   assert_seed(&conn).await?;
   for id in [1_i64, 999] {
     refused(
+      InsertBuilder::new("items")
+        .select_raw(
+          &["id", "label"],
+          SelectBuilder::new("items")
+            .columns_raw(&["id", "label"])
+            .filter(ID.eq(id)),
+        )
+        .returning(&ID)
+        .execute_on(&conn)
+        .await,
+      Capability::DmlReturning,
+    )?;
+    assert_seed(&conn).await?;
+    refused(
       UpdateBuilder::new("items")
         .set(&LABEL, "changed")
         .filter(ID.eq(id))
