@@ -37,6 +37,28 @@ Run `bash scripts/check-lancedb-smoke.sh`; it checks this inventory and executes
 the tests with the checksum-pinned real extension. These are INSERT guarantees,
 not validation of every possible SELECT expression or an atomic multi-call API.
 
+## Plain Lance UPDATE
+
+`UpdateBuilder::execute_on` executes bound `set`, computed `set_scalar`, and
+trusted raw `set_expr` assignments on attached Lance tables. Two-row fixtures
+prove selective updates survive reopening: exact text (including SQL-looking
+Unicode), real, boolean and NULL assignments affect only the selected ID. Computed assignments bind before typed WHERE predicates; distinct bound
+values and exact reopened rows prove their order on the real backend.
+
+The returned count is the number of matched rows, including a row assigned its
+existing value. No match returns zero and preserves reopened data. An unfiltered
+UPDATE affects every row. Missing tables/columns, an empty assignment list and
+deferred codecs propagate query errors without changing rows; a subsequent valid
+update succeeds and persists. Raw expression text is caller-owned SQL, not a
+portable translation. This slice adds no DELETE, MERGE or RETURNING guarantees.
+
+Lance UPDATE rejects bound BLOB literals, both empty and nonempty, with a
+`DbError::Query` naming the unsupported BLOB literal. A mixed text/BLOB assignment
+fails without a partial write; INSERT blob support does not imply UPDATE support.
+
+The same pinned `bash scripts/check-lancedb-smoke.sh` command checks and executes
+the dedicated `lance_update_test` target.
+
 ## Tests
 
 | Lane | Binary | Test |
@@ -50,8 +72,13 @@ not validation of every possible SELECT expression or an atomic multi-call API.
 | lancedb-smoke | portable_write_test | lance_insert::bound_scalar_rows_persist_after_reopen |
 | lancedb-smoke | portable_write_test | lance_insert::insert_select_copies_projection_and_empty_source_persists |
 | lancedb-smoke | portable_write_test | lance_insert::invalid_insert_preserves_rows_and_session_recovers |
+| lancedb-smoke | lance_update_test | selective_scalar_assignments_persist_after_reopen |
+| lancedb-smoke | lance_update_test | computed_and_raw_assignments_bind_before_typed_filters |
+| lancedb-smoke | lance_update_test | no_match_same_value_and_unfiltered_counts_persist |
+| lancedb-smoke | lance_update_test | invalid_updates_preserve_rows_and_session_recovers |
 | default | facade_only_write_test | shared_writes_compile_with_facade_only |
 
 The facade proof compiles with only `toolu-orm` as a direct dependency. The Lance
-smoke script also compiles mixed `postgres,rusqlite,lancedb` query features.
-
+smoke script also runs all four UPDATE tests with mixed
+`postgres,rusqlite,lancedb` query features. Their snapshots read the persisted
+Lance catalog through independent native connections.
