@@ -1,16 +1,16 @@
 use super::support::{ELEMENTS, FINITE_BOUNDARIES, TestResult, invalid_inputs, value};
+use toolu_orm_connection::PgConfig;
 use toolu_orm_core::{value::to_pg_params, vector::Vector};
 
 #[tokio::test]
 async fn pgvector_round_trip_and_prewrite_validation() -> TestResult {
-  let port = std::env::var("TEST_DB_PORT").unwrap_or_else(|_| "5434".into());
-  let password = std::env::var("TEST_DB_PASSWORD").unwrap_or_else(|_| "toolu".into());
+  let config = PgConfig::for_test("toolu");
   let (client, connection) = tokio_postgres::Config::new()
-    .host("localhost")
-    .port(port.parse()?)
-    .user("toolu")
-    .password(password)
-    .dbname("toolu")
+    .host(&config.host)
+    .port(config.port)
+    .user(&config.user)
+    .password(&config.password)
+    .dbname(&config.dbname)
     .connect(tokio_postgres::NoTls)
     .await?;
   let task = tokio::spawn(connection);
