@@ -21,6 +21,22 @@
 
 ## How to run
 
+The workspace's dev and test profiles optimize the rusqlite Rust wrapper at
+level 1. On Linux, unoptimized shared generic helpers can otherwise pull unused
+rusqlite archive members into a Lance binary before dead-section elimination,
+colliding with libSQL's bundled SQLite symbols even without a SQLite query.
+The mixed-feature tests select Lance; they do not claim that both bundled
+SQLite engines can operate together in one process. External consumers running
+the same mixed-feature tests need the equivalent setting in their root manifest:
+
+```toml
+[profile.dev.package.rusqlite]
+opt-level = 1
+
+[profile.test.package.rusqlite]
+opt-level = 1
+```
+
 Each of the sixteen combinations, including the no-driver arm and all eight Lance-enabled subsets. The four CI lanes
 give `toolu-orm-core` only four of them, so this guard is what keeps the other
 four definitions of `impl_derived_from_row!` honest — it runs in CI and in the

@@ -115,6 +115,21 @@ The same derive works when Lance is combined with relational drivers, provided
 each field type supports every enabled decoder. Handwritten implementations
 that omit `from_lance_row` keep a default error for Lance reads.
 
+If both `libsql` and `rusqlite` are enabled alongside Lance on Linux, add these
+settings to your application's root manifest, as this workspace does:
+
+```toml
+[profile.dev.package.rusqlite]
+opt-level = 1
+
+[profile.test.package.rusqlite]
+opt-level = 1
+```
+
+This avoids unoptimized shared Rust helpers pulling the unused rusqlite native
+engine into a Lance binary and colliding with libSQL's SQLite symbols. It does
+not make running both bundled SQLite engines in one process supported.
+
 ### Converting a field
 
 `#[from_row(with = "f")]` routes the decoded value through `f`, which takes and
