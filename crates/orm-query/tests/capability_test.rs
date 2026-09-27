@@ -50,6 +50,24 @@ fn requirements_are_named_and_runtime_selected() -> TestResult {
     }
   }
   assert!(require_capabilities(Dialect::Lance, &[]).is_ok());
+  assert!(require_capabilities(Dialect::Lance, &[Capability::KeyMerge]).is_ok());
+  refused(
+    require_capabilities(
+      Dialect::Lance,
+      &[Capability::KeyMerge, Capability::OnConflict],
+    ),
+    Capability::OnConflict,
+  )?;
+  assert!(matches!(
+    require_capabilities(
+      Dialect::Sqlite,
+      &[Capability::OnConflict, Capability::KeyMerge]
+    ),
+    Err(DbError::UnsupportedCapability {
+      backend: Dialect::Sqlite,
+      capability: Capability::KeyMerge,
+    })
+  ));
   Ok(())
 }
 

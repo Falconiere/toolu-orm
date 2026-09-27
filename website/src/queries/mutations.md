@@ -274,3 +274,59 @@ renders. `connection::require_capabilities` and
 preflight for callers that must check guarantees before their own side effects.
 They do not automatically integrate schema/migration builders or enable SQLite
 constraint settings.
+
+## Explicit key-based MERGE
+
+`MergeBuilder` is separate from `InsertBuilder::on_conflict`. It runs one native
+MERGE on Lance or PostgreSQL 15+ through the connection-selected dialect. SQLite
+returns `DbError::UnsupportedCapability` with `Capability::KeyMerge` before any SQL;
+use its existing ON CONFLICT API when you need unique-key conflict handling.
+
+```rust
+use toolu_orm::{
+    connection::{DbConnection, DbError},
+    core::{column::{Integer, Text}, query_column::Column, value::Value},
+    query::merge::{Matched, MergeBuilder, NotMatched},
+};
+
+async fn merge_items(conn: &impl DbConnection) -> Result<u64, DbError> {
+    let id: Column<Integer> = Column::new("items", "id");
+    let label: Column<Text> = Column::new("items", "label");
+    MergeBuilder::new("items")
+        .columns(&[&id, &label])
+        .keys(&[&id])
+        .row(vec![Value::Integer(1), Value::Text("updated".into())])
+        .row(vec![Value::Integer(2), Value::Text("inserted".into())])
+        .when_matched(Matched::Update)
+        .when_not_matched(NotMatched::Insert)
+        .execute_on(conn).await
+}
+```
+
+Both policies are mandatory. Choose `Matched::DoNothing` for insert-only or
+`NotMatched::DoNothing` for update-only. Update assigns every supplied non-key
+column, retaining omitted columns; insert supplies the named columns, leaving
+omitted columns to their database defaults/nulls. `into_table(TableRef)` accepts a
+qualified target; column handles supply unqualified names. Target aliases are
+replaced by internal aliases. `to_sql_for` validates and returns bound SQL.
+
+This API **does not enforce uniqueness**. One source tuple updates every target
+row with matching keys, including duplicate target keys. Concurrent writers can
+insert duplicate absent keys unless the database enforces a constraint. The
+returned count is the database's affected-row count, so it can exceed source size.
+
+Keys accept non-null `Value::Integer`, `Value::Text`, or `Value::Boolean`, using
+one variant per key column across the batch. Repeated exact source tuples are
+rejected before execution, whether their target keys exist or not. Supply keys
+matching the target types and equality/collation semantics: coercion and custom
+collations that equate distinct source tuples are outside this contract. Non-key
+values use the ordinary driver codecs; use `Value::Boolean` for boolean values.
+Empty batches, duplicate/missing column or key names, wrong row widths, missing
+policies, two no-op policies, and updates with no non-key columns are refused.
+
+The checksum-pinned Lance tests verify failed mixed update/insert conversion leaves
+all rows unchanged after reopen and the session remains usable. This is one-statement
+atomicity, not multi-statement transactions. The raw pinned extension does not reject
+all repeated sources: a matched row may take either source value and repeated absent
+keys insert duplicates. The builder rejects those exact repeated tuples. Ordinary
+DML RETURNING and ON CONFLICT restrictions remain unchanged.

@@ -545,6 +545,12 @@ For an update that preserves the existing row, use
 methods. `InsertBuilder::select` inserts a whole SELECT result. See
 [Upsert](docs/scenarios/upsert.md) and [INSERT … SELECT](docs/scenarios/insert-select.md).
 
+For explicit key-based writes, `query::merge::MergeBuilder` offers required matched
+and unmatched policies on Lance and PostgreSQL 15+. SQLite returns a typed
+`KeyMerge` refusal. MERGE does not enforce uniqueness or replace ON CONFLICT;
+see [portable write scenarios](docs/scenarios/portable-writes.md) and the
+[mutation guide](website/src/queries/mutations.md#explicit-key-based-merge).
+
 **Shared connection writes.** `InsertBuilder`, `UpdateBuilder`, and
 `DeleteBuilder` provide async `.execute_on(&conn)` for any `DbConnection`.
 It renders with that connection's runtime dialect and returns

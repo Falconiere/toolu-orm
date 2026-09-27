@@ -7,6 +7,8 @@ use crate::DbError;
 /// A backend guarantee an operation requires, not a claim about its SQL syntax.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Capability {
+  /// Native key-based MERGE (not unique-key conflict handling).
+  KeyMerge,
   /// Unique-key conflict handling, including ignore and replace shorthands.
   OnConflict,
   /// Rows returned by ordinary INSERT, UPDATE, or DELETE.
@@ -32,6 +34,7 @@ impl Capability {
   #[must_use]
   pub const fn as_str(self) -> &'static str {
     match self {
+      Self::KeyMerge => "key_merge",
       Self::OnConflict => "on_conflict",
       Self::DmlReturning => "dml_returning",
       Self::PrimaryKey => "primary_key",
@@ -48,8 +51,11 @@ impl Capability {
   #[must_use]
   pub const fn alternative(self) -> &'static str {
     match self {
+      Self::KeyMerge => {
+        "use native MERGE on Lance or PostgreSQL 15+; SQLite ON CONFLICT is a separate API requiring unique constraints"
+      },
       Self::OnConflict => {
-        "use PostgreSQL or SQLite for unique-key conflict handling; explicit Lance MERGE via raw SQL has different semantics and does not enforce uniqueness"
+        "use PostgreSQL or SQLite for unique-key conflict handling; explicit MergeBuilder has different semantics and does not enforce uniqueness"
       },
       Self::DmlReturning => {
         "execute without RETURNING, then SELECT explicitly if needed; the separate read is not atomic with the write"
@@ -73,16 +79,18 @@ impl Capability {
 /// Check structured requirements before any SQL or side effects.
 ///
 /// Empty requirements pass (for example an ordinary filtered SELECT). SQLite
-/// and PostgreSQL pass this coarse backend check; connection configuration and
+/// refuses native KeyMerge; PostgreSQL passes this coarse backend check. Configuration and
 /// statement validity still matter. Raw SQL and fragments are never inspected.
 /// Schema callers must invoke this before mutation; it is not schema validation.
 ///
 /// # Errors
 ///
-/// Returns the first unsupported requirement on Lance with a named alternative.
+/// Returns the first unsupported requirement with a named alternative.
 pub fn require_capabilities(backend: Dialect, requirements: &[Capability]) -> Result<(), DbError> {
-  if backend == Dialect::Lance {
-    if let Some(&capability) = requirements.first() {
+  for &capability in requirements {
+    if (capability == Capability::KeyMerge && backend == Dialect::Sqlite)
+      || (capability != Capability::KeyMerge && backend == Dialect::Lance)
+    {
       return Err(DbError::UnsupportedCapability {
         backend,
         capability,

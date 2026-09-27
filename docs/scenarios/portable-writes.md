@@ -87,6 +87,27 @@ outside this slice; existing RETURNING capability refusal remains unchanged.
 single Lance and mixed `postgres,rusqlite,lancedb` features against the pinned
 real extension. Snapshots read persisted rows through independent connections.
 
+## Explicit key-based MERGE
+
+`MergeBuilder` requires both matched/unmatched policies and executes one native
+statement on Lance and PostgreSQL 15+. SQLite refuses `KeyMerge` before execution;
+ON CONFLICT remains a separate API. A mixed batch updates existing keys and inserts
+absent keys. Update-only and insert-only policies skip the other branch.
+
+Keys may be composite non-null integer/text/boolean tuples. Repeated exact source
+keys and malformed batches fail before execution; values must match target types
+and equality/collation semantics. A single source row updates all duplicate target
+matches, without enforcing uniqueness. The pinned raw Lance control demonstrates
+why preflight is required: repeated matching sources select an unspecified winner,
+while repeated absent keys insert duplicate rows. Neither behavior is an API promise.
+
+Real Lance tests assert exact reopened rows, NULL non-key values, hostile text,
+quoted identifiers, composite/text/boolean keys, omitted-column preservation,
+malformed refusal, and failed mixed-statement conversion with no partial writes and
+same-session recovery. PostgreSQL tests check mixed writes, policies, all-NULL
+values, duplicate targets and constraint-failure atomicity. Real SQLite tests prove
+refusal preserves existing rows and ON CONFLICT remains available.
+
 ## Tests
 
 | Lane | Binary | Test |
@@ -114,3 +135,16 @@ The facade proof compiles with only `toolu-orm` as a direct dependency. The Lanc
 smoke script also runs all four UPDATE tests with mixed
 `postgres,rusqlite,lancedb` query features. Their snapshots read the persisted
 Lance catalog through independent native connections.
+
+| default | merge_sql_test | explicit_merge_binds_rows_and_refuses_sqlite |
+| default | merge_sql_test | validation_and_postgres_parameter_order |
+| default | merge_sql_test | qualified_identifiers_are_escaped_and_aliases_are_internal |
+| rusqlite-only | merge_sql_test | sqlite_refusal_preserves_real_rows_and_on_conflict |
+| postgres | postgres_merge_test | native_merge_policies_nulls_duplicates_and_atomicity |
+| lancedb-smoke | lance_merge_test | behavior::mixed_merge_policies_and_reopen |
+| lancedb-smoke | lance_merge_test | behavior::duplicate_targets_update_and_repeated_sources_refuse |
+| lancedb-smoke | lance_merge_test | behavior::failing_mixed_statement_is_atomic_and_session_recovers |
+| lancedb-smoke | lance_merge_test | behavior::malformed_batches_preserve_persisted_rows |
+| lancedb-smoke | lance_merge_test | behavior::composite_keys_and_null_values_preserve_other_groups |
+| lancedb-smoke | lance_merge_test | raw_control::raw_repeated_sources_show_why_preflight_is_required |
+| lancedb-smoke | lance_merge_test | quoted::quoted_identifiers_text_boolean_keys_and_defaults |
