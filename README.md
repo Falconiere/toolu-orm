@@ -486,6 +486,10 @@ Changing `dim`, the element type, or
 `distance_metric` is refused by the diff the same way FTS5 changes are — drop,
 recreate, and re-embed in a hand-written migration.
 
+### Checked portable vectors
+
+Use `toolu_orm::core::vector::Vector::<3>::new(&[1.25, -2.5, 0.0])?` and convert it into `Value` to retain checked vector semantics until binding. PostgreSQL stores pgvector, sqlite-vec stores little-endian f32 BLOBs, and Lance stores native `FLOAT[3]` through a bound array-text conversion. Length mismatches and nonfinite elements fail before a write. Legacy `Value::vector` remains SQLite-specific. See [checked portable vectors](docs/scenarios/portable-vectors.md) for decoding, required declarations and the L2 compatibility boundary.
+
 ---
 
 ## Query builders

@@ -9,6 +9,7 @@ mod session_row;
 mod sql;
 mod transaction;
 mod value;
+mod vector;
 
 pub use namespace::{LanceColumn, LanceColumnType, LanceNamespace, LanceNamespaceError};
 pub use session::LanceDbConnection;

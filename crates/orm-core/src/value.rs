@@ -14,13 +14,15 @@ pub enum JsonStorage {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-/// Portable scalar value and driver binding representation.
+/// Portable scalar or checked vector value and driver binding representation.
 pub enum Value {
   Null,
   Integer(i64),
   Real(f64),
   Text(String),
   Blob(Vec<u8>),
+  /// Dimension-checked finite vector, encoded for the selected backend.
+  Vector(crate::vector::VectorValue),
   /// Postgres `boolean`. SQLite binds `0` or `1` via [`Value::sqlite_stored`].
   Boolean(bool),
   /// Unix-epoch seconds for a Postgres `timestamptz`. SQLite binds the integer.
@@ -48,6 +50,9 @@ impl Value {
   /// An embedding as the little-endian `f32` bytes a `vec0` `float[N]`
   /// parameter is read from — the conversion every caller would otherwise
   /// hand-roll.
+  ///
+  /// This helper is SQLite-specific. For checked portable input, use
+  /// [`crate::vector::Vector`].
   ///
   /// `int8` and `bit` vectors are already byte slices; pass those as
   /// [`Value::Blob`].
@@ -144,7 +149,7 @@ impl From<Value> for libsql::Value {
       SqliteForm::Integer(n) => libsql::Value::Integer(n),
       SqliteForm::Real(f) => libsql::Value::Real(f),
       SqliteForm::Text(s) => libsql::Value::Text(s.to_owned()),
-      SqliteForm::Blob(b) => libsql::Value::Blob(b.to_owned()),
+      SqliteForm::Blob(b) => libsql::Value::Blob(b.into_owned()),
     }
   }
 }
@@ -179,7 +184,7 @@ impl rusqlite::types::ToSql for Value {
         rusqlite::types::Value::Text(s.to_owned()),
       )),
       SqliteForm::Blob(b) => Ok(rusqlite::types::ToSqlOutput::Owned(
-        rusqlite::types::Value::Blob(b.to_owned()),
+        rusqlite::types::Value::Blob(b.into_owned()),
       )),
     }
   }
