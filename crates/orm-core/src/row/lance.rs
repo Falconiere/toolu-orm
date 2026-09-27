@@ -1,5 +1,6 @@
 //! Owned, driver-neutral columns projected from a Lance query.
 
+use super::FromLanceValue;
 use crate::{error::DbCoreError, value::Value};
 
 /// A selected Lance result row without DuckDB types in the public API.
@@ -40,5 +41,34 @@ impl LanceRow {
       .find(|(column, _)| column.eq_ignore_ascii_case(name))
       .map(|(_, value)| value)
       .ok_or_else(|| DbCoreError::RowMapping(format!("missing Lance result column {name}")))
+  }
+
+  /// Decode a named scalar without implicit conversions between value kinds.
+  ///
+  /// `Option<T>` accepts SQL NULL, but a missing column is always an error.
+  ///
+  /// # Errors
+  ///
+  /// Returns `RowMapping` with the column and expected Rust type when a column
+  /// is absent, NULL for a required field, or incompatible with `T`.
+  pub fn get_typed<T: FromLanceValue>(&self, name: &str) -> Result<T, DbCoreError> {
+    let expected = std::any::type_name::<T>();
+    let value = self.get(name).map_err(|error| {
+      if let DbCoreError::RowMapping(message) = error {
+        DbCoreError::RowMapping(format!("{message}; expected {expected}"))
+      } else {
+        error
+      }
+    })?;
+    T::from_lance_value(value).ok_or_else(|| {
+      let reason = if matches!(value, Value::Null) {
+        "NULL"
+      } else {
+        "incompatible scalar type"
+      };
+      DbCoreError::RowMapping(format!(
+        "Lance column {name}: expected {expected}, got {reason}"
+      ))
+    })
   }
 }

@@ -125,9 +125,10 @@ and exposes async `DbConnection` plus runtime-free `DbConnectionBlocking`.
 Calls share one serialized DuckDB connection; async calls wait for admission
 before entering the blocking pool. Bound `Value` inputs use prepared SQL.
 For `query_map`, implement `FromRow::from_lance_row` and read named `LanceRow`
-values; BIGINT, VARCHAR, and NULL results are currently supported. Batch SQL
-can create tables that persist after reopen, while unsupported statements
-return a typed query error. Full scalar decoding, derive support, portable
+values through `get_typed`: `i64`, `f64`, `String`, `bool`, `Vec<u8>`, and `Option<T>`.
+Missing, NULL, or mismatched required fields report the column and expected Rust type.
+Batch SQL can create tables that persist after reopen, while unsupported statements
+return a typed query error. Derive support, portable
 query builders, and migrations remain separate work. The
 [Lance connection scenario](https://github.com/Falconiere/toolu-orm/blob/main/docs/scenarios/lancedb-dbconnection.md)
 records the API limits and real tests.

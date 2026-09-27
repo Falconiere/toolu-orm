@@ -184,9 +184,9 @@ checks extension loading.
 and implements async `DbConnection` and synchronous `DbConnectionBlocking`.
 Both serialize SQL on one DuckDB connection. The shared methods accept bound
 `Value` parameters; `query_map` uses a manually implemented
-`FromRow::from_lance_row` with named `LanceRow` values for BIGINT, VARCHAR, and
-NULL results. `execute_batch` can create tables that persist after reopening
-the catalog. Full scalar decoding, derive support, portable query builders,
+`FromRow::from_lance_row` with `LanceRow::get_typed` for integer, real, text, boolean, binary, and
+optional scalar fields. `execute_batch` can create tables that persist after reopening
+the catalog. Derive support, portable query builders,
 and migrations are separate work. See the
 [connection scenario](docs/scenarios/lancedb-dbconnection.md) for the supported
 surface, errors, and real database tests.
@@ -194,7 +194,8 @@ surface, errors, and real database tests.
 `to_duckdb_params(&values)` converts portable `Value` slices for prepared DuckDB
 statements. It binds NULL, integer, real, text, binary, and boolean values; UUID,
 JSON, temporal, and decimal variants return `LanceValueError::Unsupported`
-before execution. The [scalar binding scenario](docs/scenarios/lancedb-scalar-binding.md)
+before execution. See the [scalar decoding contract](docs/scenarios/lancedb-scalar-decoding.md)
+for typed result access and errors. The [scalar binding scenario](docs/scenarios/lancedb-scalar-binding.md)
 shows the real prepared insert and filter tests, including quoted text and NULL.
 
 Pinned artifacts are verified on macOS arm64, Linux amd64, and Linux arm64;
