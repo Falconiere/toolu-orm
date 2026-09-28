@@ -117,10 +117,9 @@ jobs:
       - name: Shared writes select each connection in a mixed-driver build
         run: cargo nextest run -p toolu-orm-query --features postgres,rusqlite,sqlite-vec --test portable_write_test
 
-      # The four lanes above only give orm-core four of the eight driver
-      # combinations, so half of `impl_derived_from_row!`'s definitions are
-      # never expanded by one. This compiles the FromRow derive against all
-      # eight.
+      # Compile all sixteen subsets, including Lance with each relational
+      # shape, plus external consumers without local driver feature names.
+      # Runtime Lance derive coverage lives in the lancedb-smoke job.
       - name: FromRow derive compiles on every driver combination
         run: bash scripts/check-derive-matrix.sh
 

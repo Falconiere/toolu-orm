@@ -286,3 +286,33 @@ LANCE_EXTENSION_PATH="$extension" cargo nextest run \
   --test lance_update_test --test lance_delete_test --test lance_merge_test --success-output immediate
 cargo nextest run -p toolu-orm-facade-consumer --features lancedb \
   --test facade_only_write_test
+
+# Every Lance-enabled derive shape must decode persisted rows through the facade.
+actual=$(printf '%s\n' "$listed_consumer" | awk '
+  /^toolu-orm-facade-consumer::facade_only_lance_from_row_test / {
+    sub(/^toolu-orm-facade-consumer::/, "")
+    print
+  }
+' | sort)
+documented=$(awk -F'|' '
+  $2 ~ /^[[:space:]]*lancedb-smoke[[:space:]]*$/ && \
+  $3 ~ /^[[:space:]]*facade_only_lance_from_row_test[[:space:]]*$/ {
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4)
+    print $3 " " $4
+  }
+' docs/scenarios/from-row-derive.md | sort)
+if [[ -z "$actual" || -z "$documented" ]] || \
+  ! diff -u <(printf '%s\n' "$documented") <(printf '%s\n' "$actual"); then
+  printf 'lancedb-smoke: facade-only derive scenario docs and test names differ\n' >&2
+  exit 1
+fi
+# libsql-ffi and libsqlite3-sys each bundle SQLite, so a linked binary with
+# both libsql and rusqlite fails with duplicate sqlite3_* symbols on Linux.
+# Those two subsets stay compile-checked by scripts/check-derive-matrix.sh.
+for drivers in lancedb lancedb,postgres lancedb,libsql lancedb,rusqlite \
+  lancedb,postgres,libsql lancedb,postgres,rusqlite; do
+  LANCE_EXTENSION_PATH="$extension" cargo nextest run \
+    -p toolu-orm-facade-consumer --no-default-features --features "$drivers" \
+    --test facade_only_lance_from_row_test --success-output immediate
+done

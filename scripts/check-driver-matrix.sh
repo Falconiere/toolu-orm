@@ -2,7 +2,7 @@
 # Compiles the driver-dependent crates under every driver combination.
 #
 # `scripts/check-derive-matrix.sh` proves `#[derive(FromRow)]` expands on all
-# eight driver combinations. It does not compile orm-connection or orm-query,
+# sixteen driver combinations. It does not compile orm-connection or orm-query,
 # and that gap is what let issue #124 ship: those crates picked a `FromRow`
 # method from their *own* feature flags, while the method that exists is decided
 # by whatever Cargo unified onto `toolu-orm-core`. The two diverge as soon as one

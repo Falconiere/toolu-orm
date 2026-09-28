@@ -7,6 +7,7 @@ mod decode_postgres;
 #[cfg(feature = "rusqlite")]
 mod decode_rusqlite;
 mod derived;
+mod derived_lance;
 #[cfg(feature = "lancedb")]
 mod lance;
 #[cfg(feature = "lancedb")]

@@ -1,7 +1,7 @@
 # FromRow derive
 
-**Feature:** `#[derive(FromRow)]` maps a row into a struct positionally (each field read at its own index, in declaration order) and exposes `REQUIRED_COLUMNS`, so `select_for::<T>()` selects exactly the columns `T` needs, in the order it decodes them.
-**Drivers:** all of them, in whatever shape `toolu-orm-core`'s unified features gave the trait. One driver yields `from_row`; two or more yield one real decoder per driver. The derive reaches that shape through `toolu_orm_core::impl_derived_from_row!`, whose eight `#[cfg]`-gated definitions are compiled with `toolu-orm-core`'s own features (`crates/orm-core/src/row/derived.rs`), which is what lets a derive expanded in a consumer crate follow features it cannot see.
+**Feature:** `#[derive(FromRow)]` maps relational rows positionally and Lance rows by field name and exposes `REQUIRED_COLUMNS`, so `select_for::<T>()` selects exactly the columns `T` needs, in the order it decodes them.
+**Drivers:** all of them, in whatever shape `toolu-orm-core`'s unified features gave the trait. One relational driver yields `from_row`; two or more yield one real decoder per relational driver. Enabling `lancedb` adds `from_lance_row` without changing those methods. The derive reaches that shape through `toolu_orm_core::impl_derived_from_row!`, whose eight `#[cfg]`-gated definitions are compiled with `toolu-orm-core`'s own features (`crates/orm-core/src/row/derived.rs`), which is what lets a derive expanded in a consumer crate follow features it cannot see.
 **Spec:** AC-18 and [#17](https://github.com/Falconiere/toolu-orm/issues/17).
 
 ## What is proven
@@ -14,17 +14,22 @@
 - **`#[from_row(with = "f")]`:** normalizes an accepted value and surfaces `f`'s rejection as `RowMapping` naming that column, on both single-driver lanes.
 - **Every existing single-driver suite** now decodes through the derive: the libsql and rusqlite `users` fixtures dropped their hand-written impls, so the mutations, reads and relational binaries on both lanes exercise it end to end.
 - **A facade-only consumer** derives it with `toolu-orm` as its single dependency, on the default (libsql-only) lane — the derive's macro call and row type both resolve through `::toolu_orm::core::…`.
-- **All eight driver combinations compile**, in two packages, guarded by `scripts/check-derive-matrix.sh`. `toolu-orm-facade-consumer` is the decisive one: `toolu-orm` is its only dependency, so in the rusqlite-only build `tokio-postgres` is absent from its dependency graph entirely (`cargo tree` finds no occurrence), yet the derive — which names `tokio_postgres::Row` in its postgres decoder unconditionally — still compiles. That is what pins the claim that an inactive driver's decoder costs nothing: its tokens are bound to a `$…:block` the surviving macro arm never interpolates, so they are dropped before name resolution rather than resolved and discarded. `toolu-orm-macros` covers the wider derive surface (`#[from_row(with)]`, renamed columns, several structs) but cannot prove absence, since its dev-dependencies pull in all three driver crates.
+- **All sixteen driver combinations compile**, in two packages, guarded by `scripts/check-derive-matrix.sh`. `toolu-orm-facade-consumer` is the decisive one: `toolu-orm` is its only dependency, so in the rusqlite-only build `tokio-postgres` is absent from its dependency graph entirely (`cargo tree` finds no occurrence), yet the derive — which names `tokio_postgres::Row` in its postgres decoder unconditionally — still compiles. That is what pins the claim that an inactive driver's decoder costs nothing: its tokens are bound to a `$…:block` the surviving macro arm never interpolates, so they are dropped before name resolution rather than resolved and discarded. `toolu-orm-macros` covers the wider derive surface (`#[from_row(with)]`, renamed columns, several structs) but cannot prove absence, since its dev-dependencies pull in all three driver crates.
+
+- **External consumer without local features:** the derive compiles with `lancedb` enabled only on its dependency and `unexpected_cfgs` denied. A rusqlite-only `i32` field also proves inactive Lance tokens impose no Lance scalar bound.
+- **Facade-only Lance reads:** all portable scalar types, optional NULL/present values, reordered and case-varied projection names, and empty results decode through the derive against a real attached Lance table. Missing required or optional fields, required NULL, wrong scalar types and rejected custom conversions produce column-level errors. The smoke lane executes this binary in the six Lance-enabled feature subsets that link at most one bundled SQLite; the two with both `libsql` and `rusqlite` are compile-checked by the derive matrix only, because `libsql-ffi` and `libsqlite3-sys` each bundle SQLite and a linked binary with both fails with duplicate `sqlite3_*` symbols on Linux. The two subsets with rusqlite also decode a real SQLite row into the same struct.
 
 ## How to run
 
-Each of the eight combinations, including the no-driver arm. The four CI lanes
+The derive matrix checks each of the sixteen combinations, including the no-driver arm and all eight Lance-enabled subsets. The four CI lanes
 give `toolu-orm-core` only four of them, so this guard is what keeps the other
 four definitions of `impl_derived_from_row!` honest — it runs in CI and in the
 quality gate, and it fails naming the combination that broke:
 
 ```sh
 bash scripts/check-derive-matrix.sh
+# Downloads and verifies the pinned extension, then runs real Lance tests.
+bash scripts/check-lancedb-smoke.sh
 ```
 
 The suites themselves:
@@ -61,3 +66,6 @@ TEST_DB_PORT=5434 cargo nextest run -p toolu-orm-core -p toolu-orm-macros -p too
 | rusqlite-only | rusqlite_derived_from_row_test | derive_on_a_short_select_is_row_mapping_naming_the_column |
 | rusqlite-only | rusqlite_derived_from_row_test | derive_absent_trailing_nullable_column_is_rejected |
 | rusqlite-only | rusqlite_derived_from_row_test | derive_with_attribute_normalizes_then_rejects |
+| lancedb-smoke | facade_only_lance_from_row_test | scalars::facade_derive_decodes_named_lance_scalars |
+| lancedb-smoke | facade_only_lance_from_row_test | errors::facade_derive_reports_missing_null_and_wrong_type |
+| lancedb-smoke | facade_only_lance_from_row_test | errors::facade_derive_runs_custom_conversion_and_preserves_errors |

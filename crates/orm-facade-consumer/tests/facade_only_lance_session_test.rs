@@ -2,30 +2,13 @@
 
 use toolu_orm::{
   connection::{DbConnection, DbError, LanceDbConnection},
-  core::{
-    error::DbCoreError,
-    row::{FromRow, LanceRow},
-    value::Value,
-  },
+  core::value::Value,
+  FromRow,
 };
 
+#[derive(FromRow)]
 struct ConsumerRow {
   id: i64,
-}
-
-impl FromRow for ConsumerRow {
-  const REQUIRED_COLUMNS: &'static [&'static str] = &["id"];
-
-  fn from_lance_row(row: &LanceRow) -> Result<Self, DbCoreError> {
-    let value = row.get("id")?;
-    if let Value::Integer(id) = value {
-      Ok(Self { id: *id })
-    } else {
-      Err(DbCoreError::RowMapping(format!(
-        "id expected BIGINT, got {value:?}"
-      )))
-    }
-  }
 }
 
 async fn use_all_connection_methods(conn: &LanceDbConnection) -> Result<Vec<ConsumerRow>, DbError> {

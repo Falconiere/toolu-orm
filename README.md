@@ -183,11 +183,15 @@ checks extension loading.
 `LanceDbConnection::from_namespace(namespace)` consumes an attached namespace
 and implements async `DbConnection` and synchronous `DbConnectionBlocking`.
 Both serialize SQL on one DuckDB connection. The shared methods accept bound
-`Value` parameters; `query_map` uses a manually implemented
-`FromRow::from_lance_row` with `LanceRow::get_typed` for integer, real, text, boolean, binary, and
-optional scalar fields. `execute_batch` can create tables that persist after reopening
-the catalog. Derive support, portable query builders,
-and migrations are separate work. See the
+`Value` parameters; `query_map` accepts `#[derive(toolu_orm::FromRow)]` with
+the facade as the only dependency, or a manual `FromRow::from_lance_row`.
+The Lance decoder reads integer, real, text, boolean, binary, and optional
+scalar fields by name through `LanceRow::get_typed`, including in mixed-driver
+builds. Missing columns and required NULL report the field and expected type.
+`execute_batch` can create tables that persist after reopening
+the catalog. Portable SELECT builders and migrations are separate work.
+The [derive scenario](docs/scenarios/from-row-derive.md) covers real Lance
+reads across every Lance-enabled feature subset that links one bundled SQLite. See the
 [connection scenario](docs/scenarios/lancedb-dbconnection.md) for the supported
 surface, errors, and real database tests.
 
@@ -353,7 +357,8 @@ Field types map to `ColumnType`: `Text`, `Integer`, `Real`, `Blob`, `Uuid`,
 no corresponding `Array` marker for table fields.
 
 **Row mapping.** `#[derive(FromRow)]` fills `REQUIRED_COLUMNS` from the field
-names in declaration order and reads each field positionally at its own index, so
+names in declaration order and reads relational fields positionally at their
+own indices, so
 `select_for::<T>()` picks exactly the columns `T` needs, in the order it decodes
 them. An `Option<T>` field decodes SQL `NULL` as `None`; decode failures
 produce `DbCoreError::RowMapping` naming the column's index and name. libsql
@@ -361,14 +366,19 @@ also reads a missing trailing nullable column as `None`; rusqlite rejects the
 out-of-range index. Use `select_for::<T>()` to select every required column.
 
 The derive expands to whichever shape the drivers on `toolu-orm-core` gave the
-trait, so it compiles on every combination — one driver means a single
-`from_row`, two or more mean one method per driver:
+trait, so it compiles on every combination — one relational driver means a
+single `from_row`, two or more mean one method per relational driver:
 
 | Drivers active | Methods the derive implements |
 |---|---|
 | one of `libsql` / `rusqlite` / `postgres` | `from_row` |
 | any two | two of `from_pg_row` / `from_libsql_row` / `from_rusqlite_row` |
-| all three | all three |
+| all three relational drivers | all three |
+| `lancedb`, alone or with any of the above | adds `from_lance_row` |
+
+Lance reads fields by case-insensitive name, so reordered projections decode
+correctly. Missing fields, including optional ones, are errors; required NULL
+and scalar mismatches report the column and expected Rust type.
 
 `#[from_row(with = "f")]` on a field routes the decoded value through `f`
 (`FieldTy -> Result<FieldTy, E>`) to normalize or reject it.

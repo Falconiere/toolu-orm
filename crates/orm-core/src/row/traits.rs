@@ -13,10 +13,11 @@ use crate::error::DbCoreError;
 /// Trait for converting a database row into a Rust struct.
 /// Implemented via `#[derive(FromRow)]` in orm-macros or manually.
 ///
-/// When Cargo unifies **multiple** backend features on `toolu-orm-core`, this
+/// When Cargo unifies **multiple** relational backend features on `toolu-orm-core`, this
 /// trait exposes one method per active backend (`from_pg_row`, `from_libsql_row`,
-/// `from_rusqlite_row`). With exactly one backend enabled, a single
-/// `from_row` method is used for that backend's row type.
+/// `from_rusqlite_row`). With exactly one relational backend enabled, a single
+/// `from_row` method is used for that backend's row type. Enabling `lancedb`
+/// adds `from_lance_row` independently of this relational method shape.
 #[cfg(all(
   feature = "postgres",
   not(feature = "libsql"),

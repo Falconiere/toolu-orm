@@ -2,9 +2,9 @@
 //! `toolu_orm_core::impl_derived_from_row!` that keeps whichever ones this
 //! build of `toolu-orm-core` compiled a method for.
 //!
-//! Every field is read positionally at its own index, with the field's own Rust
-//! type, so an `Option<T>` field decodes SQL `NULL` as `None`. The three
-//! drivers differ only in how that read is spelled — see [`Driver::read`].
+//! Relational fields are read positionally; Lance fields are read by name.
+//! Each read uses the field's Rust type, including `Option<T>` for SQL NULL.
+//! See [`Driver::read`] for each driver's spelling.
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -12,19 +12,20 @@ use syn::Ident;
 
 use crate::from_row::FieldInfo;
 
-/// The three row APIs the derive can decode from.
+/// The four row APIs the derive can decode from.
 #[derive(Clone, Copy)]
 pub enum Driver {
   Postgres,
   Libsql,
   Rusqlite,
+  Lance,
 }
 
 impl Driver {
   /// Reads field `info` off a row bound to `row`, yielding the driver's own
   /// `Result<#field_ty, _>`.
   ///
-  /// libsql indexes with `i32` while the other two take `usize`, which is the
+  /// libsql indexes with `i32` while the other relational drivers take `usize`, the
   /// only reason this can fail: a struct with more than `i32::MAX` fields has
   /// no libsql index to read at.
   fn read(self, row: &Ident, info: &FieldInfo) -> syn::Result<TokenStream> {
@@ -42,6 +43,10 @@ impl Driver {
         quote! { #row.get::<#ty>(#idx) }
       },
       Self::Rusqlite => quote! { #row.get::<usize, #ty>(#idx) },
+      Self::Lance => {
+        let name = &info.name_str;
+        quote! { #row.get_typed::<#ty>(#name) }
+      },
     })
   }
 }
@@ -84,7 +89,7 @@ fn decoder(
   name: &Ident,
   fields: &[FieldInfo],
 ) -> syn::Result<TokenStream> {
-  // Named per driver so the three decoders cannot shadow one another, and
+  // Named per driver so the decoders cannot shadow one another, and
   // interpolated into the block so `macro_rules!` hygiene resolves it to the
   // binding `impl_derived_from_row!` declares from this very ident.
   let row = format_ident!(
@@ -93,6 +98,7 @@ fn decoder(
       Driver::Postgres => "pg",
       Driver::Libsql => "libsql",
       Driver::Rusqlite => "rusqlite",
+      Driver::Lance => "lance",
     }
   );
   let inits: Vec<TokenStream> = fields
@@ -104,7 +110,7 @@ fn decoder(
   })
 }
 
-/// The whole derive output: three decoders handed to
+/// The whole derive output: four decoders handed to
 /// `impl_derived_from_row!`, which keeps the ones this build has a method for.
 pub fn emit_from_row_impl(
   core: &TokenStream,
@@ -115,12 +121,14 @@ pub fn emit_from_row_impl(
   let pg = decoder(core, Driver::Postgres, name, fields)?;
   let libsql = decoder(core, Driver::Libsql, name, fields)?;
   let rusqlite = decoder(core, Driver::Rusqlite, name, fields)?;
+  let lance = decoder(core, Driver::Lance, name, fields)?;
   Ok(quote! {
     #core::impl_derived_from_row! {
       #name, &[#(#column_names),*],
       postgres = #pg,
       libsql = #libsql,
       rusqlite = #rusqlite,
+      lance = #lance,
     }
   })
 }
