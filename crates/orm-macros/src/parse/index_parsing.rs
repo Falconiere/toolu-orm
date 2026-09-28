@@ -16,6 +16,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Attribute, Ident, ItemStruct, LitStr, Result, Token};
 
 use super::column_parsing::ColumnInput;
+use super::foreign_key_parsing::ForeignKeyInput;
 use super::policy_parsing::RowSecurityInput;
 
 pub struct IndexColumnInput {
@@ -37,6 +38,8 @@ pub struct TableInput {
   pub columns: Vec<ColumnInput>,
   pub indexes: Vec<IndexInput>,
   pub primary_key: Vec<String>,
+  /// Table-level `#[foreign_key(...)]` declarations, in order.
+  pub foreign_keys: Vec<ForeignKeyInput>,
   /// `Some` when the struct declares `rls = …` or any `#[policy]`.
   pub row_security: Option<RowSecurityInput>,
 }

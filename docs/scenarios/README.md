@@ -52,6 +52,7 @@ test, update its page.
 | [Partial indexes](partial-indexes.md) | `#[index(..., where = "…")]` predicates on `IndexDef`, SQL render, serde, and drop+create diffs. |
 | [Index column DESC](index-desc.md) | `desc(col)` in `#[index]` / `#[unique_index]`, SQL `DESC`, serde string lists, diff drop+create. |
 | [Composite primary key](composite-primary-key.md) | Table-level `#[primary_key(...)]`, `AUTOINCREMENT` / Postgres `IDENTITY`, and key-set recreation. |
+| [Composite foreign key](composite-foreign-key.md) | Table-level `#[foreign_key(...)]` in `TableDef.foreign_keys`: trailing SQLite clause, Postgres constraints after the indexes, SQLite rebuild on change, enforced live on libsql and Postgres. |
 | [Renames](renames.md) | A `RenameResolver` turns drop+create into `RENAME TABLE` / `RENAME COLUMN`. |
 | [Macro compile errors](macro-compile-errors.md) | Each proc-macro error message pinned by trybuild. |
 | [Column CHECK attribute](column-check.md) | `#[column(check = "...")]` sets `ColumnDef.check`; SQL and snapshot use the existing path. |

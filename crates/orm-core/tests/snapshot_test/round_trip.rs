@@ -78,6 +78,7 @@ fn test_snapshot_round_trip_with_indexes() -> Result<(), Box<dyn std::error::Err
       where_clause: None,
     }],
     primary_key: vec![],
+    foreign_keys: vec![],
     strict: true,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,

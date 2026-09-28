@@ -1,6 +1,7 @@
 //! Dialect-aware DDL generation for migration operations.
 
 mod ddl;
+mod foreign_key;
 mod fts5_triggers;
 mod gen;
 mod operation_sql;

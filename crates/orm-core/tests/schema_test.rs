@@ -21,6 +21,7 @@ fn make_table(name: &str) -> TableDef {
     }],
     indexes: vec![],
     primary_key: vec![],
+    foreign_keys: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,

@@ -1,0 +1,5 @@
+error: #[foreign_key] needs `references = "table(col, …)"`
+ --> tests/ui/foreign_key_missing_references.rs:6:1
+  |
+6 | #[foreign_key(columns(work_item_id, project_id))]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

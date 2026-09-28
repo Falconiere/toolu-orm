@@ -16,6 +16,7 @@ use super::fts5_sync::{trigger_operations, validate as validate_fts5_sync};
 use super::indexes::diff_indexes_inner;
 use super::operation::{ColumnChange, Operation};
 use super::policy::{diff_row_security_inner, validate as validate_policies};
+use super::table_fk::table_foreign_key_change;
 use super::virtual_tables::{check_new_virtual_table, check_virtual_pair, VirtualPairCheck};
 
 /// # Errors
@@ -144,6 +145,7 @@ fn diff_tables(
         table_def: table.clone(),
       });
     }
+    ops.extend(table_foreign_key_change(&old_name, old_st, new_st, table));
     diff_indexes_inner(&mut ops, &table.name, &old_st.indexes, &new_st.indexes);
     diff_foreign_keys_inner(
       &mut ops,

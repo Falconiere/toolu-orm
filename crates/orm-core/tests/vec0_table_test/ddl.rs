@@ -67,6 +67,7 @@ fn a_vector_column_on_an_ordinary_table_is_a_byte_column() {
     }],
     indexes: vec![],
     primary_key: vec![],
+    foreign_keys: vec![],
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,

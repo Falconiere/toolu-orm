@@ -1,0 +1,5 @@
+error: expected `name = "…"`, `columns(…)`, `references = "…"`, `on_delete = "…"` or `on_update = "…"`
+ --> tests/ui/foreign_key_unknown_key.rs:6:93
+  |
+6 | #[foreign_key(columns(work_item_id, project_id), references = "work_items(id, project_id)", deferrable = "yes")]
+  |                                                                                             ^^^^^^^^^^

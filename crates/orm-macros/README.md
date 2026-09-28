@@ -37,9 +37,12 @@ src/
 │   ├── column_attrs.rs          # Read and strip #[column(...)] attributes
 │   ├── column_type_spec.rs      # Field type -> TypeSpec (Varchar<N>, Char<N>)
 │   ├── primary_key_parsing.rs   # Table-level composite primary keys
+│   ├── foreign_key_parsing.rs   # Table-level composite #[foreign_key(...)]
+│   ├── fk_validation.rs         # #[foreign_key] columns and names vs the struct
 │   └── index_parsing.rs         # Parse #[index] / #[unique_index]
 └── expand/
     ├── schema_expansion.rs      # Generate TableSchema impl
+    ├── foreign_key_expansion.rs # ForeignKeyDef literals for #[foreign_key]
     ├── columns_expansion.rs     # Generate Column<T> constants module
     └── relational_expansion.rs  # Generate scalar metadata and row decoding
 ```
@@ -80,7 +83,9 @@ fn main() {
 ```
 
 Additional ordinary-table attributes include composite
-`#[primary_key(a, b)]`, `#[column(primary_key, autoincrement)]` on `Integer`,
+`#[primary_key(a, b)]`, composite foreign keys with
+`#[foreign_key(columns(a, b), references = "t(x, y)", on_delete = "cascade")]`,
+`#[column(primary_key, autoincrement)]` on `Integer`,
 `#[column(check = "score >= 0")]`, and partial indexes such as
 `#[index("active_email", email, where = "deleted_at IS NULL")]`.
 

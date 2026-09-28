@@ -1,0 +1,5 @@
+error: `columns(...)` lists 2 columns but `references` names 1
+ --> tests/ui/foreign_key_count_mismatch.rs:6:63
+  |
+6 | #[foreign_key(columns(work_item_id, project_id), references = "work_items(id)")]
+  |                                                               ^^^^^^^^^^^^^^^^

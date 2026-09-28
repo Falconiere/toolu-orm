@@ -204,7 +204,7 @@ renders successful operations per dialect:
 | Group | Operations |
 |---|---|
 | Tables | `CreateTable`, `DropTable`, `RenameTable` |
-| Columns | `AddColumn`, `DropColumn`, `RenameColumn`, `AlterColumn` (type, default, nullability, uniqueness, primary key, autoincrement, composite primary key) |
+| Columns | `AddColumn`, `DropColumn`, `RenameColumn`, `AlterColumn` (type, default, nullability, uniqueness, primary key, autoincrement, composite primary key, table-level foreign keys) |
 | Indexes | `CreateIndex`, `DropIndex` |
 | Constraints | `AddForeignKey`, `DropForeignKey`, `AddCheckConstraint`, `DropCheckConstraint` |
 | Enums | `CreateEnum`, `AlterEnum`, `DropEnum` |
@@ -212,8 +212,11 @@ renders successful operations per dialect:
 
 An operation does not guarantee executable SQL for both dialects. SQLite
 column alterations trigger one create/copy/drop/rename rebuild per table,
-including its declared indexes. Standalone foreign-key and CHECK changes render
-comments requiring hand-written migration SQL. Postgres primary-key and
+including its declared indexes; so does adding, removing or changing a
+table-level `#[foreign_key(...)]`. Column-level foreign-key and CHECK changes
+render comments on SQLite requiring hand-written migration SQL. Postgres
+attaches every new foreign-key constraint after the migration's tables and
+indexes. Postgres primary-key and
 autoincrement alterations also render comments. SQLite virtual-table DDL is
 commented out for Postgres, and Postgres row-level security (`ENABLE ROW LEVEL
 SECURITY`, `CREATE POLICY`) is commented out for SQLite. Inspect the generated file before applying it.

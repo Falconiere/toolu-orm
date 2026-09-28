@@ -339,6 +339,7 @@ pub struct PipelineRun {
 | `#[column(not_null)]` | `NOT NULL`; omit it for a nullable column. |
 | `#[column(default = "...")]` | Raw SQL default, e.g. `"unixepoch()"`, `"'pending'"`, `"uuid4_str()"`. |
 | `#[column(references = "t(col)", on_delete = "cascade", on_update = "...")]` | Foreign key with referential actions. |
+| `#[foreign_key(name = "...", columns(a, b), references = "t(x, y)", on_delete = "cascade")]` | Table-level composite foreign key over two or more columns; `name` defaults to `fk_<table>_<columns>`. A column may also carry its own `references`. |
 | `#[column(as_text)]` | Store an enum or custom type as `TEXT`. |
 | `#[index("name", col, ...)]` / `#[unique_index("name", col)]` | Secondary indexes; `desc(col)` selects descending order and `where = "..."` adds a partial-index predicate. |
 | `#[view(Name, pick(a, b))]` / `#[view(Name, omit(c))]` | Generate a subset struct from the table. |

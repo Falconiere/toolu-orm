@@ -83,6 +83,7 @@ fn test_varchar_column_sql() {
       }],
       indexes: vec![],
       primary_key: vec![],
+      foreign_keys: vec![],
       strict: true,
       kind: toolu_orm_core::table::TableKind::Ordinary,
       fts5_sync: None,

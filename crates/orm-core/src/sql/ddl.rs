@@ -5,6 +5,7 @@ use crate::dialect::Dialect;
 use crate::index::IndexDef;
 use crate::table::{TableDef, TableKind};
 
+use super::foreign_key::foreign_key_clause;
 use super::fts5_triggers::rebuild_sql;
 use super::translate::translate_default;
 use super::virtual_table::{create_virtual_table_sql, unsupported_dialect_comment};
@@ -111,6 +112,11 @@ pub(crate) fn create_table_sql_named(
     .collect();
   if !table.primary_key.is_empty() {
     defs.push(composite_primary_key_sql(&table.primary_key));
+  }
+  // Postgres checks the referenced unique key when the constraint is created,
+  // so `generate_sql_for` attaches these there after the migration's indexes.
+  if dialect == Dialect::Sqlite {
+    defs.extend(table.foreign_keys.iter().map(foreign_key_clause));
   }
   let cols = defs.join(",\n    ");
   let guard = if if_not_exists { "IF NOT EXISTS " } else { "" };

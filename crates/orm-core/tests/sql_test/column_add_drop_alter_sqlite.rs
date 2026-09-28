@@ -22,6 +22,7 @@ fn users_table() -> TableDef {
       where_clause: None,
     }],
     primary_key: vec![],
+    foreign_keys: vec![],
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
