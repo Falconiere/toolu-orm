@@ -63,6 +63,8 @@ fn self_reference_takes_the_default_name_and_keeps_the_column_fk() -> Result<(),
   );
   let project_id = def.find_column("project_id").ok_or("no project_id")?;
   assert_eq!(project_id.references.as_deref(), Some("projects(id)"));
+  assert_eq!(project_id.on_delete, Some(ForeignKeyAction::Cascade));
+  assert_eq!(project_id.on_update, None);
   Ok(())
 }
 
