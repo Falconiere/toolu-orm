@@ -42,6 +42,7 @@ pub fn expand_vec0_table(attr: TokenStream, item: TokenStream) -> syn::Result<To
     columns,
     indexes: Vec::new(),
     primary_key: Vec::new(),
+    foreign_keys: Vec::new(),
     row_security: None,
   };
 

@@ -8,10 +8,12 @@
 //! - `enums_and_indexes` — ColumnEnum derive, index parsing
 //! - `views` — view macros (omit/pick)
 //! - `builder_methods` — companion modules, factory methods, serde
+//! - `foreign_keys` — table-level `#[foreign_key(...)]`
 
 pub mod builder_methods;
 pub mod column_types_and_fk;
 pub mod enums_and_indexes;
+pub mod foreign_keys;
 pub mod primary_keys;
 pub mod schema_basics;
 pub mod views;
