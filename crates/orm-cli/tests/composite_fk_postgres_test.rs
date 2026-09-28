@@ -57,7 +57,7 @@ async fn migrate_to(
 async fn refused(conn: &PgConnection, sql: &str) -> TestResult {
   match conn.execute_sql(sql, vec![]).await {
     Ok(_) => Err(format!("accepted: {sql}").into()),
-    Err(e) if format!("{e:?}").contains("23503") || e.to_string().contains("foreign key") => Ok(()),
+    Err(e) if format!("{e:?}").contains("23503") => Ok(()),
     Err(e) => Err(format!("unexpected error for {sql}: {e:?}").into()),
   }
 }

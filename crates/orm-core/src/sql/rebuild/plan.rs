@@ -47,7 +47,10 @@ fn needs_recreation_sqlite(changes: &[ColumnChange]) -> bool {
 ///
 /// Index operations pass through: `DropIndex` is ordered before the rebuild,
 /// and `CreateIndex` after it is a no-op because the rebuild already re-creates
-/// every index the target `TableDef` declares.
+/// every index the target `TableDef` declares. Foreign-key operations on a
+/// rebuilt table are dropped: the rebuilt table already carries every key the
+/// target `TableDef` declares, so the comment SQLite would render for them
+/// ("rebuild table to attach constraint") would be false.
 pub(crate) fn plan_sqlite_rebuilds(ordered: Vec<Operation>) -> Vec<SqliteStep> {
   let rebuilt = tables_to_rebuild(&ordered);
   if rebuilt.is_empty() {
@@ -58,6 +61,9 @@ pub(crate) fn plan_sqlite_rebuilds(ordered: Vec<Operation>) -> Vec<SqliteStep> {
   let mut steps: Vec<SqliteStep> = Vec::new();
 
   for op in ordered {
+    if foreign_key_op_table(&op).is_some_and(|name| rebuilt.contains_key(name)) {
+      continue;
+    }
     let absorbed = column_op_table(&op)
       .filter(|name| rebuilt.contains_key(*name))
       .map(ToOwned::to_owned);
@@ -87,6 +93,17 @@ fn column_op_table(op: &Operation) -> Option<&str> {
     return Some(table);
   }
   if let Operation::DropColumn { table, .. } = op {
+    return Some(table);
+  }
+  None
+}
+
+/// The table a foreign-key operation targets, `None` for anything else.
+fn foreign_key_op_table(op: &Operation) -> Option<&str> {
+  if let Operation::AddForeignKey { table, .. } = op {
+    return Some(table);
+  }
+  if let Operation::DropForeignKey { table, .. } = op {
     return Some(table);
   }
   None

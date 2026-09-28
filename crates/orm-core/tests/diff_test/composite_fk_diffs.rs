@@ -45,6 +45,7 @@ fn adding_a_composite_fk_rebuilds_on_sqlite_and_adds_a_constraint_on_postgres() 
     sqlite.contains("CREATE TABLE \"_toolu_new_project_evidence\""),
     "{sqlite}"
   );
+  assert!(!sqlite.contains("-- FOREIGN KEY"), "{sqlite}");
   assert!(
     sqlite.contains("FOREIGN KEY (\"work_item_id\", \"project_id\") REFERENCES \"project_work_items\" (\"id\", \"project_id\") ON DELETE CASCADE"),
     "{sqlite}"
@@ -72,6 +73,7 @@ fn removing_a_composite_fk_rebuilds_without_the_clause() -> TestResult {
     sqlite.contains("CREATE TABLE \"_toolu_new_project_evidence\""),
     "{sqlite}"
   );
+  assert!(!sqlite.contains("-- drop FOREIGN KEY"), "{sqlite}");
   let staging = sqlite
     .split("CREATE TABLE \"_toolu_new_project_evidence\"")
     .nth(1)
