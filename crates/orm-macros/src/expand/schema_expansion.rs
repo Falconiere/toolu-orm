@@ -43,6 +43,7 @@ pub fn expand(input: &TableInput) -> TokenStream {
                       #(#index_defs),*
                   ],
                   primary_key: vec![#(#primary_key.to_owned()),*],
+                  foreign_keys: ::std::vec::Vec::new(),
                   strict: #strict,
                   kind: #core::table::TableKind::Ordinary,
                   fts5_sync: ::core::option::Option::None,

@@ -40,6 +40,7 @@ pub fn memories() -> TableDef {
     columns: vec![column("id", true), column("body", false)],
     indexes: vec![],
     primary_key: vec![],
+    foreign_keys: vec![],
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,

@@ -37,6 +37,7 @@ fn table_with_index(index: IndexDef) -> TableDef {
     ],
     indexes: vec![index],
     primary_key: Vec::new(),
+    foreign_keys: Vec::new(),
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,

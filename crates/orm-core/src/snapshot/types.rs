@@ -185,6 +185,7 @@ impl Snapshot {
           columns: ordered_columns(&snap_table),
           indexes: snap_table.indexes.values().cloned().collect(),
           primary_key: snap_table.primary_key.clone(),
+          foreign_keys: vec![],
           strict: snap_table.strict,
           kind: snap_table.kind.clone(),
           fts5_sync: snap_table.fts5_sync.clone(),

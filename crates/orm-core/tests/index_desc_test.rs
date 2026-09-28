@@ -32,6 +32,7 @@ fn table_with_index(index: IndexDef) -> TableDef {
     columns: vec![col("id"), col("at")],
     indexes: vec![index],
     primary_key: Vec::new(),
+    foreign_keys: Vec::new(),
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,
