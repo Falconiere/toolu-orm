@@ -7,6 +7,142 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0](https://github.com/Falconiere/toolu-orm/compare/v0.11.0...v0.12.0) - 2026-09-28
+
+### `toolu-orm-cli`
+
+#### Added
+- *(schema)* table-level composite #[foreign_key(...)] on #[table] ([#265](https://github.com/Falconiere/toolu-orm/pull/265))
+- *(query)* add explicit key-based MERGE ([#261](https://github.com/Falconiere/toolu-orm/pull/261))
+- *(query)* reject unsupported Lance capabilities before execution ([#254](https://github.com/Falconiere/toolu-orm/pull/254))
+- *(lancedb)* implement DbConnection for attached sessions ([#251](https://github.com/Falconiere/toolu-orm/pull/251))
+- *(lancedb)* bind portable scalar values ([#197](https://github.com/Falconiere/toolu-orm/pull/197))
+- *(lancedb)* attach and reopen local namespaces ([#195](https://github.com/Falconiere/toolu-orm/pull/195))
+- *(query)* render SQL for session-selected dialect ([#194](https://github.com/Falconiere/toolu-orm/pull/194))
+- *(lancedb)* load pinned Lance extension on startup ([#193](https://github.com/Falconiere/toolu-orm/pull/193))
+- *(lancedb)* wire optional DuckDB feature ([#191](https://github.com/Falconiere/toolu-orm/pull/191))
+
+#### Other
+- decode DuckDB scalar result columns ([#252](https://github.com/Falconiere/toolu-orm/pull/252))
+- execute portable writes through a shared session ([#253](https://github.com/Falconiere/toolu-orm/pull/253))
+- *(lancedb)* prove missing extension fails startup ([#196](https://github.com/Falconiere/toolu-orm/pull/196))
+
+### `toolu-orm`
+
+#### Added
+- *(schema)* table-level composite #[foreign_key(...)] on #[table] ([#265](https://github.com/Falconiere/toolu-orm/pull/265))
+- *(query)* add explicit key-based MERGE ([#261](https://github.com/Falconiere/toolu-orm/pull/261))
+- *(query)* reject unsupported Lance capabilities before execution ([#254](https://github.com/Falconiere/toolu-orm/pull/254))
+- *(lancedb)* implement DbConnection for attached sessions ([#251](https://github.com/Falconiere/toolu-orm/pull/251))
+- *(lancedb)* bind portable scalar values ([#197](https://github.com/Falconiere/toolu-orm/pull/197))
+- *(lancedb)* attach and reopen local namespaces ([#195](https://github.com/Falconiere/toolu-orm/pull/195))
+- *(query)* render SQL for session-selected dialect ([#194](https://github.com/Falconiere/toolu-orm/pull/194))
+- *(lancedb)* load pinned Lance extension on startup ([#193](https://github.com/Falconiere/toolu-orm/pull/193))
+- *(lancedb)* wire optional DuckDB feature ([#191](https://github.com/Falconiere/toolu-orm/pull/191))
+
+#### Other
+- decode DuckDB scalar result columns ([#252](https://github.com/Falconiere/toolu-orm/pull/252))
+- execute portable writes through a shared session ([#253](https://github.com/Falconiere/toolu-orm/pull/253))
+- *(lancedb)* prove missing extension fails startup ([#196](https://github.com/Falconiere/toolu-orm/pull/196))
+
+### `toolu-orm-query`
+
+#### Added
+- *(schema)* table-level composite #[foreign_key(...)] on #[table] ([#265](https://github.com/Falconiere/toolu-orm/pull/265))
+- *(query)* add explicit key-based MERGE ([#261](https://github.com/Falconiere/toolu-orm/pull/261))
+- *(query)* reject unsupported Lance capabilities before execution ([#254](https://github.com/Falconiere/toolu-orm/pull/254))
+- *(lancedb)* implement DbConnection for attached sessions ([#251](https://github.com/Falconiere/toolu-orm/pull/251))
+- *(lancedb)* bind portable scalar values ([#197](https://github.com/Falconiere/toolu-orm/pull/197))
+- *(lancedb)* attach and reopen local namespaces ([#195](https://github.com/Falconiere/toolu-orm/pull/195))
+- *(query)* render SQL for session-selected dialect ([#194](https://github.com/Falconiere/toolu-orm/pull/194))
+- *(lancedb)* load pinned Lance extension on startup ([#193](https://github.com/Falconiere/toolu-orm/pull/193))
+- *(lancedb)* wire optional DuckDB feature ([#191](https://github.com/Falconiere/toolu-orm/pull/191))
+
+#### Fixed
+- *(lancedb)* preserve portable DELETE predicates ([#260](https://github.com/Falconiere/toolu-orm/pull/260))
+
+#### Other
+- *(lancedb)* verify portable UPDATE execution ([#259](https://github.com/Falconiere/toolu-orm/pull/259))
+- *(lancedb)* verify portable INSERT persistence and SELECT ([#257](https://github.com/Falconiere/toolu-orm/pull/257))
+- decode DuckDB scalar result columns ([#252](https://github.com/Falconiere/toolu-orm/pull/252))
+- execute portable writes through a shared session ([#253](https://github.com/Falconiere/toolu-orm/pull/253))
+- *(lancedb)* prove missing extension fails startup ([#196](https://github.com/Falconiere/toolu-orm/pull/196))
+
+### `toolu-orm-macros`
+
+#### Added
+- *(schema)* table-level composite #[foreign_key(...)] on #[table] ([#265](https://github.com/Falconiere/toolu-orm/pull/265))
+- *(query)* add explicit key-based MERGE ([#261](https://github.com/Falconiere/toolu-orm/pull/261))
+- *(query)* reject unsupported Lance capabilities before execution ([#254](https://github.com/Falconiere/toolu-orm/pull/254))
+- *(lancedb)* implement DbConnection for attached sessions ([#251](https://github.com/Falconiere/toolu-orm/pull/251))
+- *(lancedb)* bind portable scalar values ([#197](https://github.com/Falconiere/toolu-orm/pull/197))
+- *(lancedb)* attach and reopen local namespaces ([#195](https://github.com/Falconiere/toolu-orm/pull/195))
+- *(query)* render SQL for session-selected dialect ([#194](https://github.com/Falconiere/toolu-orm/pull/194))
+- *(lancedb)* load pinned Lance extension on startup ([#193](https://github.com/Falconiere/toolu-orm/pull/193))
+- *(lancedb)* wire optional DuckDB feature ([#191](https://github.com/Falconiere/toolu-orm/pull/191))
+
+#### Other
+- decode DuckDB scalar result columns ([#252](https://github.com/Falconiere/toolu-orm/pull/252))
+- execute portable writes through a shared session ([#253](https://github.com/Falconiere/toolu-orm/pull/253))
+- *(lancedb)* prove missing extension fails startup ([#196](https://github.com/Falconiere/toolu-orm/pull/196))
+
+### `toolu-orm-connection`
+
+#### Added
+- *(schema)* table-level composite #[foreign_key(...)] on #[table] ([#265](https://github.com/Falconiere/toolu-orm/pull/265))
+- *(query)* add explicit key-based MERGE ([#261](https://github.com/Falconiere/toolu-orm/pull/261))
+- *(query)* reject unsupported Lance capabilities before execution ([#254](https://github.com/Falconiere/toolu-orm/pull/254))
+- *(lancedb)* implement DbConnection for attached sessions ([#251](https://github.com/Falconiere/toolu-orm/pull/251))
+- *(lancedb)* bind portable scalar values ([#197](https://github.com/Falconiere/toolu-orm/pull/197))
+- *(lancedb)* attach and reopen local namespaces ([#195](https://github.com/Falconiere/toolu-orm/pull/195))
+- *(query)* render SQL for session-selected dialect ([#194](https://github.com/Falconiere/toolu-orm/pull/194))
+- *(lancedb)* load pinned Lance extension on startup ([#193](https://github.com/Falconiere/toolu-orm/pull/193))
+- *(lancedb)* wire optional DuckDB feature ([#191](https://github.com/Falconiere/toolu-orm/pull/191))
+
+#### Fixed
+- *(lancedb)* preserve portable DELETE predicates ([#260](https://github.com/Falconiere/toolu-orm/pull/260))
+
+#### Other
+- decode DuckDB scalar result columns ([#252](https://github.com/Falconiere/toolu-orm/pull/252))
+- execute portable writes through a shared session ([#253](https://github.com/Falconiere/toolu-orm/pull/253))
+- *(lancedb)* prove missing extension fails startup ([#196](https://github.com/Falconiere/toolu-orm/pull/196))
+
+### `toolu-orm-sqlite-vec-register`
+
+#### Added
+- *(schema)* table-level composite #[foreign_key(...)] on #[table] ([#265](https://github.com/Falconiere/toolu-orm/pull/265))
+- *(query)* add explicit key-based MERGE ([#261](https://github.com/Falconiere/toolu-orm/pull/261))
+- *(query)* reject unsupported Lance capabilities before execution ([#254](https://github.com/Falconiere/toolu-orm/pull/254))
+- *(lancedb)* implement DbConnection for attached sessions ([#251](https://github.com/Falconiere/toolu-orm/pull/251))
+- *(lancedb)* bind portable scalar values ([#197](https://github.com/Falconiere/toolu-orm/pull/197))
+- *(lancedb)* attach and reopen local namespaces ([#195](https://github.com/Falconiere/toolu-orm/pull/195))
+- *(query)* render SQL for session-selected dialect ([#194](https://github.com/Falconiere/toolu-orm/pull/194))
+- *(lancedb)* load pinned Lance extension on startup ([#193](https://github.com/Falconiere/toolu-orm/pull/193))
+- *(lancedb)* wire optional DuckDB feature ([#191](https://github.com/Falconiere/toolu-orm/pull/191))
+
+#### Other
+- decode DuckDB scalar result columns ([#252](https://github.com/Falconiere/toolu-orm/pull/252))
+- execute portable writes through a shared session ([#253](https://github.com/Falconiere/toolu-orm/pull/253))
+- *(lancedb)* prove missing extension fails startup ([#196](https://github.com/Falconiere/toolu-orm/pull/196))
+
+### `toolu-orm-core`
+
+#### Added
+- *(schema)* table-level composite #[foreign_key(...)] on #[table] ([#265](https://github.com/Falconiere/toolu-orm/pull/265))
+- *(query)* add explicit key-based MERGE ([#261](https://github.com/Falconiere/toolu-orm/pull/261))
+- *(query)* reject unsupported Lance capabilities before execution ([#254](https://github.com/Falconiere/toolu-orm/pull/254))
+- *(lancedb)* implement DbConnection for attached sessions ([#251](https://github.com/Falconiere/toolu-orm/pull/251))
+- *(lancedb)* bind portable scalar values ([#197](https://github.com/Falconiere/toolu-orm/pull/197))
+- *(lancedb)* attach and reopen local namespaces ([#195](https://github.com/Falconiere/toolu-orm/pull/195))
+- *(query)* render SQL for session-selected dialect ([#194](https://github.com/Falconiere/toolu-orm/pull/194))
+- *(lancedb)* load pinned Lance extension on startup ([#193](https://github.com/Falconiere/toolu-orm/pull/193))
+- *(lancedb)* wire optional DuckDB feature ([#191](https://github.com/Falconiere/toolu-orm/pull/191))
+
+#### Other
+- decode DuckDB scalar result columns ([#252](https://github.com/Falconiere/toolu-orm/pull/252))
+- execute portable writes through a shared session ([#253](https://github.com/Falconiere/toolu-orm/pull/253))
+- *(lancedb)* prove missing extension fails startup ([#196](https://github.com/Falconiere/toolu-orm/pull/196))
+
 ## [0.11.0](https://github.com/Falconiere/toolu-orm/compare/v0.10.1...v0.11.0) - 2026-09-21
 
 ### `toolu-orm-cli`
