@@ -8,6 +8,7 @@ use crate::table::TableDef;
 use super::ddl::{
   add_column_sql, create_index_sql, create_table_sql, recreate_fts5_from_content_sql,
 };
+use super::foreign_key::add_constraint_sql;
 use super::fts5_triggers::{create_sync_triggers_sql, drop_sync_triggers_sql};
 use super::policy::{alter_row_level_security_sql, create_policy_sql, drop_policy_sql};
 use super::postgres::alter_column_statements_postgres;
@@ -200,30 +201,6 @@ fn add_foreign_key_sql(table: &str, fk: &ForeignKeyDef, dialect: Dialect) -> Str
       fk.name
     ),
     Dialect::Lance => LANCE_UNSUPPORTED.to_owned(),
-    Dialect::Postgres => {
-      let cols = quoted_csv(&fk.columns);
-      let ref_cols = quoted_csv(&fk.references_columns);
-      let mut s = format!(
-        "ALTER TABLE \"{table}\" ADD CONSTRAINT \"{}\" FOREIGN KEY ({cols}) REFERENCES \"{}\" ({ref_cols})",
-        fk.name, fk.references_table
-      );
-      if let Some(a) = fk.on_delete {
-        s.push_str(&format!(" ON DELETE {}", a.as_sql()));
-      }
-      if let Some(a) = fk.on_update {
-        s.push_str(&format!(" ON UPDATE {}", a.as_sql()));
-      }
-      s.push(';');
-      s
-    },
+    Dialect::Postgres => add_constraint_sql(table, fk),
   }
-}
-
-/// `"a", "b"` — identifiers quoted and comma-joined.
-fn quoted_csv(names: &[String]) -> String {
-  names
-    .iter()
-    .map(|c| format!("\"{c}\""))
-    .collect::<Vec<_>>()
-    .join(", ")
 }

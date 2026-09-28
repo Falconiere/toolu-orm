@@ -4,6 +4,7 @@ use crate::dialect::Dialect;
 use crate::diff::Operation;
 use crate::ordering::order_operations;
 
+use super::foreign_key::add_constraint_sql;
 use super::operation_sql::operation_sql;
 use super::rebuild::{plan_sqlite_rebuilds, rebuild_sql, SqliteStep};
 
@@ -16,7 +17,10 @@ pub fn generate_sql(operations: &[Operation]) -> String {
 ///
 /// On SQLite the ordered operations first pass through
 /// `plan_sqlite_rebuilds`, which folds every column operation on a table that
-/// SQLite cannot alter in place into one table rebuild.
+/// SQLite cannot alter in place into one table rebuild. On Postgres every
+/// foreign-key constraint — an `AddForeignKey`, or a table-level key of a
+/// created table — comes last: Postgres checks the referenced unique key when
+/// the constraint is created, and the indexes it needs come after the tables.
 pub fn generate_sql_for(operations: &[Operation], dialect: Dialect) -> String {
   let ordered = order_operations(operations.to_vec());
   let mut parts: Vec<String> = Vec::new();
@@ -27,8 +31,25 @@ pub fn generate_sql_for(operations: &[Operation], dialect: Dialect) -> String {
       }
     },
     Dialect::Postgres => {
+      let mut foreign_keys: Vec<String> = Vec::new();
       for op in ordered {
+        match &op {
+          Operation::AddForeignKey { .. } => {
+            foreign_keys.push(operation_sql(&op, dialect));
+            continue;
+          },
+          Operation::CreateTable { table } => foreign_keys.extend(
+            table
+              .foreign_keys
+              .iter()
+              .map(|fk| add_constraint_sql(&table.name, fk)),
+          ),
+          _ => {},
+        }
         push_chunk(&mut parts, operation_sql(&op, dialect));
+      }
+      for chunk in foreign_keys {
+        push_chunk(&mut parts, chunk);
       }
     },
     Dialect::Lance => {
