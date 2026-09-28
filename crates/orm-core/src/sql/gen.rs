@@ -33,18 +33,17 @@ pub fn generate_sql_for(operations: &[Operation], dialect: Dialect) -> String {
     Dialect::Postgres => {
       let mut foreign_keys: Vec<String> = Vec::new();
       for op in ordered {
-        match &op {
-          Operation::AddForeignKey { .. } => {
-            foreign_keys.push(operation_sql(&op, dialect));
-            continue;
-          },
-          Operation::CreateTable { table } => foreign_keys.extend(
+        if matches!(op, Operation::AddForeignKey { .. }) {
+          foreign_keys.push(operation_sql(&op, dialect));
+          continue;
+        }
+        if let Operation::CreateTable { table } = &op {
+          foreign_keys.extend(
             table
               .foreign_keys
               .iter()
               .map(|fk| add_constraint_sql(&table.name, fk)),
-          ),
-          _ => {},
+          );
         }
         push_chunk(&mut parts, operation_sql(&op, dialect));
       }

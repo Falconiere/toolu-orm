@@ -45,6 +45,13 @@ pub enum ColumnChange {
   },
   /// Table-level composite primary key column list changed.
   CompositePrimaryKey { old: Vec<String>, new: Vec<String> },
+  /// The table-level foreign keys changed, in name order; SQLite must
+  /// recreate the table. Postgres applies the change through the
+  /// `DropForeignKey` / `AddForeignKey` operations the same diff emits.
+  TableForeignKeys {
+    old: Vec<ForeignKeyDef>,
+    new: Vec<ForeignKeyDef>,
+  },
 }
 
 /// One migration step, before any dialect renders it.

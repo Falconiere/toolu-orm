@@ -36,6 +36,7 @@ fn needs_recreation_sqlite(changes: &[ColumnChange]) -> bool {
         | ColumnChange::PrimaryKey { .. }
         | ColumnChange::Autoincrement { .. }
         | ColumnChange::CompositePrimaryKey { .. }
+        | ColumnChange::TableForeignKeys { .. }
     )
   })
 }

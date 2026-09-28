@@ -1,5 +1,9 @@
 //! Tests for schema diffing (migration generation).
 
+#[path = "../fixtures/composite_fk_schema.rs"]
+pub mod composite_fk_schema;
+
+mod composite_fk_diffs;
 mod enum_diffs;
 mod fk_diffs;
 mod index_diffs;
