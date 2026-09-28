@@ -27,6 +27,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 
 ## Releases
 - release-plz opens the release PR on push to main and publishes only when a release PR merges (`release_always = false`; the merged PR's head branch must start with `release-plz-`). A CI or publish fix that has to trigger the release itself must use a `release-plz-*` branch.
+- release-plz never touches `probes/lancedb/Cargo.lock` (a separate, standalone Cargo package outside the main workspace), so the release PR job's own workflow pushes a follow-up commit that refreshes it for `toolu-orm-core`/`toolu-orm-query` after every version bump (#266).
 
 ## Migrations
 - Multi-statement migration files use the `--> statement-breakpoint` separator.
