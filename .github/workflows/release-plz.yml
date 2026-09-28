@@ -19,6 +19,15 @@
 # workflow runs, so both skip `release-plz-*` head branches at the job level:
 # the PR only touches versions and the changelog, and `cargo publish` verifies
 # each crate builds before upload.
+#
+# probes/lancedb is a standalone Cargo package (own [workspace], own
+# Cargo.lock) with path dependencies on toolu-orm-core and toolu-orm-query.
+# release-plz bumps those crates' Cargo.toml versions but never touches that
+# separate lock, so lancedb-smoke's `--locked` checks go red on the release PR
+# and stay red on main after merge (#266). The PR job's last step checks the
+# PR release-plz just opened back out and pushes a follow-up commit that runs
+# `cargo update` for exactly those two path deps, following release-plz's own
+# documented pattern for editing its release PR (github/output.md).
 
 name: Release-plz
 
@@ -68,7 +77,30 @@ jobs:
       - name: Install the toolchain pinned in rust-toolchain.toml
         run: rustup toolchain install
       - uses: release-plz/action@aec534bbd8631793b9b3b8f1ee6cd886c322e17f # v0.5.133
+        id: release-plz
         with:
           command: release-pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Refresh probes/lancedb/Cargo.lock on the release PR
+        # See the header note above (#266): the PR only bumps versions and the
+        # changelog inside the main workspace, so the standalone probe's lock
+        # is never touched. Skip when no PR was opened/updated.
+        if: ${{ fromJSON(steps.release-plz.outputs.prs_created || 'false') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.release-plz.outputs.pr }}
+        run: |
+          set -euo pipefail
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          pr_number=$(jq -r '.number' <<<"$PR")
+          gh pr checkout "$pr_number"
+          cargo update --manifest-path probes/lancedb/Cargo.toml -p toolu-orm-core -p toolu-orm-query
+          if ! git diff --quiet -- probes/lancedb/Cargo.lock; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add probes/lancedb/Cargo.lock
+            git commit -m "chore(lancedb): refresh probe lockfile for release"
+            git push
+          fi
