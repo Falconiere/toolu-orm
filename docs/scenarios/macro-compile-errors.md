@@ -19,6 +19,14 @@
 | `index_where_bare.rs` | `#[index(..., where)]` | expected `=` |
 | `index_desc_extra_arg.rs` | `#[index(..., desc(at, extra))]` | desc() takes exactly one column identifier |
 | `index_desc_unknown_fn.rs` | `#[index(..., asc(at))]` | expected column identifier, desc(column), or where = "..." |
+| `foreign_key_count_mismatch.rs` | `#[foreign_key(columns(a, b), references = "t(id)")]` | `columns(...)` lists 2 columns but `references` names 1 |
+| `foreign_key_unknown_column.rs` | a `columns(...)` entry that is not a field | `tenant_id` is not a field of this struct |
+| `foreign_key_missing_references.rs` | `#[foreign_key(columns(a, b))]` | #[foreign_key] needs `references = "table(col, …)"` |
+| `foreign_key_single_column.rs` | `#[foreign_key(columns(a), …)]` | #[foreign_key] needs at least two columns; declare a single-column foreign key with #[column(references = "table(col)")] |
+| `foreign_key_bad_references.rs` | `references = "work_items"` | expected `references = "table(col, …)"` |
+| `foreign_key_unknown_action.rs` | `on_delete = "delete"` | expected `cascade`, `set_null`, `set_default`, `restrict` or `no_action` |
+| `foreign_key_unknown_key.rs` | `deferrable = "yes"` | expected `name = "…"`, `columns(…)`, `references = "…"`, `on_delete = "…"` or `on_update = "…"` |
+| `foreign_key_duplicate_name.rs` | two `#[foreign_key(name = "evidence_fk", …)]` | duplicate foreign key name "evidence_fk" on the same table |
 | `policy_duplicate_name.rs` | two `#[policy("tenant", …)]` on one table | duplicate policy "tenant" on the same table |
 | `policy_unknown_key.rs` | `#[policy("tenant", check = "…")]` | expected `for = …`, `as = …`, `to = …`, `using = "…"` or `with_check = "…"` |
 | `policy_bad_command.rs` | `#[policy("tenant", for = truncate, …)]` | expected `for = all`, `select`, `insert`, `update` or `delete` |

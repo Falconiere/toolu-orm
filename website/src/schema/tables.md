@@ -58,6 +58,7 @@ pipeline_runs::status;       // Column<Text>
 | `#[table(name = "…")]` | The required SQL table-name string. Its contents must be a valid Rust identifier, such as `"pipeline_runs"`, because they also name the generated column module. |
 | `#[table(name = "…", strict = true)]` | Emits a SQLite `STRICT` table using the ORM's Turso extension type names. Check engine support for those types; Postgres ignores this flag. See [Column types](column-types.md). |
 | `#[primary_key(col_a, col_b)]` | Table-level composite primary key. Cannot be combined with `#[column(primary_key)]`. |
+| `#[foreign_key(columns(col_a, col_b), references = "t(x, y)")]` | Table-level composite foreign key. Repeatable. See [Composite foreign keys](#composite-foreign-keys). |
 | `#[index("name", col_a, col_b)]` | Secondary index. Repeatable. Use `desc(col)` for a descending column. |
 | `#[unique_index("name", col)]` | Unique index. Repeatable — this is how you express multi-column uniqueness. `desc(col)` works the same way. |
 | `#[index("name", col, where = "deleted_at IS NULL")]` | Partial index with a raw SQL predicate. Also supported on `#[unique_index(...)]`. |
@@ -95,6 +96,52 @@ Defaults must be valid for the chosen engine. In particular, `uuid4_str()` is
 not a built-in function in stock SQLite, and `datetime('now')` is not translated
 for Postgres. Use `unixepoch()` with `Integer` for the portable epoch form shown
 above.
+
+## Composite foreign keys
+
+`#[foreign_key(...)]` declares a foreign key over two or more columns. It is
+how a child row is kept inside its parent's scope — here, a work item can only
+point at a parent in its own project:
+
+```rust
+use toolu_orm_core::column::Text;
+use toolu_orm_macros::table;
+
+#[table(name = "project_work_items")]
+#[unique_index("project_work_items_id_project_uidx", id, project_id)]
+#[foreign_key(
+  name = "project_work_items_parent_fk",
+  columns(parent_work_item_id, project_id),
+  references = "project_work_items(id, project_id)",
+  on_delete = "cascade",
+)]
+pub struct ProjectWorkItem {
+  #[column(primary_key, not_null)]
+  pub id: Text,
+  #[column(not_null, references = "projects(id)")]
+  pub project_id: Text,
+  pub parent_work_item_id: Text,
+}
+```
+
+| Key | Effect |
+|---|---|
+| `columns(a, b, …)` | Required. Fields of this struct, at least two; a single-column key belongs on `#[column(references = …)]`. |
+| `references = "table(x, y, …)"` | Required. The referenced table and columns, pairwise with `columns`. The table may be this one. |
+| `name = "…"` | Constraint name; defaults to `fk_<table>_<columns joined by _>`. Must be unique on the table. |
+| `on_delete = "…"` / `on_update = "…"` | Same actions as the column form: `cascade`, `set_null`, `set_default`, `restrict`, `no_action`. |
+
+The referenced columns need a primary key or unique index over exactly those
+columns — declare it with `#[unique_index]`. A member column may also carry
+its own `#[column(references = …)]`, as `project_id` does above. A row whose
+key columns include a NULL is not checked.
+
+SQLite renders the key as a trailing `FOREIGN KEY (…) REFERENCES … (…)` clause
+of `CREATE TABLE`, and adding, removing or changing one on an existing table
+rebuilds it (see [What the diff can express](../migrations/overview.md#what-the-diff-can-express)).
+Postgres attaches it with `ALTER TABLE … ADD CONSTRAINT "<name>" FOREIGN KEY …`
+after every table and index of the migration, because it checks the referenced
+unique key when the constraint is created.
 
 ## Virtual tables
 
