@@ -55,6 +55,7 @@ pub fn memories(body_not_null: bool) -> TableDef {
     ],
     indexes: vec![],
     primary_key: vec![],
+    foreign_keys: vec![],
     strict: false,
     kind: TableKind::Ordinary,
     fts5_sync: None,

@@ -8,6 +8,7 @@ mod fts5_sync;
 mod indexes;
 mod operation;
 mod policy;
+mod table_fk;
 mod virtual_tables;
 
 pub use engine::{diff, diff_with_resolver};

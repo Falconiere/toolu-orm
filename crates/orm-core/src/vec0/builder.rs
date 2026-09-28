@@ -162,6 +162,7 @@ impl Vec0Table {
       columns,
       indexes: Vec::new(),
       primary_key: Vec::new(),
+      foreign_keys: Vec::new(),
       strict: false,
       kind: TableKind::virtual_table(VEC0_MODULE, args),
       fts5_sync: None,

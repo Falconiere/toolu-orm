@@ -1,0 +1,5 @@
+error: `tenant_id` is not a field of this struct
+ --> tests/ui/foreign_key_unknown_column.rs:6:37
+  |
+6 | #[foreign_key(columns(work_item_id, tenant_id), references = "work_items(id, project_id)")]
+  |                                     ^^^^^^^^^

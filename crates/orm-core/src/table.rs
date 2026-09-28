@@ -4,6 +4,7 @@ use crate::column::ColumnDef;
 use crate::fts5::Fts5Sync;
 use crate::index::IndexDef;
 use crate::policy::RowSecurity;
+use crate::snapshot::ForeignKeyDef;
 
 /// How the database creates the table.
 ///
@@ -71,6 +72,11 @@ pub struct TableDef {
   /// snapshots still deserialize.
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub primary_key: Vec<String>,
+  /// Table-level foreign keys, declared with `#[foreign_key(...)]`; the
+  /// per-column ones stay on [`ColumnDef::references`]. Defaulted so older
+  /// snapshots still deserialize.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  pub foreign_keys: Vec<ForeignKeyDef>,
   #[serde(default)]
   pub strict: bool,
   /// Defaults to [`TableKind::Ordinary`], so snapshots written before virtual

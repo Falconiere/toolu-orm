@@ -23,6 +23,7 @@ fn composite_primary_key_change_recreates_table() -> TestResult {
     ],
     indexes: vec![],
     primary_key: vec!["memory_id".to_owned()],
+    foreign_keys: vec![],
     strict: false,
     kind: toolu_orm_core::table::TableKind::Ordinary,
     fts5_sync: None,

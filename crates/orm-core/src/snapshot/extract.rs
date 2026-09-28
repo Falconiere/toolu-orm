@@ -3,10 +3,52 @@
 use std::collections::BTreeMap;
 
 use crate::column::ColumnDef;
+use crate::table::TableDef;
 
 use super::types::ForeignKeyDef;
 
-pub(crate) fn extract_foreign_keys(
+/// The name a `#[column(references = …)]` foreign key is stored under.
+fn column_fk_name(table_name: &str, column: &str) -> String {
+  format!("fk_{table_name}_{column}")
+}
+
+/// True when `fk` is the one a column's own `references` produced: a single
+/// column, stored under that column's name, on a column the table declares.
+/// Anything else is a table-level foreign key.
+pub(crate) fn is_column_derived<'a>(
+  table_name: &str,
+  fk: &ForeignKeyDef,
+  mut columns: impl Iterator<Item = &'a String>,
+) -> bool {
+  let ([column], [_]) = (fk.columns.as_slice(), fk.references_columns.as_slice()) else {
+    return false;
+  };
+  fk.name == column_fk_name(table_name, column) && columns.any(|c| c == column)
+}
+
+/// The table-level foreign keys of a snapshot table, keyed by name.
+pub(crate) fn table_level_foreign_keys(
+  table_name: &str,
+  table: &super::types::SnapshotTable,
+) -> BTreeMap<String, ForeignKeyDef> {
+  table
+    .foreign_keys
+    .iter()
+    .filter(|(_, fk)| !is_column_derived(table_name, fk, table.columns.keys()))
+    .map(|(name, fk)| (name.clone(), fk.clone()))
+    .collect()
+}
+
+/// Every foreign key of `table`, per-column and table-level, keyed by name.
+pub(crate) fn extract_foreign_keys(table: &TableDef) -> BTreeMap<String, ForeignKeyDef> {
+  let mut fks = extract_column_foreign_keys(&table.name, &table.columns);
+  for fk in &table.foreign_keys {
+    fks.insert(fk.name.clone(), fk.clone());
+  }
+  fks
+}
+
+fn extract_column_foreign_keys(
   table_name: &str,
   columns: &[ColumnDef],
 ) -> BTreeMap<String, ForeignKeyDef> {
@@ -19,7 +61,7 @@ pub(crate) fn extract_foreign_keys(
       continue;
     };
     let ref_col = col_with_paren.trim_end_matches(')');
-    let fk_name = format!("fk_{table_name}_{}", col.name);
+    let fk_name = column_fk_name(table_name, &col.name);
     fks.insert(
       fk_name.clone(),
       ForeignKeyDef {
@@ -72,22 +114,30 @@ pub(crate) fn columns_for_snapshot_table(columns: &[ColumnDef]) -> BTreeMap<Stri
     .collect()
 }
 
-pub(crate) fn merge_fk_into_columns(table: &mut super::types::SnapshotTable) {
+/// Moves every column-derived foreign key back onto its column and returns
+/// the table-level ones, in name order.
+pub(crate) fn merge_fk_into_columns(
+  table_name: &str,
+  table: &mut super::types::SnapshotTable,
+) -> Vec<ForeignKeyDef> {
+  let mut table_level = Vec::new();
   for fk in table.foreign_keys.values() {
-    for (i, col_name) in fk.columns.iter().enumerate() {
-      let Some(col) = table.columns.get_mut(col_name) else {
-        continue;
-      };
-      let ref_col = fk
-        .references_columns
-        .get(i)
-        .map(String::as_str)
-        .unwrap_or("id");
-      col.references = Some(format!("{}({ref_col})", fk.references_table));
-      col.on_delete = fk.on_delete;
-      col.on_update = fk.on_update;
+    if !is_column_derived(table_name, fk, table.columns.keys()) {
+      table_level.push(fk.clone());
+      continue;
     }
+    let (Some(col_name), Some(ref_col)) = (fk.columns.first(), fk.references_columns.first())
+    else {
+      continue;
+    };
+    let Some(col) = table.columns.get_mut(col_name) else {
+      continue;
+    };
+    col.references = Some(format!("{}({ref_col})", fk.references_table));
+    col.on_delete = fk.on_delete;
+    col.on_update = fk.on_update;
   }
+  table_level
 }
 
 pub(crate) fn merge_checks_into_columns(table: &mut super::types::SnapshotTable) {

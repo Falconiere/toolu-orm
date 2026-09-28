@@ -18,6 +18,7 @@ use quote::quote;
 use crate::parse::{ColumnInput, IndexInput, TableInput, TypeSpec};
 use crate::paths;
 
+use super::foreign_key_expansion::foreign_key_tokens;
 use super::policy_expansion::row_security_tokens;
 
 pub fn expand(input: &TableInput) -> TokenStream {
@@ -29,6 +30,10 @@ pub fn expand(input: &TableInput) -> TokenStream {
   let column_defs = input.columns.iter().map(|c| column_def_tokens(&core, c));
   let index_defs = input.indexes.iter().map(|i| index_def_tokens(&core, i));
   let primary_key = &input.primary_key;
+  let foreign_keys = input
+    .foreign_keys
+    .iter()
+    .map(|fk| foreign_key_tokens(&core, table_name, fk));
   let row_security = row_security_tokens(&core, input.row_security.as_ref());
 
   quote! {
@@ -43,6 +48,9 @@ pub fn expand(input: &TableInput) -> TokenStream {
                       #(#index_defs),*
                   ],
                   primary_key: vec![#(#primary_key.to_owned()),*],
+                  foreign_keys: vec![
+                      #(#foreign_keys),*
+                  ],
                   strict: #strict,
                   kind: #core::table::TableKind::Ordinary,
                   fts5_sync: ::core::option::Option::None,
@@ -124,7 +132,7 @@ fn option_string_tokens(opt: &Option<String>) -> TokenStream {
   }
 }
 
-fn fk_action_tokens(core: &TokenStream, opt: &Option<String>) -> TokenStream {
+pub(super) fn fk_action_tokens(core: &TokenStream, opt: &Option<String>) -> TokenStream {
   let variant = match opt.as_deref() {
     Some("cascade") => "Cascade",
     Some("set_null") => "SetNull",

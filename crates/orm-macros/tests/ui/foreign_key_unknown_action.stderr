@@ -1,0 +1,5 @@
+error: expected `cascade`, `set_null`, `set_default`, `restrict` or `no_action`
+ --> tests/ui/foreign_key_unknown_action.rs:9:15
+  |
+9 |   on_delete = "delete"
+  |               ^^^^^^^^

@@ -55,6 +55,8 @@ fn alter_column_statement(table: &str, change: &ColumnChange) -> Option<String> 
     ColumnChange::CompositePrimaryKey { .. } => Some(format!(
       "-- composite PRIMARY KEY change on \"{table}\" requires table recreation on Postgres"
     )),
+    // The same diff's `DropForeignKey` / `AddForeignKey` operations apply it.
+    ColumnChange::TableForeignKeys { .. } => None,
   }
 }
 

@@ -137,7 +137,7 @@ impl Snapshot {
     let mut tables = BTreeMap::new();
     for table in registry.tables() {
       let column_order: Vec<String> = table.columns.iter().map(|c| c.name.clone()).collect();
-      let fks = extract::extract_foreign_keys(&table.name, &table.columns);
+      let fks = extract::extract_foreign_keys(table);
       let checks = extract::extract_check_constraints(&table.columns);
       let columns = extract::columns_for_snapshot_table(&table.columns);
       let indexes: BTreeMap<String, IndexDef> = table
@@ -178,13 +178,14 @@ impl Snapshot {
       .iter()
       .map(|(name, snap_table)| {
         let mut snap_table = snap_table.clone();
-        extract::merge_fk_into_columns(&mut snap_table);
+        let foreign_keys = extract::merge_fk_into_columns(name, &mut snap_table);
         extract::merge_checks_into_columns(&mut snap_table);
         TableDef {
           name: name.clone(),
           columns: ordered_columns(&snap_table),
           indexes: snap_table.indexes.values().cloned().collect(),
           primary_key: snap_table.primary_key.clone(),
+          foreign_keys,
           strict: snap_table.strict,
           kind: snap_table.kind.clone(),
           fts5_sync: snap_table.fts5_sync.clone(),

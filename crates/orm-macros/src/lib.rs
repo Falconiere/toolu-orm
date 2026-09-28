@@ -37,6 +37,11 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
     Err(e) => return e.to_compile_error().into(),
   };
 
+  let foreign_keys = match parse::parse_foreign_key_attrs(&mut item_struct) {
+    Ok(fks) => fks,
+    Err(e) => return e.to_compile_error().into(),
+  };
+
   // Parse and strip #[policy] attrs; any policy, or `rls = …`, opts the
   // table into row-level security.
   let policies = match parse::parse_policy_attrs(&mut item_struct) {
@@ -52,7 +57,7 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
   };
 
   // Parse and strip #[view] attrs from the struct
-  let views = match parse_view_attrs(&mut item_struct) {
+  let views = match view::parse_view_attrs(&mut item_struct) {
     Ok(v) => v,
     Err(e) => return e.to_compile_error().into(),
   };
@@ -68,6 +73,9 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
   if let Err(e) = parse::validate_autoincrement(&columns) {
     return e.to_compile_error().into();
   }
+  if let Err(e) = parse::validate_foreign_keys(&table_name, &foreign_keys, &columns) {
+    return e.to_compile_error().into();
+  }
 
   let input = parse::TableInput {
     table_name,
@@ -76,6 +84,7 @@ pub fn table(attr: TokenStream, item: TokenStream) -> TokenStream {
     columns,
     indexes,
     primary_key,
+    foreign_keys,
     row_security,
   };
 
@@ -156,6 +165,7 @@ fn expand_fts5_table(attr: TokenStream, item: TokenStream) -> syn::Result<TokenS
     columns,
     indexes: Vec::new(),
     primary_key: Vec::new(),
+    foreign_keys: Vec::new(),
     row_security: None,
   };
 
@@ -206,20 +216,6 @@ pub fn vec0_table(attr: TokenStream, item: TokenStream) -> TokenStream {
     Ok(tokens) => tokens,
     Err(e) => e.to_compile_error().into(),
   }
-}
-
-fn parse_view_attrs(item: &mut ItemStruct) -> syn::Result<Vec<view::ViewInput>> {
-  let mut views = Vec::new();
-  let mut remaining_attrs = Vec::new();
-  for attr in &item.attrs {
-    if attr.path().is_ident("view") {
-      views.push(view::parse_view_attr(attr)?);
-    } else {
-      remaining_attrs.push(attr.clone());
-    }
-  }
-  item.attrs = remaining_attrs;
-  Ok(views)
 }
 
 #[proc_macro_derive(ColumnEnum)]

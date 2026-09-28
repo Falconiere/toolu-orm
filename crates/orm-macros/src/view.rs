@@ -3,7 +3,7 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::parse::Parse;
-use syn::{Attribute, Ident, Result};
+use syn::{Attribute, Ident, ItemStruct, Result};
 
 use crate::parse::{ColumnInput, TypeSpec};
 
@@ -98,4 +98,19 @@ pub fn generate_view_struct(
       #(#field_tokens,)*
     }
   }
+}
+
+/// Parses and strips every `#[view(...)]` attribute from the struct.
+pub fn parse_view_attrs(item: &mut ItemStruct) -> Result<Vec<ViewInput>> {
+  let mut views = Vec::new();
+  let mut remaining_attrs = Vec::new();
+  for attr in &item.attrs {
+    if attr.path().is_ident("view") {
+      views.push(parse_view_attr(attr)?);
+    } else {
+      remaining_attrs.push(attr.clone());
+    }
+  }
+  item.attrs = remaining_attrs;
+  Ok(views)
 }
