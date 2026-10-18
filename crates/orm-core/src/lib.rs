@@ -36,3 +36,5 @@ pub mod sql;
 pub mod table;
 pub mod value;
 pub mod vec0;
+
+pub mod vector;

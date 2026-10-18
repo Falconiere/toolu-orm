@@ -12,6 +12,7 @@
 | `Text(String)` | `VARCHAR` |
 | `Blob(Vec<u8>)` | `BLOB` |
 | `Boolean(bool)` | `BOOLEAN` |
+| `Vector(VectorValue)` | Bound array text, cast by assignment into declared `FLOAT[N]`; see [portable vectors](portable-vectors.md) |
 
 `TimestampEpoch`, `TimestampText`, `Json`, `Uuid`, and `Numeric` return typed conversion errors. Their codecs are outside epic #145. DuckDB still reports its own prepare, placeholder-count, destination-type, and execution errors for supported scalar values.
 

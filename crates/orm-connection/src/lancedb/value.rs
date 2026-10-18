@@ -1,4 +1,4 @@
-//! Fallible conversion of portable ORM values into owned DuckDB parameters.
+//! Fallible conversion of portable scalars and checked vectors to DuckDB parameters.
 
 use duckdb::types::Value as DuckValue;
 use toolu_orm_core::value::Value;
@@ -32,6 +32,7 @@ fn convert_one(value: &Value) -> Result<DuckValue, LanceValueError> {
     Value::Real(number) => Ok(DuckValue::Double(*number)),
     Value::Text(text) => Ok(DuckValue::Text(text.clone())),
     Value::Blob(bytes) => Ok(DuckValue::Blob(bytes.clone())),
+    Value::Vector(vector) => Ok(DuckValue::Text(vector.array_text())),
     Value::Boolean(boolean) => Ok(DuckValue::Boolean(*boolean)),
     Value::TimestampEpoch(_) => Err(unsupported("TimestampEpoch")),
     Value::TimestampText(_) => Err(unsupported("TimestampText")),

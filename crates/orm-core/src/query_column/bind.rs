@@ -66,6 +66,7 @@ fn tag_boolean(value: Value) -> Value {
     | Value::Real(_)
     | Value::Text(_)
     | Value::Blob(_)
+    | Value::Vector(_)
     | Value::TimestampEpoch(_)
     | Value::TimestampText(_)
     | Value::Json { .. }
@@ -81,6 +82,7 @@ fn tag_timestamp(value: Value) -> Value {
     other @ (Value::Null
     | Value::Real(_)
     | Value::Blob(_)
+    | Value::Vector(_)
     | Value::Boolean(_)
     | Value::Json { .. }
     | Value::Uuid(_)
@@ -95,6 +97,7 @@ fn tag_json(value: Value, storage: JsonStorage) -> Value {
     | Value::Integer(_)
     | Value::Real(_)
     | Value::Blob(_)
+    | Value::Vector(_)
     | Value::Boolean(_)
     | Value::TimestampEpoch(_)
     | Value::TimestampText(_)
@@ -110,6 +113,7 @@ fn tag_uuid(value: Value) -> Value {
     | Value::Integer(_)
     | Value::Real(_)
     | Value::Blob(_)
+    | Value::Vector(_)
     | Value::Boolean(_)
     | Value::TimestampEpoch(_)
     | Value::TimestampText(_)
@@ -126,6 +130,7 @@ fn tag_numeric(value: Value) -> Value {
     Value::Text(text) | Value::Numeric(text) => Value::Numeric(text),
     other @ (Value::Null
     | Value::Blob(_)
+    | Value::Vector(_)
     | Value::Boolean(_)
     | Value::TimestampEpoch(_)
     | Value::TimestampText(_)

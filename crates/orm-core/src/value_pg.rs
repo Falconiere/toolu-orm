@@ -130,6 +130,7 @@ fn encode_one(value: &Value) -> Result<PgParam, DbCoreError> {
     Value::Real(f) => Ok(Box::new(*f)),
     Value::Text(s) => Ok(Box::new(FlexibleText(s.clone()))),
     Value::Blob(b) => Ok(Box::new(b.clone())),
+    Value::Vector(vector) => Ok(Box::new(vector.clone())),
     Value::Boolean(flag) => Ok(Box::new(*flag)),
     Value::TimestampEpoch(secs) => Ok(Box::new(PgTimestamp(epoch_secs_to_pg_micros(*secs)?))),
     Value::TimestampText(text) => Ok(Box::new(PgTimestamp(rfc3339_to_pg_micros(text)?))),
