@@ -87,7 +87,7 @@ tokio = "1"
 # client and TLS stack to a downstream consumer that only wants a local DB.
 # orm-connection adds remote/replication/sync/tls for `Builder::new_synced_database`.
 libsql = { version = "0.9", default-features = false, features = ["core"] }
-rusqlite = { version = "0.40", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 duckdb = { version = "=1.10505.0", features = ["bundled"] }
 tokio-postgres = { version = "0.7", features = ["with-uuid-1", "with-serde_json-1"] }
 deadpool-postgres = "0.14"
