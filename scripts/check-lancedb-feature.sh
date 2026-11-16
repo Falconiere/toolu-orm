@@ -39,6 +39,10 @@ edition = "2021"
 [dependencies]
 toolu-orm = { path = "$repo_dir/crates/orm", default-features = false, features = ["lancedb", "$driver"] }
 EOF
+  # The temporary consumer is its own workspace root; without the workspace
+  # profiles Cargo rebuilds every dependency, bundled DuckDB included.
+  awk '/^\[/ { in_profile = /^\[profile/ } in_profile' \
+    "$repo_dir/Cargo.toml" >> "$fixture_dir/Cargo.toml"
   if [[ "$item" == Driver ]]; then
     cat > "$fixture_dir/src/lib.rs" <<'EOF'
 use toolu_orm::query::QueryError;
