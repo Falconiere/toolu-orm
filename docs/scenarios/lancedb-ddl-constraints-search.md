@@ -1,6 +1,6 @@
 # LanceDB DDL, constraints, and search SQL
 
-**Scope:** Issue #157 probes the isolated Rust `duckdb =1.10505.0` binding with bundled DuckDB `v1.5.5` and signed Lance extension build `2f167ea`. The probe runs against fresh local Lance directories on macOS 26.6.2 arm64; the same pinned suite runs on Ubuntu 24.04 x86_64 in CI. Run `bash scripts/check-lancedb-smoke.sh` to verify the extension checksum and execute the real-data cases.
+**Scope:** Issue #157 probes the isolated Rust `duckdb =1.10505.0` binding with bundled DuckDB `v1.5.5` and signed Lance extension build `2f167ea`. The probe runs against fresh local Lance directories on macOS 26.6.2 arm64; the same pinned suite supports Ubuntu 24.04 x86_64. Its CI lane is temporarily disabled; run it manually. Run `bash scripts/check-lancedb-smoke.sh` to verify the extension checksum and execute the real-data cases.
 
 The SQL below is the SQL sent by the tests. `'<items-uri>'` and `'<search-uri>'` stand for the quoted absolute paths of `items.lance` and `search_items.lance` inside that run's disposable directory; only that unpredictable directory prefix changes. `lance_probe` is the attached namespace. Results were read after closing DuckDB and reopening the same Lance directory where stated. Errors are stable leading messages; the full runtime text includes a temporary path, source location, and/or SQL caret.
 

@@ -22,7 +22,7 @@ Standalone Rust ORM: schema-driven migrations, type-safe query builders, proc ma
 ## Tests
 - Test files are flat: `crates/<crate>/tests/<name>_test.rs`, until one reaches the 250-line cap; then it becomes `tests/<name>_test/` whose entry file is `main.rs` — never `mod.rs`, which cargo never compiles (`scripts/check-test-targets.sh`) — holding only `mod` declarations, `#[path]` fixture wiring and `//!` docs, with the binary's own setup in a local `support.rs`. The binary name does not change, but `cargo nextest list` then prints `<module>::<test>`, so `docs/scenarios` rows must be module-qualified. Shared setup lives in `tests/fixtures/*.rs` (no `#[test]` there) and is wired in with `#[path = "fixtures/<file>.rs"] pub mod <name>;` (`pub mod`, so unused fixture items do not trip `dead_code`; `#[allow]` is banned).
 - Driver integration tests use real databases: in-memory libsql, in-memory rusqlite, or live Postgres from `docker-compose.test.yaml` (`docker compose -f docker-compose.test.yaml up -d --wait`, then `TEST_DB_PORT=5434`). SQL rendering, schema diffs and macro compilation also have database-free tests. Postgres tests own a schema each and fail hard when the server is absent; never skip.
-- Every `[[test]]` target with `required-features` must have a CI lane that satisfies it (see Quality gate). Verify with `cargo nextest list` per lane, not by counting `#[test]`.
+- Every `[[test]]` target with `required-features` must have a CI lane that satisfies it (see Quality gate); the temporarily disabled Lance lane is the explicit exception and remains available manually. Verify with `cargo nextest list` per lane, not by counting `#[test]`.
 - Every test scenario has a page in `docs/scenarios/` with a `## Tests` table naming its tests. `scripts/check-scenario-docs.sh` fails when a listed test is missing or a test in a scenario binary is undocumented, so a new or renamed test means a doc update in the same change.
 
 ## Releases
@@ -65,7 +65,9 @@ bash scripts/check-test-targets.sh
 bash scripts/check-file-length.sh
 ```
 
-The separate `lancedb-smoke` CI job runs `bash scripts/check-lancedb-smoke.sh`,
+The `lancedb-smoke` CI job is temporarily disabled at maintainer request and is
+not a required check. Its scripts remain available manually:
+`bash scripts/check-lancedb-smoke.sh`,
 `bash scripts/check-lancedb-missing-extension.sh`, and
 `bash scripts/check-lancedb-feature.sh` for the pinned real Lance probe,
 production startup tests, a command-level missing-extension failure check, and
