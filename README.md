@@ -861,7 +861,8 @@ bash scripts/check-test-targets.sh
 bash scripts/check-file-length.sh
 ```
 
-The `lancedb-smoke` CI job also runs `bash scripts/check-lancedb-smoke.sh`
+The `lancedb-smoke` CI job is temporarily disabled and is not a required check.
+Its scripts remain available manually: `bash scripts/check-lancedb-smoke.sh`
 against a real local Lance directory,
 `bash scripts/check-lancedb-missing-extension.sh` to prove an absent extension
 fails the production startup test with `LanceDependencyUnavailable`, and

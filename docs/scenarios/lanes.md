@@ -1,6 +1,6 @@
 # Lanes and revived suites
 
-**Why lanes exist.** `FromRow` changes shape with the driver features unified on orm-core (one driver: `from_row`; two or more: `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`), and orm-query compiles its executor, transaction, and fetch code only when exactly one driver is active (`cfg_single_backend!`). A test target is real only if some CI lane satisfies its `required-features`.
+**Why lanes exist.** `FromRow` changes shape with the driver features unified on orm-core (one driver: `from_row`; two or more: `from_pg_row` / `from_libsql_row` / `from_rusqlite_row`), and orm-query compiles its executor, transaction, and fetch code only when exactly one driver is active (`cfg_single_backend!`). Each test target has a lane satisfying its `required-features`; the Lance lane is temporarily manual.
 
 | Lane | Command | Compiles |
 |---|---|---|
@@ -11,8 +11,11 @@
 | lancedb-smoke | `bash scripts/check-lancedb-smoke.sh`, `bash scripts/check-lancedb-missing-extension.sh`, and `bash scripts/check-lancedb-feature.sh` | SHA-256 verified DuckDB v1.5.5 Lance extension on Ubuntu 24.04 `linux_amd64`, real temporary Lance datasets through the Rust probe and production connection, command-level failure on a missing extension, and optional feature wiring |
 
 The `rust` CI job runs the repository format, Clippy, nextest, test-target,
-and file-length gates. The separate `lancedb-smoke` job runs the real Lance
-checks above; a failure in either job fails the workflow.
+and file-length gates. The `lancedb-smoke` job is temporarily disabled at
+maintainer request and is not a required check; run its preserved scripts
+manually. To restore CI coverage, set the repository Actions variable
+`LANCEDB_SMOKE_ENABLED` to `true` and restore the `lancedb-smoke` required
+check on `main`.
 
 Between them the four ordinary-driver lanes give orm-core only four of the
 eight driver combinations — libsql, postgres+libsql, rusqlite and postgres —

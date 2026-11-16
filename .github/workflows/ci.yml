@@ -151,6 +151,7 @@ jobs:
         run: bash scripts/check-file-length.sh
 
   lancedb-smoke:
+    if: ${{ vars.LANCEDB_SMOKE_ENABLED == 'true' }}
     # The smoke script pins DuckDB v1.5.5's linux_amd64 Lance artifact by SHA-256.
     runs-on: ubuntu-24.04
     steps:

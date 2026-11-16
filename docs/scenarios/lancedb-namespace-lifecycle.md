@@ -8,7 +8,7 @@
 
 Paths are SQL string literals with apostrophes escaped. Catalog, table, and column names must start with an ASCII letter or underscore, followed by ASCII letters, digits, or underscores. They are still quoted as SQL identifiers. Other characters are refused before SQL because the Lance extension can create punctuation-named datasets that it does not enumerate through `SHOW TABLES`. A name containing SQL punctuation cannot execute another statement or leave an inaccessible dataset. The test uses a directory with an apostrophe and a table name containing an attempted `DROP TABLE` statement, then checks the original row is intact.
 
-CI runs these tests with the pinned Linux amd64 extension in `bash scripts/check-lancedb-smoke.sh`. On an arm64 Docker host, `bash scripts/check-lancedb-smoke-docker.sh run` uses the official DuckDB v1.5.5 Linux arm64 artifact with SHA-256 `9592a76d4b24bc1cdd801afe436bc76998f6b99184162153edbb77431f2b5e56`; production startup verifies DuckDB `v1.5.5` and Lance build `2f167ea` before any table test.
+The CI lane is temporarily disabled. Run these tests manually with the pinned platform extension using `bash scripts/check-lancedb-smoke.sh`. On an arm64 Docker host, `bash scripts/check-lancedb-smoke-docker.sh run` uses the official DuckDB v1.5.5 Linux arm64 artifact with SHA-256 `9592a76d4b24bc1cdd801afe436bc76998f6b99184162153edbb77431f2b5e56`; production startup verifies DuckDB `v1.5.5` and Lance build `2f167ea` before any table test.
 
 ## Tests
 
