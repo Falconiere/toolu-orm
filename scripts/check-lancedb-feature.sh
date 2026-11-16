@@ -23,13 +23,11 @@ done
 fixture_dir=$(mktemp -d)
 trap 'rm -rf "$fixture_dir"' EXIT
 mkdir -p "$fixture_dir/src"
-# Keep the temporary consumer on the same resolved dependency versions as the
-# workspace; otherwise its fresh lockfile selects another native DuckDB build.
-cp "$repo_dir/Cargo.lock" "$fixture_dir/Cargo.lock"
-
 assert_unavailable() {
   local driver=$1
   local item=$2
+  # Each cargo check prunes other drivers; restore their pinned versions per case.
+  cp "$repo_dir/Cargo.lock" "$fixture_dir/Cargo.lock"
   cat > "$fixture_dir/Cargo.toml" <<EOF
 [package]
 name = "lancedb-feature-negative"
@@ -66,9 +64,9 @@ EOF
 
   case "$item" in
     executor|transaction)
-      expected=$(printf 'unresolved import `%s`' "toolu_orm::query::$item")
+      expected=$(printf "unresolved import \`%s\`" "toolu_orm::query::$item")
       ;;
-    Driver) expected='no variant or associated item named `Driver` found' ;;
+    Driver) expected="no variant or associated item named \`Driver\` found" ;;
     *) printf 'lancedb-feature: unknown import %s\n' "$item" >&2; exit 1 ;;
   esac
   if ! grep -Fq -- "$expected" "$fixture_dir/build.log"; then
